@@ -12,6 +12,7 @@ class UserProfile(models.Model):
 
 
 class BusinessInfo(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=50)
     address = models.CharField(max_length=100)
     email = models.EmailField()
@@ -19,7 +20,7 @@ class BusinessInfo(models.Model):
 
 
 class BillingInfo(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=50)
     address = models.CharField(max_length=100)
     card_number = models.IntegerField()

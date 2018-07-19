@@ -2,4 +2,4 @@ from django.apps import AppConfig
 
 
 class WirfiDeviceConfig(AppConfig):
-    name = 'wirfi_device'
+    name = 'wirfi_app'
