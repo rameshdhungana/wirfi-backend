@@ -1,5 +1,4 @@
 # Created by https://www.gitignore.io
-
 ### OSX ###
 .DS_Store
 .AppleDouble
@@ -34,6 +33,7 @@ __pycache__/
 
 # Distribution / packaging
 .Python
+venv/
 env/
 build/
 develop-eggs/
@@ -88,3 +88,14 @@ local_settings.py
 .env
 db.sqlite3
 .idea/
+node_modules/
+
+.idea/workspace.xml
+
+
+media/audio
+media/text/
+media/video/
+staticfiles/
+help_files/
+.vscode/
