@@ -15,7 +15,7 @@ class User(AbstractUser, DateTimeModel):
     pass
 
 
-class UserProfile(models.Model):
+class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     profile_picture = models.ImageField(upload_to='users/profile_pictures', null=True, blank=True)
     phone_number = models.CharField(max_length=15)
@@ -24,7 +24,7 @@ class UserProfile(models.Model):
         return self.user.first_name + ' ' + self.user.last_name
 
 
-class BusinessInfo(models.Model):
+class Business(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=50)
     address = models.CharField(max_length=100)
@@ -35,12 +35,12 @@ class BusinessInfo(models.Model):
         return self.name
 
 
-class BillingInfo(models.Model):
+class Billing(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=50)
     address = models.CharField(max_length=100)
-    card_number = models.IntegerField()
-    security_code = models.IntegerField()
+    card_number = models.BigIntegerField()
+    security_code = models.BigIntegerField()
     expiration_date = models.DateField()
 
     def __str__(self):
