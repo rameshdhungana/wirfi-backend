@@ -2,12 +2,22 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 
 
-class User(AbstractUser):
+class DateTimeModel(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        abstract: True
+
+
+class User(AbstractUser, DateTimeModel):
     pass
 
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
+    profile_picture = models.ImageField(upload_to='users/profile_pictures', null=True, blank=True)
     phone_number = models.CharField(max_length=15)
 
     def __str__(self):

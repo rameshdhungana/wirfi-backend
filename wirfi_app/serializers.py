@@ -7,7 +7,7 @@ from wirfi_app.models import UserProfile, BillingInfo, BusinessInfo, Device, Dev
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
-        fields = ('user', 'phone_number')
+        fields = ('user', 'phone_number', 'profile_picture')
 
 
 class BillingInfoSerializer(serializers.ModelSerializer):

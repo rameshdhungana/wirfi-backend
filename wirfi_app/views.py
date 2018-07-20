@@ -12,5 +12,5 @@ User = get_user_model()
 
 
 class UserApiView(viewsets.ModelViewSet):
-    queryset = User.objects.filter(deleted_at__isnull=True)
+    queryset = User.objects.filter()
     serializer_class = UserSerializer
