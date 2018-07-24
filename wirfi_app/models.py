@@ -1,9 +1,19 @@
+from __future__ import unicode_literals
+
 from django.db import models
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, PermissionsMixin
+from django.utils.translation import ugettext_lazy as _
+
+from .managers import UserManager
 
 
 class User(AbstractUser):
-    pass
+    email = models.EmailField(_('email address'), unique=True)
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = []
+
+    objects = UserManager()
 
 
 class UserProfile(models.Model):
@@ -44,15 +54,8 @@ class Device(models.Model):
     location_logo = models.ImageField(upload_to='device/images')
     location_photo = models.ImageField(upload_to='device/images')
     location_hours = models.DecimalField(max_digits=10, decimal_places=1)
-
-    def __str__(self):
-        return self.serial_number
-
-
-class DeviceNetwork(models.Model):
-    device = models.OneToOneField(Device, on_delete=models.CASCADE)
     ssid_name = models.CharField(max_length=50)
     password = models.CharField(max_length=100)
 
     def __str__(self):
-        return self.device.serial_number
+        return self.serial_number

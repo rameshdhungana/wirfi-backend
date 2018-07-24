@@ -14,8 +14,16 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import include, path
+from rest_framework_swagger.views import get_swagger_view
+
+schema_view = get_swagger_view(title='Wirfi API')
+# from .swagger_schema import schema_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('list-api', schema_view),
+    path('api/auth/', include('rest_auth.urls')),
+    path('api/auth/registration/', include('rest_auth.registration.urls')),
+    path('', include('wirfi_app.urls')),
 ]

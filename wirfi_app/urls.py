@@ -1,9 +1,13 @@
+from django.urls import path
 from rest_framework import routers
-from wirfi_app.views import UserApiView
+from wirfi_app.views import UserApiView, DeviceDetailView, DeviceSerialNoView
 
 router = routers.DefaultRouter()
-router.register(r'tenant', UserApiView)
+router.register(r'user', UserApiView)
 
-urlpatterns = []
+urlpatterns = [
+    path('device/', DeviceSerialNoView.as_view(), name="device-serial-number"),
+    path('device/<int:id>/', DeviceDetailView.as_view(), name="device-detail")
+]
 
 urlpatterns += router.urls
