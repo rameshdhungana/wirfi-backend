@@ -15,6 +15,9 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
+from django.conf.urls.static import static
+from django.conf import settings
+
 from rest_framework_swagger.views import get_swagger_view
 
 schema_view = get_swagger_view(title='Wirfi API')
@@ -26,4 +29,4 @@ urlpatterns = [
     path('api/auth/', include('rest_auth.urls')),
     path('api/auth/registration/', include('rest_auth.registration.urls')),
     path('', include('wirfi_app.urls')),
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

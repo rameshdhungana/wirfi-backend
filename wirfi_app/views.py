@@ -5,8 +5,8 @@ from rest_framework import viewsets, generics
 from rest_framework.response import Response
 from rest_framework import status
 
-from wirfi_app.models import Device
-from wirfi_app.serializers import UserSerializer, DeviceSerializer, DeviceSerialNoSerializer
+from wirfi_app.models import Billing, Business, Profile, Device
+from wirfi_app.serializers import UserSerializer, DeviceSerializer, DeviceSerialNoSerializer, BusinessInfoSerializer, UserProfileSerializer, BillingInfoSerializer
 
 User = get_user_model()
 
@@ -55,6 +55,21 @@ class DeviceDetailView(generics.RetrieveUpdateDestroyAPIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
-def get_token_obj(token):
-    print(token[6:])
-    return Token.objects.get(key=token[6:])
+class BillingApiView(viewsets.ModelViewSet):
+    queryset = Billing.objects.all()
+    serializer_class = BillingInfoSerializer
+
+
+class BusinessApiView(viewsets.ModelViewSet):
+    queryset = Business.objects.all()
+    serializer_class = BusinessInfoSerializer
+
+
+class ProfileApiView(viewsets.ModelViewSet):
+    queryset = Profile.objects.all()
+    serializer_class = UserProfileSerializer
+
+
+    def get_token_obj(token):
+        print(token[6:])
+        return Token.objects.get(key=token[6:])

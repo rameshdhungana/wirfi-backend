@@ -7,6 +7,7 @@ from django.utils.translation import ugettext_lazy as _
 from .managers import UserManager
 
 
+<<<<<<< HEAD
 class User(AbstractUser):
     email = models.EmailField(_('email address'), unique=True)
 
@@ -14,17 +15,31 @@ class User(AbstractUser):
     REQUIRED_FIELDS = []
 
     objects = UserManager()
+=======
+class DateTimeModel(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        abstract: True
 
 
-class UserProfile(models.Model):
+class User(AbstractUser, DateTimeModel):
+    pass
+>>>>>>> fa5be85673cd85b0ab5b7d4713d2e0bccb809d45
+
+
+class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
+    profile_picture = models.ImageField(upload_to='users/profile_pictures', null=True, blank=True)
     phone_number = models.CharField(max_length=15)
 
     def __str__(self):
         return self.user.first_name + ' ' + self.user.last_name
 
 
-class BusinessInfo(models.Model):
+class Business(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=50)
     address = models.CharField(max_length=100)
@@ -35,12 +50,12 @@ class BusinessInfo(models.Model):
         return self.name
 
 
-class BillingInfo(models.Model):
+class Billing(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=50)
     address = models.CharField(max_length=100)
-    card_number = models.IntegerField()
-    security_code = models.IntegerField()
+    card_number = models.BigIntegerField()
+    security_code = models.BigIntegerField()
     expiration_date = models.DateField()
 
     def __str__(self):
@@ -58,4 +73,8 @@ class Device(models.Model):
     password = models.CharField(max_length=100)
 
     def __str__(self):
+<<<<<<< HEAD
         return self.serial_number
+=======
+        return self.device.serial_number
+>>>>>>> fa5be85673cd85b0ab5b7d4713d2e0bccb809d45
