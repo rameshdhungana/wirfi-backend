@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from wirfi_app.models import Billing, Business, Profile, Device
-from wirfi_app.serializers import UserSerializer, DeviceSerializer, DeviceSerialNoSerializer, BusinessInfoSerializer, UserProfileSerializer, BillingInfoSerializer
+from wirfi_app.serializers import UserSerializer, DeviceSerializer, DeviceSerialNoSerializer, BusinessSerializer, UserProfileSerializer, BillingSerializer
 
 User = get_user_model()
 
@@ -57,12 +57,12 @@ class DeviceDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 class BillingApiView(viewsets.ModelViewSet):
     queryset = Billing.objects.all()
-    serializer_class = BillingInfoSerializer
+    serializer_class = BillingSerializer
 
 
 class BusinessApiView(viewsets.ModelViewSet):
     queryset = Business.objects.all()
-    serializer_class = BusinessInfoSerializer
+    serializer_class = BusinessSerializer
 
 
 class ProfileApiView(viewsets.ModelViewSet):
@@ -70,6 +70,6 @@ class ProfileApiView(viewsets.ModelViewSet):
     serializer_class = UserProfileSerializer
 
 
-    def get_token_obj(token):
-        print(token[6:])
-        return Token.objects.get(key=token[6:])
+def get_token_obj(token):
+    print(token[6:])
+    return Token.objects.get(key=token[6:])

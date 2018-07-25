@@ -50,6 +50,8 @@ INSTALLED_APPS = [
     'wirfi_app',
 ]
 
+SITE_ID = 1
+
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',

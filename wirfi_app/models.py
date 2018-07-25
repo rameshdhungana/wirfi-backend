@@ -7,15 +7,6 @@ from django.utils.translation import ugettext_lazy as _
 from .managers import UserManager
 
 
-<<<<<<< HEAD
-class User(AbstractUser):
-    email = models.EmailField(_('email address'), unique=True)
-
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = []
-
-    objects = UserManager()
-=======
 class DateTimeModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -26,8 +17,12 @@ class DateTimeModel(models.Model):
 
 
 class User(AbstractUser, DateTimeModel):
-    pass
->>>>>>> fa5be85673cd85b0ab5b7d4713d2e0bccb809d45
+    email = models.EmailField(_('email address'), unique=True)
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = []
+
+    objects = UserManager()
 
 
 class Profile(models.Model):
@@ -73,8 +68,5 @@ class Device(models.Model):
     password = models.CharField(max_length=100)
 
     def __str__(self):
-<<<<<<< HEAD
         return self.serial_number
-=======
-        return self.device.serial_number
->>>>>>> fa5be85673cd85b0ab5b7d4713d2e0bccb809d45
+

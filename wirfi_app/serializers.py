@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from django.contrib.auth import get_user_model
 
-from wirfi_app.models import UserProfile, BillingInfo, BusinessInfo, Device
+from wirfi_app.models import User, Profile, Billing, Business, Device
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -11,13 +11,13 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = ('user', 'phone_number', 'profile_picture')
 
 
-class BusinessInfoSerializer(serializers.ModelSerializer):
+class BusinessSerializer(serializers.ModelSerializer):
     class Meta:
         model = Business
         fields = ('user', 'name', 'address', 'email', 'phone_number')
 
 
-class BillingInfoSerializer(serializers.ModelSerializer):
+class BillingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Billing
         fields = ('user', 'name', 'address', 'card_number', 'security_code', 'expiration_date')
@@ -25,8 +25,8 @@ class BillingInfoSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     profile = UserProfileSerializer(read_only=True)
-    billing = BillingInfoSerializer(read_only=True)
-    business = BusinessInfoSerializer(read_only=True)
+    billing = BillingSerializer(read_only=True)
+    business = BusinessSerializer(read_only=True)
 
     class Meta:
         model = get_user_model()
