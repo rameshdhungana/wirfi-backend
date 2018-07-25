@@ -2,7 +2,8 @@ from django.urls import path
 
 from rest_framework import routers
 
-from wirfi_app.views import UserApiView, ProfileApiView, BusinessApiView, BillingApiView, DeviceDetailView, DeviceSerialNoView
+from wirfi_app.views import UserApiView, ProfileApiView, BusinessApiView, BillingApiView, DeviceDetailView, \
+    DeviceSerialNoView , StripeTokenRegistration
 
 router = routers.DefaultRouter()
 router.register(r'user', UserApiView)
@@ -12,7 +13,8 @@ router.register(r'billing', BillingApiView)
 
 urlpatterns = [
     path('device/', DeviceSerialNoView.as_view(), name="device-serial-number"),
-    path('device/<int:id>/', DeviceDetailView.as_view(), name="device-detail")
+    path('device/<int:id>/', DeviceDetailView.as_view(), name="device-detail"),
+    path('stripe/register-token/', StripeTokenRegistration.as_view(), name="stripe_token_registration")
 ]
 
 urlpatterns += router.urls

@@ -1,4 +1,6 @@
 from django.contrib.auth import get_user_model
+from django.views.generic import View
+from django.http import HttpResponse
 
 from rest_framework.authtoken.models import Token
 from rest_framework import viewsets, generics
@@ -6,7 +8,8 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from wirfi_app.models import Billing, Business, Profile, Device
-from wirfi_app.serializers import UserSerializer, DeviceSerializer, DeviceSerialNoSerializer, BusinessSerializer, UserProfileSerializer, BillingSerializer
+from wirfi_app.serializers import UserSerializer, DeviceSerializer, DeviceSerialNoSerializer, BusinessSerializer, \
+    UserProfileSerializer, BillingSerializer
 
 User = get_user_model()
 
@@ -74,3 +77,10 @@ class ProfileApiView(viewsets.ModelViewSet):
 
 def get_token_obj(token):
     return Token.objects.get(key=token)
+
+
+class StripeTokenRegistration(View):
+    def get(self, request):
+        data = request.body
+        print(data)
+        return HttpResponse('this is the data', data)
