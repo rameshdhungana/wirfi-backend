@@ -1,7 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.views.generic import View
-from django.http import HttpResponse
-
+from rest_framework.decorators import api_view
 from rest_framework.authtoken.models import Token
 from rest_framework import viewsets, generics
 from rest_framework.response import Response
@@ -79,8 +77,8 @@ def get_token_obj(token):
     return Token.objects.get(key=token)
 
 
-class StripeTokenRegistration(View):
-    def get(self, request):
-        data = request.body
-        print(data)
-        return HttpResponse('this is the data', data)
+@api_view(['POST'])
+def stripe_token_registration(request):
+    data = request.data
+    print(data)
+    return Response({"message": "Got some data!", "data": data})
