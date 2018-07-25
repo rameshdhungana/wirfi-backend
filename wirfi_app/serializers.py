@@ -36,7 +36,7 @@ class UserSerializer(serializers.ModelSerializer):
 class DeviceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Device
-        exclude = ('serial_number', 'user',)
+        exclude = ('user',)
         read_only_fields = ['serial_number']
 
 
