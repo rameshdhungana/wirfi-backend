@@ -33,6 +33,16 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ('email', 'first_name', 'last_name', 'profile', 'billing', 'business',)
 
 
+class UserDetailsSerializer(serializers.ModelSerializer):
+    """
+    User model w/o password
+    """
+    class Meta:
+        model = get_user_model()
+        fields = ('pk', 'email', 'first_name', 'last_name')
+        read_only_fields = ('email', )
+
+
 class DeviceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Device
@@ -43,5 +53,5 @@ class DeviceSerializer(serializers.ModelSerializer):
 class DeviceSerialNoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Device
-        fields = ('id', 'serial_number')
+        fields = ('id', 'serial_number', 'name',)
         read_only_fields = ['name']
