@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from django.contrib.auth import get_user_model
 
-from wirfi_app.models import User, Profile, Billing, Business, Device
+from wirfi_app.models import Profile, Billing, Business, Device
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
