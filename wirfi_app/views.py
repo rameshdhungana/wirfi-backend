@@ -1,3 +1,4 @@
+import stripe
 from django.contrib.auth import get_user_model
 from rest_framework.decorators import api_view
 from rest_framework.authtoken.models import Token
@@ -81,4 +82,19 @@ def get_token_obj(token):
 def stripe_token_registration(request):
     data = request.data
     print(data)
+    # Set your secret key: remember to change this to your live secret key in production
+    # See your keys here: https://dashboard.stripe.com/account/apikeys
+    stripe.api_key = "sk_test_FLCaTLlnXR6AZEu3JTsMv9Ld"
+
+    # Token is created using Checkout or Elements!
+    # Get the payment token ID submitted by the form:
+    token = data['id'].strip()
+    print(token)
+
+    charge = stripe.Charge.create(
+        amount=999,
+        currency='usd',
+        description='Example charge',
+        source=token,
+    )
     return Response({"message": "Got some data!", "data": data})
