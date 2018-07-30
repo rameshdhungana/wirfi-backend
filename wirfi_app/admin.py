@@ -1,6 +1,6 @@
 from django.contrib import admin
 # from django.contrib.auth.admin import UserAdmin
-from .models import User, Profile, Business, Billing, Device
+from .models import User, Profile, Business, Billing, Device ,Subscription ,ServicePlan
 
 admin.site.register(User)
-admin.site.register([Profile, Billing, Business, Device])
+admin.site.register([Profile, Billing, Business, Device, Subscription])

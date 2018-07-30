@@ -6,9 +6,10 @@ from rest_framework import viewsets, generics
 from rest_framework.response import Response
 from rest_framework import status
 
-from wirfi_app.models import Billing, Business, Profile, Device
+from wirfi_app.models import Billing, Business, Profile, Device, Subscription
 from wirfi_app.serializers import UserSerializer, DeviceSerializer, DeviceSerialNoSerializer, BusinessSerializer, \
     UserProfileSerializer, BillingSerializer
+from django.conf import settings
 
 User = get_user_model()
 
@@ -84,17 +85,38 @@ def stripe_token_registration(request):
     print(data)
     # Set your secret key: remember to change this to your live secret key in production
     # See your keys here: https://dashboard.stripe.com/account/apikeys
-    stripe.api_key = "sk_test_FLCaTLlnXR6AZEu3JTsMv9Ld"
+    stripe.api_key = settings.STRIPE_API_KEY
 
     # Token is created using Checkout or Elements!
     # Get the payment token ID submitted by the form:
     token = data['id'].strip()
+    email = data['email']
+    print(email)
     print(token)
 
-    charge = stripe.Charge.create(
-        amount=999,
-        currency='usd',
-        description='Example charge',
+    # # Create a Customer:
+    customer = stripe.Customer.create(
         source=token,
+        email=email
     )
+    print(customer.id, 2123123412432134234, request.user)
+    # Charge the Customer instead of the card:
+    Subscription.objects.create(customer_id=customer.id, user=request.user, email=email, service_plan=1)
+
+    # charge = stripe.Charge.create(
+    #     amount=999,
+    #     currency='usd',
+    #     description='Example charge',
+    #     source=token,
+    #     statement_descriptor='Custom descriptor'
+    # )
+
+    charge = stripe.Charge.create(
+        amount=1000,
+        currency='usd',
+        customer=customer.id,
+        receipt_email=email
+
+    )
+    print(charge)
     return Response({"message": "Got some data!", "data": data})
