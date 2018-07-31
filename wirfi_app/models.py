@@ -132,3 +132,11 @@ class Subscription(DateTimeModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     email = models.EmailField()
     service_plan = models.ForeignKey(ServicePlan, on_delete=models.CASCADE)
+
+
+class AuthenticationInfo(DateTimeModel):
+    device_id = models.CharField(max_length=128, blank=True)
+    auth_key = models.CharField(max_length=128)
+    refresh_token = models.CharField(max_length=128)
+    push_notification_token = models.CharField(max_length=128, blank=True)
+    device_type = models.IntegerField(null=True, blank=True)
