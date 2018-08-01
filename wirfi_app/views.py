@@ -5,10 +5,12 @@ from rest_framework.authtoken.models import Token
 from rest_framework import viewsets, generics
 from rest_framework.response import Response
 from rest_framework import status
+from rest_auth.registration.views import RegisterView
+from rest_auth.views import LoginView
 
 from wirfi_app.models import Billing, Business, Profile, Device, Subscription
 from wirfi_app.serializers import UserSerializer, DeviceSerializer, DeviceSerialNoSerializer, BusinessSerializer, \
-    UserProfileSerializer, BillingSerializer
+    UserProfileSerializer, BillingSerializer, UserRegistrationSerializer,UserLoginSerializer
 from django.conf import settings
 
 User = get_user_model()
@@ -120,3 +122,13 @@ def stripe_token_registration(request):
     )
     print(charge)
     return Response({"message": "Got some data!", "data": data})
+
+
+class RegisterUser(RegisterView):
+    serializer_class = UserRegistrationSerializer
+
+
+class LoginUser(LoginView):
+    serializer_class = UserLoginSerializer
+
+

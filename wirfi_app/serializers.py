@@ -1,4 +1,6 @@
 from rest_framework import serializers
+from rest_auth.registration.serializers import RegisterSerializer
+from rest_auth.serializers import LoginSerializer
 
 from django.contrib.auth import get_user_model
 
@@ -37,10 +39,11 @@ class UserDetailsSerializer(serializers.ModelSerializer):
     """
     User model w/o password
     """
+
     class Meta:
         model = get_user_model()
         fields = ('pk', 'email', 'first_name', 'last_name')
-        read_only_fields = ('email', )
+        read_only_fields = ('email',)
 
 
 class DeviceSerializer(serializers.ModelSerializer):
@@ -55,3 +58,24 @@ class DeviceSerialNoSerializer(serializers.ModelSerializer):
         model = Device
         fields = ('id', 'serial_number', 'name',)
         read_only_fields = ['name']
+
+
+class UserRegistrationSerializer(RegisterSerializer):
+    first_name = serializers.CharField(max_length=64)
+    last_name = serializers.CharField(max_length=64)
+
+    def get_cleaned_data(self):
+        return {
+            'username': self.validated_data.get('username', ''),
+            'password1': self.validated_data.get('password1', ''),
+            'email': self.validated_data.get('email', ''),
+            'first_name': self.validated_data.get('first_name', ''),
+            'last_name': self.validated_data.get('last_name', ''),
+
+        }
+
+
+class UserLoginSerializer(LoginSerializer):
+    device_id = serializers.CharField(max_length=128)
+    device_type = serializers.IntegerField()
+    push_notification_token = serializers.CharField(max_length=128)
