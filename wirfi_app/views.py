@@ -1,5 +1,8 @@
 import stripe
+
 from django.contrib.auth import get_user_model
+from django.conf import settings
+
 from rest_framework.decorators import api_view
 from rest_framework.authtoken.models import Token
 from rest_framework import viewsets, generics
@@ -9,9 +12,8 @@ from rest_auth.registration.views import RegisterView
 from rest_auth.views import LoginView
 
 from wirfi_app.models import Billing, Business, Profile, Device, Subscription
-from wirfi_app.serializers import UserSerializer, DeviceSerializer, DeviceSerialNoSerializer, BusinessSerializer, \
-    UserProfileSerializer, BillingSerializer, UserRegistrationSerializer,UserLoginSerializer
-from django.conf import settings
+from wirfi_app.serializers import UserSerializer, UserProfileSerializer, DeviceSerializer, DeviceSerialNoSerializer, \
+    DeviceNetworkSerializer, BusinessSerializer, BillingSerializer, UserRegistrationSerializer, LoginSerializer
 
 User = get_user_model()
 
@@ -28,23 +30,50 @@ class DeviceSerialNoView(generics.ListCreateAPIView):
         token = get_token_obj(self.request.auth)
         return Device.objects.filter(user=token.user)
 
+    def list(self, request, *args, **kwargs):
+        devices = self.get_queryset()
+        serializer = DeviceSerialNoSerializer(devices, many=True)
+        headers = self.get_success_headers(serializer.data)
+        data = {
+            'code': getattr(settings, 'SUCCESS_CODE', '0001'),
+            'message': "Details successfully fetched.",
+            'data': {
+                'device': serializer.data
+            }
+        }
+        return Response(data, status=status.HTTP_200_OK, headers=headers)
+
     def create(self, request, *args, **kwargs):
         token = get_token_obj(request.auth)
         serializer = DeviceSerialNoSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(user=token.user)
         headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        data = {
+            'code': getattr(settings, 'SUCCESS_CODE', '0001'),
+            'message': "Successfully device created.",
+            'data': serializer.data
+        }
+        return Response(data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class DeviceDetailView(generics.RetrieveUpdateDestroyAPIView):
     lookup_field = 'id'
     serializer_class = DeviceSerializer
 
-    def get(self, request, *args, **kwargs):
+    def get_queryset(self):
         token = get_token_obj(self.request.auth)
-        device = Device.objects.filter(user=token.user).get(pk=self.kwargs['id'])
-        return Response(DeviceSerializer(device).data)
+        return Device.objects.filter(user=token.user).filter(pk=self.kwargs['id'])
+
+    def retrieve(self, request, *args, **kwargs):
+        device = self.get_object()
+        serializer = DeviceSerialNoSerializer(device)
+        data = {
+            'code': getattr(settings, 'SUCCESS_CODE', '0001'),
+            'message': "Detail successfully fetched.",
+            'data': serializer.data
+        }
+        return Response(data, status=status.HTTP_200_OK)
 
     def update(self, request, *args, **kwargs):
         device = self.get_object()
@@ -57,14 +86,115 @@ class DeviceDetailView(generics.RetrieveUpdateDestroyAPIView):
 
         serializer = DeviceSerializer(device, data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        serializer.save(user=token.user)
+        data = {
+            'code': getattr(settings, 'SUCCESS_CODE', '0001'),
+            'message': "Device successfully updated.",
+            'data': serializer.data
+        }
+        return Response(data, status=status.HTTP_200_OK)
 
 
-class BillingApiView(viewsets.ModelViewSet):
-    queryset = Billing.objects.all()
+class DeviceNetworkView(generics.RetrieveUpdateAPIView):
+    lookup_field = 'id'
+    serializer_class = DeviceNetworkSerializer
+
+    def get_queryset(self):
+        token = get_token_obj(self.request.auth)
+        return Device.objects.filter(user=token.user).filter(pk=self.kwargs['id'])
+
+    def retrieve(self, request, *args, **kwargs):
+        device = self.get_object()
+        serializer = DeviceSerialNoSerializer(device)
+        data = {
+            'code': getattr(settings, 'SUCCESS_CODE', '0001'),
+            'message': "Detail successfully fetched.",
+            'data': serializer.data
+        }
+        return Response(data, status=status.HTTP_200_OK)
+
+    def update(self, request, *args, **kwargs):
+        device = self.get_object()
+        token = get_token_obj(self.request.auth)
+        serializer = DeviceNetworkSerializer(device, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=token.user)
+        data = {
+            'code': getattr(settings, 'SUCCESS_CODE', '0001'),
+            'message': "Device successfully updated.",
+            'data': serializer.data
+        }
+        return Response(data, status=status.HTTP_200_OK)
+
+
+class BillingView(generics.ListCreateAPIView):
     serializer_class = BillingSerializer
+
+    def get_queryset(self):
+        token = get_token_obj(self.request.auth)
+        return Billing.objects.filter(user=token.user)
+
+    def list(self, request, *args, **kwargs):
+        billings = self.get_queryset()
+        serializer = BillingSerializer(billings, many=True)
+        headers = self.get_success_headers(serializer.data)
+        data = {
+            'code': getattr(settings, 'SUCCESS_CODE', '0001'),
+            'message': "Details successfully fetched.",
+            'data': {
+                'billing_info': serializer.data,
+                'email': request.user.email
+            }
+        }
+        return Response(data, status=status.HTTP_200_OK, headers=headers)
+
+    def create(self, request, *args, **kwargs):
+        token = get_token_obj(request.auth)
+        serializer = BillingSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=token.user)
+        headers = self.get_success_headers(serializer.data)
+        data = {
+            'code': getattr(settings, 'SUCCESS_CODE', '0001'),
+            'message': "Billing Info successfully created.",
+            'data': serializer.data
+        }
+        return Response(data, status=status.HTTP_201_CREATED, headers=headers)
+
+
+class BillingDetailView(generics.RetrieveUpdateDestroyAPIView):
+    lookup_field = 'id'
+    serializer_class = BillingSerializer
+
+    def get_queryset(self):
+        token = get_token_obj(self.request.auth)
+        return Billing.objects.filter(user=token.user).filter(pk=self.kwargs.get('id', ''))
+
+    def retrieve(self, request, *args, **kwargs):
+        billing = self.get_object()
+        serializer = BillingSerializer(billing)
+        data = {
+            'code': getattr(settings, 'SUCCESS_CODE', '0001'),
+            'message': "Details successfully fetched.",
+            'data': {
+                'billing_info': serializer.data,
+                'email': request.user.email
+            }
+        }
+        return Response(data, status=status.HTTP_200_OK)
+
+    def update(self, request, *args, **kwargs):
+        token = get_token_obj(request.auth)
+        billing = self.get_object()
+        serializer = BillingSerializer(billing, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=token.user)
+        data = {
+            'code': getattr(settings, 'SUCCESS_CODE', '0001'),
+            'message': "Billing Info successfully updated.",
+            'data': serializer.data
+        }
+        return Response(data, status=status.HTTP_200_OK)
 
 
 class BusinessApiView(viewsets.ModelViewSet):
