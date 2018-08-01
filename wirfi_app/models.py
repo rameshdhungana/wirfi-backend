@@ -108,12 +108,12 @@ class Billing(models.Model):
 class Device(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     serial_number = models.CharField(max_length=30, unique=True)
-    name = models.CharField(max_length=30, null=True)
-    location_logo = models.ImageField(upload_to='device/images', null=True)
-    location_photo = models.ImageField(upload_to='device/images', null=True)
-    location_hours = models.DecimalField(max_digits=10, decimal_places=1, null=True)
-    ssid_name = models.CharField(max_length=50, null=True)
-    password = models.CharField(max_length=100, null=True)
+    name = models.CharField(max_length=30)
+    location_logo = models.ImageField(upload_to='device/images')
+    location_photo = models.ImageField(upload_to='device/images')
+    # location_hours = models.DecimalField(max_digits=10, decimal_places=1, null=True)
+    ssid_name = models.CharField(max_length=50)
+    password = models.CharField(max_length=100)
 
     def __str__(self):
         return self.serial_number
