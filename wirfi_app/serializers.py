@@ -1,10 +1,59 @@
-from rest_framework import serializers
-from rest_auth.registration.serializers import RegisterSerializer
-from rest_auth.serializers import LoginSerializer
+from django.utils.translation import ugettext_lazy as _
+from django.contrib.auth import get_user_model, authenticate
+from django.conf import settings
 
-from django.contrib.auth import get_user_model
+from rest_framework import serializers, exceptions
+from rest_auth.registration.serializers import RegisterSerializer
 
 from wirfi_app.models import Profile, Billing, Business, Device
+
+User = get_user_model()
+
+
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True, allow_blank=False)
+    password = serializers.CharField(style={'input_type': 'password'})
+
+    def _validate_email(self, email, password):
+        user = None
+        if email and password:
+            user = authenticate(email=email, password=password)
+        else:
+            msg = _('Must include "email" and "password".')
+            raise exceptions.ValidationError(msg)
+        return user
+
+    def validate(self, attrs):
+        email = attrs.get('email')
+        password = attrs.get('password')
+        user = None
+
+        if 'allauth' in settings.INSTALLED_APPS:
+            from allauth.account import app_settings
+
+            # Authentication through email
+            if app_settings.AUTHENTICATION_METHOD == app_settings.AuthenticationMethod.EMAIL:
+                user = self._validate_email(email, password)
+
+        # Did we get back an active user?
+        if user:
+            if not user.is_active:
+                msg = _('User account is disabled.')
+                raise exceptions.ValidationError(msg)
+        else:
+            msg = _('Unable to log in with provided credentials.')
+            raise exceptions.ValidationError(msg)
+
+        # If required, is the email verified?
+        if 'rest_auth.registration' in settings.INSTALLED_APPS:
+            from allauth.account import app_settings
+            if app_settings.EMAIL_VERIFICATION == app_settings.EmailVerificationMethod.MANDATORY:
+                email_address = user.emailaddress_set.get(email=user.email)
+                if not email_address.verified:
+                    raise serializers.ValidationError(_('E-mail is not verified.'))
+
+        attrs['user'] = user
+        return attrs
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -16,13 +65,13 @@ class UserProfileSerializer(serializers.ModelSerializer):
 class BusinessSerializer(serializers.ModelSerializer):
     class Meta:
         model = Business
-        fields = ('user', 'name', 'address', 'email', 'phone_number')
+        fields = ('name', 'address', 'email', 'phone_number')
 
 
 class BillingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Billing
-        fields = ('user', 'name', 'address', 'card_number', 'security_code', 'expiration_date')
+        fields = ('name', 'address', 'card_number', 'security_code', 'expiration_date')
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -31,7 +80,7 @@ class UserSerializer(serializers.ModelSerializer):
     business = BusinessSerializer(read_only=True)
 
     class Meta:
-        model = get_user_model()
+        model = User
         fields = ('email', 'first_name', 'last_name', 'profile', 'billing', 'business',)
 
 
@@ -41,7 +90,7 @@ class UserDetailsSerializer(serializers.ModelSerializer):
     """
 
     class Meta:
-        model = get_user_model()
+        model = User
         fields = ('pk', 'email', 'first_name', 'last_name')
         read_only_fields = ('email',)
 
@@ -49,15 +98,20 @@ class UserDetailsSerializer(serializers.ModelSerializer):
 class DeviceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Device
-        exclude = ('user',)
-        read_only_fields = ['serial_number']
+        fields = ['id', 'name', 'serial_number', 'ssid_name', 'password']
+        read_only_fields = ['serial_number', 'ssid_name', 'password']
 
 
 class DeviceSerialNoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Device
         fields = ('id', 'serial_number', 'name',)
-        read_only_fields = ['name']
+
+
+class DeviceNetworkSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Device
+        fields = ('id', 'ssid_name', 'password',)
 
 
 class UserRegistrationSerializer(RegisterSerializer):
@@ -66,16 +120,13 @@ class UserRegistrationSerializer(RegisterSerializer):
 
     def get_cleaned_data(self):
         return {
-            'username': self.validated_data.get('username', ''),
             'password1': self.validated_data.get('password1', ''),
             'email': self.validated_data.get('email', ''),
             'first_name': self.validated_data.get('first_name', ''),
             'last_name': self.validated_data.get('last_name', ''),
-
         }
 
-
-class UserLoginSerializer(LoginSerializer):
-    device_id = serializers.CharField(max_length=128)
-    device_type = serializers.IntegerField()
-    push_notification_token = serializers.CharField(max_length=128)
+# class UserLoginSerializer(LoginSerializer):
+#     device_id = serializers.CharField(max_length=128)
+#     device_type = serializers.IntegerField()
+#     push_notification_token = serializers.CharField(max_length=128)

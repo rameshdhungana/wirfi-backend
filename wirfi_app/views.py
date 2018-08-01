@@ -84,7 +84,6 @@ def get_token_obj(token):
 @api_view(['POST'])
 def stripe_token_registration(request):
     data = request.data
-    print(data)
     # Set your secret key: remember to change this to your live secret key in production
     # See your keys here: https://dashboard.stripe.com/account/apikeys
     stripe.api_key = settings.STRIPE_API_KEY
@@ -93,15 +92,13 @@ def stripe_token_registration(request):
     # Get the payment token ID submitted by the form:
     token = data['id'].strip()
     email = data['email']
-    print(email)
-    print(token)
 
     # # Create a Customer:
     customer = stripe.Customer.create(
         source=token,
         email=email
     )
-    print(customer.id, 2123123412432134234, request.user)
+
     # Charge the Customer instead of the card:
     Subscription.objects.create(customer_id=customer.id, user=request.user, email=email, service_plan=1)
 
@@ -120,15 +117,24 @@ def stripe_token_registration(request):
         receipt_email=email
 
     )
-    print(charge)
-    return Response({"message": "Got some data!", "data": data})
+    return Response({"code": '0001', "message": "Got some data!", "data": data})
 
 
 class RegisterUser(RegisterView):
     serializer_class = UserRegistrationSerializer
 
 
-class LoginUser(LoginView):
-    serializer_class = UserLoginSerializer
+class Login(LoginView):
+    serializer_class = LoginSerializer
+
+    def post(self, request, *args, **kwargs):
+        response = super(Login, self).post(request, *args, **kwargs)
+        response.data = {
+            'code': getattr(settings, 'SUCCESS_CODE', '0001'),
+            'message': "Successfully Logged In.",
+            'data': {'auth_token': response.data.get('key')}
+        }
+        return response
+
 
 
