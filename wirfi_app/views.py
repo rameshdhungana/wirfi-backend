@@ -9,7 +9,12 @@ from rest_framework import viewsets, generics
 from rest_framework.response import Response
 from rest_framework import status
 from rest_auth.registration.views import RegisterView
+from allauth.account import app_settings as allauth_settings
 from rest_auth.views import LoginView
+from django.views.generic import TemplateView
+from rest_auth.app_settings import (TokenSerializer,
+                                    JWTSerializer,
+                                    create_token)
 
 from wirfi_app.models import Billing, Business, Profile, Device, Subscription
 from wirfi_app.serializers import UserSerializer, UserProfileSerializer, DeviceSerializer, DeviceSerialNoSerializer, \
@@ -35,7 +40,7 @@ class DeviceSerialNoView(generics.ListCreateAPIView):
         serializer = DeviceSerialNoSerializer(devices, many=True)
         headers = self.get_success_headers(serializer.data)
         data = {
-            'code': getattr(settings, 'SUCCESS_CODE', '0001'),
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Details successfully fetched.",
             'data': {
                 'device': serializer.data
@@ -50,7 +55,7 @@ class DeviceSerialNoView(generics.ListCreateAPIView):
         serializer.save(user=token.user)
         headers = self.get_success_headers(serializer.data)
         data = {
-            'code': getattr(settings, 'SUCCESS_CODE', '0001'),
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Successfully device created.",
             'data': serializer.data
         }
@@ -69,7 +74,7 @@ class DeviceDetailView(generics.RetrieveUpdateDestroyAPIView):
         device = self.get_object()
         serializer = DeviceSerialNoSerializer(device)
         data = {
-            'code': getattr(settings, 'SUCCESS_CODE', '0001'),
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Detail successfully fetched.",
             'data': serializer.data
         }
@@ -88,7 +93,7 @@ class DeviceDetailView(generics.RetrieveUpdateDestroyAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save(user=token.user)
         data = {
-            'code': getattr(settings, 'SUCCESS_CODE', '0001'),
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Device successfully updated.",
             'data': serializer.data
         }
@@ -107,7 +112,7 @@ class DeviceNetworkView(generics.RetrieveUpdateAPIView):
         device = self.get_object()
         serializer = DeviceSerialNoSerializer(device)
         data = {
-            'code': getattr(settings, 'SUCCESS_CODE', '0001'),
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Detail successfully fetched.",
             'data': serializer.data
         }
@@ -120,7 +125,7 @@ class DeviceNetworkView(generics.RetrieveUpdateAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save(user=token.user)
         data = {
-            'code': getattr(settings, 'SUCCESS_CODE', '0001'),
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Device successfully updated.",
             'data': serializer.data
         }
@@ -139,7 +144,7 @@ class BillingView(generics.ListCreateAPIView):
         serializer = BillingSerializer(billings, many=True)
         headers = self.get_success_headers(serializer.data)
         data = {
-            'code': getattr(settings, 'SUCCESS_CODE', '0001'),
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Details successfully fetched.",
             'data': {
                 'billing_info': serializer.data,
@@ -155,7 +160,7 @@ class BillingView(generics.ListCreateAPIView):
         serializer.save(user=token.user)
         headers = self.get_success_headers(serializer.data)
         data = {
-            'code': getattr(settings, 'SUCCESS_CODE', '0001'),
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Billing Info successfully created.",
             'data': serializer.data
         }
@@ -174,7 +179,7 @@ class BillingDetailView(generics.RetrieveUpdateDestroyAPIView):
         billing = self.get_object()
         serializer = BillingSerializer(billing)
         data = {
-            'code': getattr(settings, 'SUCCESS_CODE', '0001'),
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Details successfully fetched.",
             'data': {
                 'billing_info': serializer.data,
@@ -190,7 +195,7 @@ class BillingDetailView(generics.RetrieveUpdateDestroyAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save(user=token.user)
         data = {
-            'code': getattr(settings, 'SUCCESS_CODE', '0001'),
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Billing Info successfully updated.",
             'data': serializer.data
         }
@@ -247,11 +252,21 @@ def stripe_token_registration(request):
         receipt_email=email
 
     )
-    return Response({"code": '0001', "message": "Got some data!", "data": data})
+    return Response({"code": 1, "message": "Got some data!", "data": data})
 
 
 class RegisterUser(RegisterView):
     serializer_class = UserRegistrationSerializer
+
+    def get_response_data(self, user):
+        if allauth_settings.EMAIL_VERIFICATION == \
+                allauth_settings.EmailVerificationMethod.MANDATORY:
+            data = {
+                'code': getattr(settings, 'SUCCESS_CODE', 1),
+                'message': "Verification e-mail sent.",
+
+            }
+            return data
 
 
 class Login(LoginView):
@@ -260,11 +275,12 @@ class Login(LoginView):
     def post(self, request, *args, **kwargs):
         response = super(Login, self).post(request, *args, **kwargs)
         response.data = {
-            'code': getattr(settings, 'SUCCESS_CODE', '0001'),
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Successfully Logged In.",
             'data': {'auth_token': response.data.get('key')}
         }
         return response
 
 
-
+class VerifyEmailView(TemplateView):
+    template_name = 'test.html'
