@@ -19,8 +19,7 @@ urlpatterns = [
     path('stripe/register-token/', stripe_token_registration, name="stripe_token_registration"),
     path('register/', RegisterUser.as_view(), name='user_registration'),
     path('login/', Login.as_view(), name='user_login'),
-    path('api/auth/registration/account-confirm-email/(?P<key>[-:\w]+)/$', VerifyEmailView.as_view(),
-         name='account_confirm_email'),
+
 ]
 
 urlpatterns += router.urls
