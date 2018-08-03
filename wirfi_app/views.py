@@ -15,9 +15,6 @@ from rest_auth.registration.views import RegisterView
 from allauth.account import app_settings as allauth_settings
 from rest_auth.views import LoginView
 from django.views.generic import TemplateView
-from rest_auth.app_settings import (TokenSerializer,
-                                    JWTSerializer,
-                                    create_token)
 
 from wirfi_app.models import Billing, Business, Profile, Device, Subscription
 from wirfi_app.serializers import UserSerializer, UserProfileSerializer, DeviceSerializer, DeviceSerialNoSerializer, \
@@ -169,6 +166,7 @@ class BillingView(generics.ListCreateAPIView):
         }
         return Response(data, status=status.HTTP_201_CREATED, headers=headers)
 
+
 # Overwrites email confirmation url so that the correct url is sent in the email.
 # to change the actual address, see core.urls name: 'account_confirm_email'
 
@@ -177,9 +175,10 @@ class MyAccountAdapter(DefaultAccountAdapter):
         url = reverse(
             "account_confirm_email",
             args=[emailconfirmation.key])
-        print("test:",url);
+        print("test:", url);
         return settings.FRONTEND_HOST + url
-        
+
+
 class BillingDetailView(generics.RetrieveUpdateDestroyAPIView):
     lookup_field = 'id'
     serializer_class = BillingSerializer
@@ -290,7 +289,3 @@ class Login(LoginView):
             'data': {'auth_token': response.data.get('key')}
         }
         return response
-
-
-class VerifyEmailView(TemplateView):
-    template_name = 'test.html'

@@ -1,7 +1,7 @@
 import stripe
 from django.core.management import BaseCommand
 from django.conf import settings
-from wirfi_app.models import StripeBillingInfo
+from wirfi_app.models import Subscription
 
 
 class Command(BaseCommand):

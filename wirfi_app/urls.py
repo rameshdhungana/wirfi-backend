@@ -3,7 +3,7 @@ from django.urls import path
 from rest_framework import routers
 
 from wirfi_app.views import UserApiView, ProfileApiView, BusinessApiView, BillingView, BillingDetailView, \
-    DeviceDetailView, DeviceSerialNoView, DeviceNetworkView, stripe_token_registration, RegisterUser, Login,VerifyEmailView
+    DeviceDetailView, DeviceSerialNoView, DeviceNetworkView, stripe_token_registration, RegisterUser, Login
 
 router = routers.DefaultRouter()
 router.register(r'user', UserApiView)
