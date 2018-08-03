@@ -65,21 +65,26 @@ class LoginSerializer(serializers.Serializer):
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
+    profile_picture = serializers.ImageField()
+
     class Meta:
         model = Profile
-        fields = ('user', 'phone_number', 'profile_picture')
+        fields = '__all__'
+        read_only_fields = ('user', )
 
 
 class BusinessSerializer(serializers.ModelSerializer):
     class Meta:
         model = Business
-        fields = ('name', 'address', 'email', 'phone_number')
+        fields = '__all__'
+        read_only_fields = ('user',)
 
 
 class BillingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Billing
-        fields = ('name', 'address', 'card_number', 'security_code', 'expiration_date')
+        fields = '__all__'
+        read_only_fields = ('user',)
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -89,7 +94,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('email', 'first_name', 'last_name', 'profile', 'billing', 'business',)
+        fields = ('id', 'email', 'first_name', 'last_name', 'profile', 'billing', 'business',)
 
 
 class UserDetailsSerializer(serializers.ModelSerializer):
