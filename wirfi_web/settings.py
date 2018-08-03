@@ -49,7 +49,6 @@ INSTALLED_APPS = [
     'rest_auth.registration',
     'allauth',
     'allauth.account',
-    'allauth.socialaccount',
 
     'wirfi_app',
 ]
@@ -160,9 +159,10 @@ EMAIL_HOST = config('EMAIL_HOST')
 EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 EMAIL_PORT = config('EMAIL_PORT')
-FRONTEND_HOST="localhost:4200"
 
-ACCOUNT_ADAPTER = 'wirfi_app.views.MyAccountAdapter'
+FRONTEND_HOST = config('FRONTEND_HOST')
+
+ACCOUNT_ADAPTER = 'wirfi_app.all_auth_adapter.MyAccountAdapter'
 
 # Account Settings
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
