@@ -14,17 +14,12 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import include, path, re_path
+from django.urls import include, path
 from django.conf.urls.static import static
 from django.conf import settings
-from django.contrib.auth import views
 
 from rest_framework_swagger.views import get_swagger_view
-
 # from rest_framework_jwt.views import obtain_jwt_token, refresh_jwt_token, verify_jwt_token
-# from rest_auth.registration.views import VerifyEmailView
-
-from allauth.account.views import confirm_email as allauthemailconfirmation
 
 schema_view = get_swagger_view(title='Wirfi API')
 
