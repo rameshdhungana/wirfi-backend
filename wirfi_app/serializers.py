@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model, authenticate
 from django.conf import settings
 
 from rest_framework import serializers, exceptions
-from rest_auth.registration.serializers import RegisterSerializer
+# from rest_auth.registration.serializers import RegisterSerializer
 
 from wirfi_app.models import Profile, Billing, Business, Device
 
@@ -164,8 +164,3 @@ class UserRegistrationSerializer(serializers.Serializer):
         self.custom_signup(request, user)
         setup_user_email(request, user, [])
         return user
-
-# class UserLoginSerializer(LoginSerializer):
-#     device_id = serializers.CharField(max_length=128)
-#     device_type = serializers.IntegerField()
-#     push_notification_token = serializers.CharField(max_length=128)

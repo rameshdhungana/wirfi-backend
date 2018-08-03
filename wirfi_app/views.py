@@ -244,13 +244,11 @@ def stripe_token_registration(request):
     #     source=token,
     #     statement_descriptor='Custom descriptor'
     # )
-
     charge = stripe.Charge.create(
         amount=1000,
         currency='usd',
         customer=customer.id,
         receipt_email=email
-
     )
     return Response({"code": 1, "message": "Got some data!", "data": data})
 
@@ -264,7 +262,6 @@ class RegisterUser(RegisterView):
             data = {
                 'code': getattr(settings, 'SUCCESS_CODE', 1),
                 'message': "Verification e-mail sent.",
-
             }
             return data
 

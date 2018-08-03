@@ -73,7 +73,7 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.TokenAuthentication',
         # 'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
+        # 'rest_framework.authentication.SessionAuthentication',
         # 'rest_framework.authentication.BasicAuthentication',
 
     ),
@@ -156,10 +156,10 @@ REST_AUTH_SERIALIZERS = {
     'LOGIN_SERIALIZER': 'wirfi_app.serializers.LoginSerializer',
 }
 
-EMAIL_HOST = 'smtp.mailtrap.io'
-EMAIL_HOST_USER = 'b4aa529decf2f6'
-EMAIL_HOST_PASSWORD = '3840d4b8bab2a9'
-EMAIL_PORT = '2525'
+EMAIL_HOST = config('EMAIL_HOST')
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+EMAIL_PORT = config('EMAIL_PORT')
 
 # Account Settings
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
