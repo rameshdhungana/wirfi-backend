@@ -34,13 +34,14 @@ urlpatterns = [
                   path('api/auth/', include('rest_auth.urls')),
                   path('', include('wirfi_app.urls')),
                   path('api/auth/registration/', include('rest_auth.registration.urls')),
-                  # re_path('account-confirm-email/', VerifyEmailView.as_view(),
-                  #         name='account_email_verification_sent'),
-                  #
-                  # url(r'^account-confirm-email/(?P<key>[-:\w]+)/$',
-                  #     allauthemailconfirmation, name="account_confirm_email"),
+                 
+                  re_path('account-confirm-email/', VerifyEmailView.as_view(),
+                          name='account_email_verification_sent'),
+                  
+                  url(r'^account-confirm-email/(?P<key>[-:\w]+)/$',
+                      allauthemailconfirmation, name="account_confirm_email"),
 
-                  # re_path(r'^account-confirm-email/(?P<key>[-:\w]+)/$', VerifyEmailView.as_view(),
-                  #         name='account_confirm_email'),
+                  re_path(r'^account-confirm-email/(?P<key>[-:\w]+)/$', VerifyEmailView.as_view(),
+                          name='account_confirm_email'),
 
               ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

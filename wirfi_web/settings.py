@@ -160,6 +160,9 @@ EMAIL_HOST = config('EMAIL_HOST')
 EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 EMAIL_PORT = config('EMAIL_PORT')
+FRONTEND_HOST="localhost:4200"
+
+ACCOUNT_ADAPTER = 'wirfi_app.views.MyAccountAdapter'
 
 # Account Settings
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None

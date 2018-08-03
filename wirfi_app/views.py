@@ -2,6 +2,9 @@ import stripe
 
 from django.contrib.auth import get_user_model
 from django.conf import settings
+from allauth.account.adapter import DefaultAccountAdapter
+from django.urls import reverse
+from django.conf import settings
 
 from rest_framework.decorators import api_view
 from rest_framework.authtoken.models import Token
@@ -166,7 +169,17 @@ class BillingView(generics.ListCreateAPIView):
         }
         return Response(data, status=status.HTTP_201_CREATED, headers=headers)
 
+# Overwrites email confirmation url so that the correct url is sent in the email.
+# to change the actual address, see core.urls name: 'account_confirm_email'
 
+class MyAccountAdapter(DefaultAccountAdapter):
+    def get_email_confirmation_url(self, request, emailconfirmation):
+        url = reverse(
+            "account_confirm_email",
+            args=[emailconfirmation.key])
+        print("test:",url);
+        return settings.FRONTEND_HOST + url
+        
 class BillingDetailView(generics.RetrieveUpdateDestroyAPIView):
     lookup_field = 'id'
     serializer_class = BillingSerializer
