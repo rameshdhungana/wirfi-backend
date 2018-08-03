@@ -367,7 +367,7 @@ class VerifyEmailRegisterView(VerifyEmailView):
     serializer_class = VerifyEmailSerializer
 
     def post(self, request, *args, **kwargs):
-        response = super(VerifyEmail, self).post(request, *args, **kwargs)
+        response = super(VerifyEmailRegisterView, self).post(request, *args, **kwargs)
         response.data = {
             "code": getattr(settings, 'SUCCESS_CODE', 1),
             "message": "Email Successfully verified."

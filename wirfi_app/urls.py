@@ -35,18 +35,12 @@ urlpatterns = [
 
     path('register/', RegisterUserView.as_view(), name='user_registration'),
     path('register/verify-email', VerifyEmailRegisterView.as_view(), name="verify_email"),
-
-    # re_path('account-confirm-email/', VerifyEmailRegisterView.as_view(),
-    #     name='account_email_verification_sent'),
-    #
-    # url(r'^account-confirm-email/(?P<key>[-:\w]+)/$',
-    #     allauthemailconfirmation, name="account_confirm_email"),
-    #
-    # re_path(r'^account-confirm-email/(?P<key>[-:\w]+)/$', VerifyEmailRegisterView.as_view(),
-    #     name='account_confirm_email'),
+    re_path('account-confirm-email/', VerifyEmailRegisterView.as_view(),
+        name='account_email_verification_sent'),
 
     path('reset-password/', ResetPasswordView.as_view(), name="reset-password"),
     path('reset-password/confirm/', ResetPasswordConfirmView.as_view(), name="confirm-reset"),
+    path('reset/<uidb64>/<token>/', ResetPasswordConfirmView.as_view(), name='password_reset_confirm'),
     path('change-password/', ChangePasswordView.as_view(), name="change-password"),
 
 ]
