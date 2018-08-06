@@ -1,7 +1,7 @@
 import stripe
 
 from django.contrib.auth import get_user_model, logout as django_logout
-from django.urls import reverse
+from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 
 from rest_framework.decorators import api_view
@@ -214,7 +214,15 @@ class BusinessView(generics.ListCreateAPIView):
 
     def list(self, request, *args, **kwargs):
         businesses = self.get_queryset()
-        serializer = BusinessSerializer(businesses, many=True)
+        if not businesses:
+            data = {
+                'code': getattr(settings, 'NO_DATA_CODE', 2),
+                'message': "No any associated business info. Please add them."
+            }
+            return Response(data, status=status.HTTP_200_OK)
+
+
+        serializer = BusinessSerializer(businesses[0])
         headers = self.get_success_headers(serializer.data)
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
@@ -239,25 +247,13 @@ class BusinessView(generics.ListCreateAPIView):
         return Response(data, status=status.HTTP_201_CREATED, headers=headers)
 
 
-class BusinessDetailView(generics.RetrieveUpdateDestroyAPIView):
+class BusinessDetailView(generics.UpdateAPIView, generics.DestroyAPIView):
     lookup_field = 'id'
     serializer_class = BusinessSerializer
 
     def get_queryset(self):
         token = get_token_obj(self.request.auth)
         return Business.objects.filter(user=token.user).filter(pk=self.kwargs.get('id', ''))
-
-    def retrieve(self, request, *args, **kwargs):
-        business = self.get_object()
-        serializer = BusinessSerializer(business)
-        data = {
-            'code': getattr(settings, 'SUCCESS_CODE', 1),
-            'message': "Details successfully fetched.",
-            'data': {
-                'business_info': serializer.data
-            }
-        }
-        return Response(data, status=status.HTTP_200_OK)
 
     def update(self, request, *args, **kwargs):
         token = get_token_obj(request.auth)
@@ -323,11 +319,22 @@ class Login(LoginView):
     serializer_class = LoginSerializer
 
     def post(self, request, *args, **kwargs):
-        response = super(Login, self).post(request, *args, **kwargs)
+        self.request = request
+        self.serializer = self.get_serializer(data=self.request.data,
+                                              context={'request': request})
+        self.serializer.is_valid(raise_exception=True)
+        user = self.serializer.validated_data['user']
+        super(Login, self).login()
+        response = super(Login, self).get_response()
+
         response.data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Successfully Logged In.",
-            'data': {'auth_token': response.data.get('key')}
+            'data': {
+                'auth_token': response.data.get('key'),
+                'is_first_login': False if user.last_login else True,
+                'last_login': user.last_login
+             }
         }
         return response
 
@@ -342,8 +349,11 @@ def logout(request, *args, **kwargs):
     """
     try:
         request.user.auth_token.delete()
-    except (AttributeError, ObjectDoesNotExist):
-        pass
+    except (AttributeError, ObjectDoesNotExist) as err:
+        return Response({
+            "code": getattr(settings, 'SUCCESS_CODE', 1),
+            "message": str(err)},
+            status=status.HTTP_400_BAD_REQUEST)
 
     django_logout(request)
     return Response({"code": getattr(settings, 'SUCCESS_CODE', 1), "message": "Successfully logged out."},

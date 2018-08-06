@@ -76,15 +76,13 @@ class UserProfileSerializer(serializers.ModelSerializer):
 class BusinessSerializer(serializers.ModelSerializer):
     class Meta:
         model = Business
-        fields = '__all__'
-        read_only_fields = ('user',)
+        exclude = ('user',)
 
 
 class BillingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Billing
-        fields = '__all__'
-        read_only_fields = ('user',)
+        exclude = ('user',)
 
 
 class UserSerializer(serializers.ModelSerializer):
