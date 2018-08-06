@@ -14,40 +14,18 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import include, path, re_path
+from django.urls import include, path
 from django.conf.urls.static import static
-from django.conf.urls import url
 from django.conf import settings
 
-from django.contrib.auth import views
 from rest_framework_swagger.views import get_swagger_view
-
 # from rest_framework_jwt.views import obtain_jwt_token, refresh_jwt_token, verify_jwt_token
-from rest_auth.registration.views import VerifyEmailView
-from allauth.account.views import confirm_email as allauthemailconfirmation
 
 schema_view = get_swagger_view(title='Wirfi API')
-# from .swagger_schema import schema_view
 
 urlpatterns = [
-                  path('admin/', admin.site.urls),
-                  path('list-api', schema_view),
-                  path('api/auth/', include('rest_auth.urls')),
+    path('admin/', admin.site.urls),
+    path('list-api/', schema_view),
+    path('', include('wirfi_app.urls')),
 
-                  path('password_reset/', views.PasswordResetView.as_view(), name='password_reset'),
-                  path('password_reset/done/', views.PasswordResetDoneView.as_view(), name='password_reset_done'),
-                  path('reset/<uidb64>/<token>/', views.PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
-                  path('reset/done/', views.PasswordResetCompleteView.as_view(), name='password_reset_complete'),
-                  path('', include('wirfi_app.urls')),
-                  path('api/auth/registration/', include('rest_auth.registration.urls')),
-                 
-                  re_path('account-confirm-email/', VerifyEmailView.as_view(),
-                          name='account_email_verification_sent'),
-                  
-                  url(r'^account-confirm-email/(?P<key>[-:\w]+)/$',
-                      allauthemailconfirmation, name="account_confirm_email"),
-
-                  re_path(r'^account-confirm-email/(?P<key>[-:\w]+)/$', VerifyEmailView.as_view(),
-                          name='account_confirm_email'),
-
-              ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

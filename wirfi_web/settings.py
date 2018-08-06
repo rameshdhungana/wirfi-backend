@@ -49,7 +49,6 @@ INSTALLED_APPS = [
     'rest_auth.registration',
     'allauth',
     'allauth.account',
-    'allauth.socialaccount',
 
     'wirfi_app',
 ]
@@ -160,9 +159,10 @@ EMAIL_HOST = config('EMAIL_HOST')
 EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 EMAIL_PORT = config('EMAIL_PORT')
-FRONTEND_HOST="localhost:4200"
 
-ACCOUNT_ADAPTER = 'wirfi_app.views.MyAccountAdapter'
+FRONTEND_HOST = config('FRONTEND_HOST')
+
+ACCOUNT_ADAPTER = 'wirfi_app.all_auth_adapter.MyAccountAdapter'
 
 # Account Settings
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
@@ -171,6 +171,8 @@ ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.0/topics/i18n/
@@ -181,7 +183,8 @@ TIME_ZONE = 'UTC'
 
 USE_I18N = True
 
-USE_L10N = True
+USE_L10N = TrueFRONTEND_HOST = "localhost:4200"
+
 
 USE_TZ = True
 

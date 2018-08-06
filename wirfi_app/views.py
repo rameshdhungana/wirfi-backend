@@ -1,24 +1,28 @@
 import stripe
-
-from django.contrib.auth import get_user_model
-from django.conf import settings
 from allauth.account.adapter import DefaultAccountAdapter
+
+from django.contrib.auth import get_user_model, logout as django_logout
 from django.urls import reverse
 from django.conf import settings
-
+from django.core.exceptions import  ObjectDoesNotExist
 from rest_framework.decorators import api_view
 from rest_framework.authtoken.models import Token
 from rest_framework import viewsets, generics
 from rest_framework.response import Response
 from rest_framework import status
-from rest_auth.registration.views import RegisterView
+from rest_auth.registration.views import RegisterView, VerifyEmailView, VerifyEmailSerializer
+from rest_auth.views import LoginView, \
+    PasswordResetView, PasswordResetConfirmView, PasswordChangeView, \
+    PasswordResetSerializer, PasswordResetConfirmSerializer, PasswordChangeSerializer
+
 from allauth.account import app_settings as allauth_settings
 from rest_auth.views import LoginView
-from django.views.generic import TemplateView
 
 from wirfi_app.models import Billing, Business, Profile, Device, Subscription
-from wirfi_app.serializers import UserSerializer, UserProfileSerializer, DeviceSerializer, DeviceSerialNoSerializer, \
-    DeviceNetworkSerializer, BusinessSerializer, BillingSerializer, UserRegistrationSerializer, LoginSerializer
+from wirfi_app.serializers import UserSerializer, UserProfileSerializer, \
+    DeviceSerializer, DeviceSerialNoSerializer, DeviceNetworkSerializer, \
+    BusinessSerializer, BillingSerializer, \
+    UserRegistrationSerializer, LoginSerializer
 
 User = get_user_model()
 
@@ -170,12 +174,13 @@ class BillingView(generics.ListCreateAPIView):
 # Overwrites email confirmation url so that the correct url is sent in the email.
 # to change the actual address, see core.urls name: 'account_confirm_email'
 
+
 class MyAccountAdapter(DefaultAccountAdapter):
     def get_email_confirmation_url(self, request, emailconfirmation):
         url = reverse(
             "account_confirm_email",
             args=[emailconfirmation.key])
-        print("test:", url);
+        print("test:", url)
         return settings.FRONTEND_HOST + url
 
 
@@ -214,9 +219,72 @@ class BillingDetailView(generics.RetrieveUpdateDestroyAPIView):
         return Response(data, status=status.HTTP_200_OK)
 
 
-class BusinessApiView(viewsets.ModelViewSet):
-    queryset = Business.objects.all()
+class BusinessView(generics.ListCreateAPIView):
     serializer_class = BusinessSerializer
+
+    def get_queryset(self):
+        token = get_token_obj(self.request.auth)
+        return Business.objects.filter(user=token.user)
+
+    def list(self, request, *args, **kwargs):
+        businesses = self.get_queryset()
+        serializer = BusinessSerializer(businesses, many=True)
+        headers = self.get_success_headers(serializer.data)
+        data = {
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
+            'message': "Details successfully fetched.",
+            'data': {
+                'business_info': serializer.data
+            }
+        }
+        return Response(data, status=status.HTTP_200_OK, headers=headers)
+
+    def create(self, request, *args, **kwargs):
+        token = get_token_obj(request.auth)
+        serializer = BusinessSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=token.user)
+        headers = self.get_success_headers(serializer.data)
+        data = {
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
+            'message': "Business Info successfully created.",
+            'data': serializer.data
+        }
+        return Response(data, status=status.HTTP_201_CREATED, headers=headers)
+
+
+class BusinessDetailView(generics.RetrieveUpdateDestroyAPIView):
+    lookup_field = 'id'
+    serializer_class = BusinessSerializer
+
+    def get_queryset(self):
+        token = get_token_obj(self.request.auth)
+        return Business.objects.filter(user=token.user).filter(pk=self.kwargs.get('id', ''))
+
+    def retrieve(self, request, *args, **kwargs):
+        business = self.get_object()
+        serializer = BusinessSerializer(business)
+        data = {
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
+            'message': "Details successfully fetched.",
+            'data': {
+                'business_info': serializer.data
+            }
+        }
+        return Response(data, status=status.HTTP_200_OK)
+
+    def update(self, request, *args, **kwargs):
+        token = get_token_obj(request.auth)
+        billing = self.get_object()
+        serializer = BillingSerializer(billing, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=token.user)
+        data = {
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
+            'message': "Business Info successfully updated.",
+            'data': serializer.data
+        }
+        return Response(data, status=status.HTTP_200_OK)
 
 
 class ProfileApiView(viewsets.ModelViewSet):
@@ -265,19 +333,6 @@ def stripe_token_registration(request):
     return Response({"code": 1, "message": "Got some data!", "data": data})
 
 
-class RegisterUser(RegisterView):
-    serializer_class = UserRegistrationSerializer
-
-    def get_response_data(self, user):
-        if allauth_settings.EMAIL_VERIFICATION == \
-                allauth_settings.EmailVerificationMethod.MANDATORY:
-            data = {
-                'code': getattr(settings, 'SUCCESS_CODE', 1),
-                'message': "Verification e-mail sent.",
-            }
-            return data
-
-
 class Login(LoginView):
     serializer_class = LoginSerializer
 
@@ -287,5 +342,83 @@ class Login(LoginView):
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Successfully Logged In.",
             'data': {'auth_token': response.data.get('key')}
+        }
+        return response
+
+
+@api_view(['POST'])
+def logout(request, *args, **kwargs):
+    """
+    Calls Django logout method and delete the Token object
+    assigned to the current User object.
+
+    Accepts/Returns nothing.
+    """
+    try:
+        request.user.auth_token.delete()
+    except (AttributeError, ObjectDoesNotExist):
+        pass
+
+    django_logout(request)
+    return Response({"code": getattr(settings, 'SUCCESS_CODE', 1), "message": "Successfully logged out."},
+                    status=status.HTTP_200_OK)
+
+
+class RegisterUserView(RegisterView):
+    serializer_class = UserRegistrationSerializer
+
+    def get_response_data(self, user):
+        if allauth_settings.EMAIL_VERIFICATION == \
+                allauth_settings.EmailVerificationMethod.MANDATORY:
+            data = {
+                'code': getattr(settings, 'SUCCESS_CODE', 1),
+                'message': "Please check your email for account validation link. Thank you.",
+            }
+            return data
+
+
+class VerifyEmailRegisterView(VerifyEmailView):
+    serializer_class = VerifyEmailSerializer
+
+    def post(self, request, *args, **kwargs):
+        response = super(VerifyEmailRegisterView, self).post(request, *args, **kwargs)
+        response.data = {
+            "code": getattr(settings, 'SUCCESS_CODE', 1),
+            "message": "Email Successfully verified."
+        }
+        return response
+
+
+class ResetPasswordView(PasswordResetView):
+    serializer_class = PasswordResetSerializer
+
+    def post(self, request, *args, **kwargs):
+        response = super(ResetPasswordView, self).post(request, *args, **kwargs)
+        response.data = {
+            "code": getattr(settings, 'SUCCESS_CODE', 1),
+            "message": "Password reset e-mail has been sent. Please check your em-mail."
+        }
+        return response
+
+
+class ResetPasswordConfirmView(PasswordResetConfirmView):
+    serializer_class = PasswordResetConfirmSerializer
+
+    def post(self, request, *args, **kwargs):
+        response = super(ResetPasswordConfirmView, self).post(request, *args, **kwargs)
+        response.data = {
+            "code": getattr(settings, 'SUCCESS_CODE', 1),
+            "message": "Password has been successfully reset with new password."
+        }
+        return response
+
+class ChangePasswordView(PasswordChangeView):
+    serializer_class = PasswordChangeSerializer
+
+    def post(self, request, *args, **kwargs):
+        response = super(ChangePasswordView, self).post(request, *args, **kwargs)
+        response.data = {
+            "code": getattr(settings, 'SUCCESS_CODE', 1),
+            "message": "New password has been saved."
         }
         return response
