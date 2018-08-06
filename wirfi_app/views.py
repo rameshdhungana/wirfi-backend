@@ -1,12 +1,17 @@
 import stripe
 from allauth.account.adapter import DefaultAccountAdapter
+import datetime
 
-from django.contrib.auth import get_user_model, logout as django_logout
-from django.urls import reverse
+from django.contrib.auth import get_user_model, login as django_login, logout as django_logout
+from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 from django.core.exceptions import  ObjectDoesNotExist
+from django.utils.decorators import method_decorator
+from django.views.decorators.debug import sensitive_post_parameters
+
+
 from rest_framework.decorators import api_view
-from rest_framework.authtoken.models import Token
+# from rest_framework.authtoken.models import Token
 from rest_framework import viewsets, generics
 from rest_framework.response import Response
 from rest_framework import status
@@ -18,11 +23,17 @@ from rest_auth.views import LoginView, \
 from allauth.account import app_settings as allauth_settings
 from rest_auth.views import LoginView
 
-from wirfi_app.models import Billing, Business, Profile, Device, Subscription
+from wirfi_app.models import Billing, Business, Profile, Device, Subscription, AuthorizationToken
 from wirfi_app.serializers import UserSerializer, UserProfileSerializer, \
     DeviceSerializer, DeviceSerialNoSerializer, DeviceNetworkSerializer, \
     BusinessSerializer, BillingSerializer, \
-    UserRegistrationSerializer, LoginSerializer
+    UserRegistrationSerializer, LoginSerializer, AuthorizationTokenSerializer
+
+sensitive_post_parameters_m = method_decorator(
+    sensitive_post_parameters(
+        'password', 'old_password', 'new_password1', 'new_password2'
+    )
+)
 
 User = get_user_model()
 
@@ -228,7 +239,14 @@ class BusinessView(generics.ListCreateAPIView):
 
     def list(self, request, *args, **kwargs):
         businesses = self.get_queryset()
-        serializer = BusinessSerializer(businesses, many=True)
+        if not businesses:
+            data = {
+                'code': getattr(settings, 'NO_DATA_CODE', 2),
+                'message': "No any associated business info. Please add them."
+            }
+            return Response(data, status=status.HTTP_200_OK)
+
+        serializer = BusinessSerializer(businesses[0])
         headers = self.get_success_headers(serializer.data)
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
@@ -253,7 +271,7 @@ class BusinessView(generics.ListCreateAPIView):
         return Response(data, status=status.HTTP_201_CREATED, headers=headers)
 
 
-class BusinessDetailView(generics.RetrieveUpdateDestroyAPIView):
+class BusinessDetailView(generics.UpdateAPIView, generics.DestroyAPIView):
     lookup_field = 'id'
     serializer_class = BusinessSerializer
 
@@ -261,22 +279,10 @@ class BusinessDetailView(generics.RetrieveUpdateDestroyAPIView):
         token = get_token_obj(self.request.auth)
         return Business.objects.filter(user=token.user).filter(pk=self.kwargs.get('id', ''))
 
-    def retrieve(self, request, *args, **kwargs):
-        business = self.get_object()
-        serializer = BusinessSerializer(business)
-        data = {
-            'code': getattr(settings, 'SUCCESS_CODE', 1),
-            'message': "Details successfully fetched.",
-            'data': {
-                'business_info': serializer.data
-            }
-        }
-        return Response(data, status=status.HTTP_200_OK)
-
     def update(self, request, *args, **kwargs):
         token = get_token_obj(request.auth)
-        billing = self.get_object()
-        serializer = BillingSerializer(billing, data=request.data)
+        business = self.get_object()
+        serializer = BusinessSerializer(business, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(user=token.user)
         data = {
@@ -293,7 +299,7 @@ class ProfileApiView(viewsets.ModelViewSet):
 
 
 def get_token_obj(token):
-    return Token.objects.get(key=token)
+    return AuthorizationToken.objects.get(key=token)
 
 
 @api_view(['POST'])
@@ -333,15 +339,76 @@ def stripe_token_registration(request):
     return Response({"code": 1, "message": "Got some data!", "data": data})
 
 
-class Login(LoginView):
+class Login(generics.GenericAPIView):
+    """
+        Check the credentials and return the REST Token
+        if the credentials are valid and authenticated.
+        Calls Django Auth login method to register User ID
+        in Django session framework
+
+        Accept the following POST parameters: username, password
+        Return the REST Framework Token Object's key.
+    """
+
     serializer_class = LoginSerializer
+    token_model = AuthorizationToken
+
+    @sensitive_post_parameters_m
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
+    def create_token(self):
+        push_notification = self.request.data['push_notification_token']
+        device_id = self.request.data['device_id']
+        device_type = self.request.data['device_type']
+        token, _ = self.token_model.objects.get_or_create(user=self.user,
+                                                          push_notification_token=push_notification,
+                                                          device_id=device_id,
+                                                          device_type=device_type)
+        return token
+
+    def process_login(self):
+        django_login(self.request, self.user)
+
+    def get_response_serializer(self):
+        response_serializer = AuthorizationTokenSerializer
+        return response_serializer
+
+    def login(self):
+        self.user = self.serializer.validated_data['user']
+        self.token = self.create_token()
+
+        if getattr(settings, 'REST_SESSION_LOGIN', True):
+            self.process_login()
+
+    def get_response(self):
+        serializer_class = self.get_response_serializer()
+
+        serializer = serializer_class(instance=self.token,
+                                      context={'request': self.request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request, *args, **kwargs):
-        response = super(Login, self).post(request, *args, **kwargs)
+        self.request = request
+        self.serializer = self.get_serializer(data=self.request.data,
+                                              context={'request': request})
+        self.serializer.is_valid(raise_exception=True)
+        user = self.serializer.validated_data['user']
+        self.login()
+        self.user.last_login = datetime.datetime.now()
+        self.user.save()
+        response = self.get_response()
         response.data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Successfully Logged In.",
-            'data': {'auth_token': response.data.get('key')}
+            'data': {
+                'auth_token': response.data.get('key'),
+                'device_id': response.data.get('device_id'),
+                'device_type': response.data.get('device_type'),
+                'push_notification_token': response.data.get('push_notification_token'),
+                'is_first_login': False if user.last_login else True,
+                'last_login': user.last_login
+            }
         }
         return response
 
@@ -355,9 +422,13 @@ def logout(request, *args, **kwargs):
     Accepts/Returns nothing.
     """
     try:
-        request.user.auth_token.delete()
-    except (AttributeError, ObjectDoesNotExist):
-        pass
+        print(request.user.auth_token)
+        AuthorizationToken.objects.get(pk=request.auth).delete()
+    except (AttributeError, ObjectDoesNotExist) as err:
+        return Response({
+            "code": getattr(settings, 'SUCCESS_CODE', 1),
+            "message": str(err)},
+            status=status.HTTP_400_BAD_REQUEST)
 
     django_logout(request)
     return Response({"code": getattr(settings, 'SUCCESS_CODE', 1), "message": "Successfully logged out."},
@@ -396,7 +467,7 @@ class ResetPasswordView(PasswordResetView):
         response = super(ResetPasswordView, self).post(request, *args, **kwargs)
         response.data = {
             "code": getattr(settings, 'SUCCESS_CODE', 1),
-            "message": "Password reset e-mail has been sent. Please check your em-mail."
+            "message": "Password reset e-mail has been sent. Please check your e-mail."
         }
         return response
 

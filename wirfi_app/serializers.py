@@ -5,7 +5,7 @@ from django.conf import settings
 from rest_framework import serializers, exceptions
 # from rest_auth.registration.serializers import RegisterSerializer
 
-from wirfi_app.models import Profile, Billing, Business, Device
+from wirfi_app.models import Profile, Billing, Business, Device, AuthorizationToken
 
 try:
     from allauth.account import app_settings as allauth_settings
@@ -64,6 +64,12 @@ class LoginSerializer(serializers.Serializer):
         return attrs
 
 
+class AuthorizationTokenSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AuthorizationToken
+        exclude = ('user',)
+
+
 class UserProfileSerializer(serializers.ModelSerializer):
     profile_picture = serializers.ImageField()
 
@@ -76,15 +82,13 @@ class UserProfileSerializer(serializers.ModelSerializer):
 class BusinessSerializer(serializers.ModelSerializer):
     class Meta:
         model = Business
-        fields = '__all__'
-        read_only_fields = ('user',)
+        exclude = ('user',)
 
 
 class BillingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Billing
-        fields = '__all__'
-        read_only_fields = ('user',)
+        exclude = ('user',)
 
 
 class UserSerializer(serializers.ModelSerializer):

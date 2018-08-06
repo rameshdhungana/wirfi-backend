@@ -70,7 +70,7 @@ CORS_ORIGIN_ALLOW_ALL = True
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework.authentication.TokenAuthentication',
+        'wirfi_app.authentication.MyOwnTokenAuthentication',
         # 'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
         # 'rest_framework.authentication.SessionAuthentication',
         # 'rest_framework.authentication.BasicAuthentication',
@@ -83,9 +83,6 @@ REST_FRAMEWORK = {
     'EXCEPTION_HANDLER': 'wirfi_app.utils.custom_exception_handler',
 }
 
-if DEBUG:
-    # the browsable API works with session authentication and useful during development
-    REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'] += ('rest_framework.authentication.SessionAuthentication',)
 
 ROOT_URLCONF = 'wirfi_web.urls'
 
@@ -146,6 +143,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Codes for success and failure
 ERROR_CODE = 0
 SUCCESS_CODE = 1
+NO_DATA_CODE = 2
 
 OLD_PASSWORD_FIELD_ENABLED = True
 LOGOUT_ON_PASSWORD_CHANGE = True
@@ -163,6 +161,12 @@ EMAIL_PORT = config('EMAIL_PORT')
 FRONTEND_HOST = config('FRONTEND_HOST')
 
 ACCOUNT_ADAPTER = 'wirfi_app.all_auth_adapter.MyAccountAdapter'
+REST_SESSION_LOGIN = False
+
+AUTHENTICATION_BACKENDS = (
+    # `allauth` specific authentication methods, such as login by e-mail
+    'allauth.account.auth_backends.AuthenticationBackend',
+)
 
 # Account Settings
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None

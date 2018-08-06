@@ -1,5 +1,8 @@
 from __future__ import unicode_literals
 
+import binascii
+import os
+
 from django.db import models
 from django.contrib.auth.models import PermissionsMixin
 from django.contrib.auth.base_user import AbstractBaseUser
@@ -86,9 +89,8 @@ class Business(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=50)
     address = models.CharField(max_length=100)
-    latitude = models.DecimalField(max_digits=9, decimal_places=6)
-    longitude = models.DecimalField(max_digits=9, decimal_places=6)
-    email = models.EmailField()
+    latitude = models.DecimalField(max_digits=15, decimal_places=12)
+    longitude = models.DecimalField(max_digits=15, decimal_places=12)
     phone_number = models.CharField(max_length=15)
 
     def __str__(self):
@@ -99,8 +101,8 @@ class Billing(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=50)
     address = models.CharField(max_length=100)
-    latitude = models.DecimalField(max_digits=9, decimal_places=6)
-    longitude = models.DecimalField(max_digits=9, decimal_places=6)
+    latitude = models.DecimalField(max_digits=15, decimal_places=12)
+    longitude = models.DecimalField(max_digits=15, decimal_places=12)
     email = models.EmailField()
     strip_token = models.TextField()
 
@@ -137,9 +139,25 @@ class Subscription(DateTimeModel):
     service_plan = models.ForeignKey(ServicePlan, on_delete=models.CASCADE)
 
 
-class AuthenticationInfo(DateTimeModel):
+class AuthorizationToken(models.Model):
+    key = models.CharField(_("Key"), max_length=40, primary_key=True)
+    created = models.DateTimeField(_("Created"), auto_now_add=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     device_id = models.CharField(max_length=128, blank=True)
-    auth_key = models.CharField(max_length=128)
-    refresh_token = models.CharField(max_length=128)
-    push_notification_token = models.CharField(max_length=128, blank=True)
+    push_notification_token = models.CharField(max_length=128, blank=True, unique=True)
     device_type = models.IntegerField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = _("Token")
+        verbose_name_plural = _("Tokens")
+
+    def save(self, *args, **kwargs):
+        if not self.key:
+            self.key = self.generate_key()
+        return super().save(*args, **kwargs)
+
+    def generate_key(self):
+        return binascii.hexlify(os.urandom(20)).decode()
+
+    def __str__(self):
+        return self.key
