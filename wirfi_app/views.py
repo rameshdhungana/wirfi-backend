@@ -1,12 +1,15 @@
 import stripe
 import datetime
 
-from django.contrib.auth import get_user_model, logout as django_logout
+from django.contrib.auth import get_user_model, login as django_login, logout as django_logout
 from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
+from django.utils.decorators import method_decorator
+from django.views.decorators.debug import sensitive_post_parameters
+
 
 from rest_framework.decorators import api_view
-from rest_framework.authtoken.models import Token
+# from rest_framework.authtoken.models import Token
 from rest_framework import viewsets, generics
 from rest_framework.response import Response
 from rest_framework import status
@@ -17,11 +20,17 @@ from rest_auth.views import LoginView, \
 
 from allauth.account import app_settings as allauth_settings
 
-from wirfi_app.models import Billing, Business, Profile, Device, Subscription
+from wirfi_app.models import Billing, Business, Profile, Device, Subscription, AuthorizationToken
 from wirfi_app.serializers import UserSerializer, UserProfileSerializer, \
     DeviceSerializer, DeviceSerialNoSerializer, DeviceNetworkSerializer, \
     BusinessSerializer, BillingSerializer, \
-    UserRegistrationSerializer, LoginSerializer
+    UserRegistrationSerializer, LoginSerializer, AuthorizationTokenSerializer
+
+sensitive_post_parameters_m = method_decorator(
+    sensitive_post_parameters(
+        'password', 'old_password', 'new_password1', 'new_password2'
+    )
+)
 
 User = get_user_model()
 
@@ -221,7 +230,6 @@ class BusinessView(generics.ListCreateAPIView):
             }
             return Response(data, status=status.HTTP_200_OK)
 
-
         serializer = BusinessSerializer(businesses[0])
         headers = self.get_success_headers(serializer.data)
         data = {
@@ -275,7 +283,7 @@ class ProfileApiView(viewsets.ModelViewSet):
 
 
 def get_token_obj(token):
-    return Token.objects.get(key=token)
+    return AuthorizationToken.objects.get(key=token)
 
 
 @api_view(['POST'])
@@ -315,8 +323,54 @@ def stripe_token_registration(request):
     return Response({"code": 1, "message": "Got some data!", "data": data})
 
 
-class Login(LoginView):
+class Login(generics.GenericAPIView):
+    """
+        Check the credentials and return the REST Token
+        if the credentials are valid and authenticated.
+        Calls Django Auth login method to register User ID
+        in Django session framework
+
+        Accept the following POST parameters: username, password
+        Return the REST Framework Token Object's key.
+    """
+
     serializer_class = LoginSerializer
+    token_model = AuthorizationToken
+
+    @sensitive_post_parameters_m
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
+    def create_token(self):
+        push_notification = self.request.data['push_notification_token']
+        device_id = self.request.data['device_id']
+        device_type = self.request.data['device_type']
+        token, _ = self.token_model.objects.get_or_create(user=self.user,
+                                                          push_notification_token=push_notification,
+                                                          device_id=device_id,
+                                                          device_type=device_type)
+        return token
+
+    def process_login(self):
+        django_login(self.request, self.user)
+
+    def get_response_serializer(self):
+        response_serializer = AuthorizationTokenSerializer
+        return response_serializer
+
+    def login(self):
+        self.user = self.serializer.validated_data['user']
+        self.token = self.create_token()
+
+        if getattr(settings, 'REST_SESSION_LOGIN', True):
+            self.process_login()
+
+    def get_response(self):
+        serializer_class = self.get_response_serializer()
+
+        serializer = serializer_class(instance=self.token,
+                                      context={'request': self.request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request, *args, **kwargs):
         self.request = request
@@ -324,19 +378,21 @@ class Login(LoginView):
                                               context={'request': request})
         self.serializer.is_valid(raise_exception=True)
         user = self.serializer.validated_data['user']
-        super(Login, self).login()
-        user.last_login = datetime.datetime.now()
-        user.save()
-        response = super(Login, self).get_response()
-
+        self.login()
+        self.user.last_login = datetime.datetime.now()
+        self.user.save()
+        response = self.get_response()
         response.data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Successfully Logged In.",
             'data': {
                 'auth_token': response.data.get('key'),
+                'device_id': response.data.get('device_id'),
+                'device_type': response.data.get('device_type'),
+                'push_notification_token': response.data.get('push_notification_token'),
                 'is_first_login': False if user.last_login else True,
                 'last_login': user.last_login
-             }
+            }
         }
         return response
 
@@ -350,7 +406,8 @@ def logout(request, *args, **kwargs):
     Accepts/Returns nothing.
     """
     try:
-        request.user.auth_token.delete()
+        print(request.user.auth_token)
+        AuthorizationToken.objects.get(pk=request.auth).delete()
     except (AttributeError, ObjectDoesNotExist) as err:
         return Response({
             "code": getattr(settings, 'SUCCESS_CODE', 1),
