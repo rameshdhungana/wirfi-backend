@@ -382,7 +382,7 @@ class ResetPasswordView(PasswordResetView):
         response = super(ResetPasswordView, self).post(request, *args, **kwargs)
         response.data = {
             "code": getattr(settings, 'SUCCESS_CODE', 1),
-            "message": "Password reset e-mail has been sent. Please check your em-mail."
+            "message": "Password reset e-mail has been sent. Please check your e-mail."
         }
         return response
 
