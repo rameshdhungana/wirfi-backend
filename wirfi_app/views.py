@@ -1,4 +1,5 @@
 import stripe
+import datetime
 
 from django.contrib.auth import get_user_model, logout as django_logout
 from django.core.exceptions import ObjectDoesNotExist
@@ -15,7 +16,6 @@ from rest_auth.views import LoginView, \
     PasswordResetSerializer, PasswordResetConfirmSerializer, PasswordChangeSerializer
 
 from allauth.account import app_settings as allauth_settings
-# from rest_auth.app_settings import TokenSerializer, JWTSerializer, create_token
 
 from wirfi_app.models import Billing, Business, Profile, Device, Subscription
 from wirfi_app.serializers import UserSerializer, UserProfileSerializer, \
@@ -257,8 +257,8 @@ class BusinessDetailView(generics.UpdateAPIView, generics.DestroyAPIView):
 
     def update(self, request, *args, **kwargs):
         token = get_token_obj(request.auth)
-        billing = self.get_object()
-        serializer = BillingSerializer(billing, data=request.data)
+        business = self.get_object()
+        serializer = BusinessSerializer(business, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(user=token.user)
         data = {
@@ -325,6 +325,8 @@ class Login(LoginView):
         self.serializer.is_valid(raise_exception=True)
         user = self.serializer.validated_data['user']
         super(Login, self).login()
+        user.last_login = datetime.datetime.now()
+        user.save()
         response = super(Login, self).get_response()
 
         response.data = {
