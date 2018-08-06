@@ -1,6 +1,6 @@
 from django.conf import settings
 from allauth.account.adapter import DefaultAccountAdapter
-
+from django.conf import settings
 
 # Overwrites email confirmation url so that the correct url is sent in the email.
 # to change the actual address, see core.urls name: 'account_confirm_email'
