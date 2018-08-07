@@ -1,12 +1,11 @@
 from django.urls import path, re_path
-from django.conf.urls import url
 
 from rest_framework import routers
 
 from wirfi_app.views import UserApiView, ProfileApiView, \
     BusinessView, BusinessDetailView, \
     BillingView, BillingDetailView, \
-    DeviceDetailView, DeviceSerialNoView, DeviceNetworkView, \
+    DeviceView, DeviceDetailView, DeviceNetworkView, DeviceNetworkDetailView, DeviceLocationHoursView, \
     stripe_token_registration, \
     Login, logout, RegisterUserView, VerifyEmailRegisterView, \
     ResetPasswordView, ResetPasswordConfirmView, ChangePasswordView
@@ -22,9 +21,11 @@ urlpatterns = [
     path('business/', BusinessView.as_view()),
     path('business/<int:id>/', BusinessDetailView.as_view()),
 
-    path('device/', DeviceSerialNoView.as_view(), name="device-serial-number"),
+    path('device/', DeviceView.as_view(), name="device-serial-number"),
     path('device/<int:id>/', DeviceDetailView.as_view(), name="device-detail"),
-    path('device/<int:id>/network/', DeviceNetworkView.as_view(), name="device-network"),
+    path('device/<int:device_id>/network/', DeviceNetworkView.as_view(), name="device-network"),
+    path('device/<int:device_id>/network/<int:id>/', DeviceNetworkDetailView.as_view(), name="device-network-detail"),
+    path('device/<int:device_id>/location-hours/', DeviceLocationHoursView.as_view(), name="device-location-hours"),
 
     path('stripe/register-token/', stripe_token_registration, name="stripe_token_registration"),
 

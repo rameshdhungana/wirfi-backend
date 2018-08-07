@@ -1,9 +1,7 @@
 import stripe
-from allauth.account.adapter import DefaultAccountAdapter
 import datetime
 
 from django.contrib.auth import get_user_model, login as django_login, logout as django_logout
-from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 from django.core.exceptions import  ObjectDoesNotExist
 from django.utils.decorators import method_decorator
@@ -11,7 +9,6 @@ from django.views.decorators.debug import sensitive_post_parameters
 
 
 from rest_framework.decorators import api_view
-# from rest_framework.authtoken.models import Token
 from rest_framework import viewsets, generics
 from rest_framework.response import Response
 from rest_framework import status
@@ -21,11 +18,12 @@ from rest_auth.views import LoginView, \
     PasswordResetSerializer, PasswordResetConfirmSerializer, PasswordChangeSerializer
 
 from allauth.account import app_settings as allauth_settings
-from rest_auth.views import LoginView
 
-from wirfi_app.models import Billing, Business, Profile, Device, Subscription, AuthorizationToken
+from wirfi_app.models import Billing, Business, Profile, \
+    Device, DeviceLocationHours, DeviceNetwork, \
+    Subscription, AuthorizationToken
 from wirfi_app.serializers import UserSerializer, UserProfileSerializer, \
-    DeviceSerializer, DeviceSerialNoSerializer, DeviceNetworkSerializer, \
+    DeviceSerializer, DeviceLocationHoursSerializer, DeviceNetworkSerializer, \
     BusinessSerializer, BillingSerializer, \
     UserRegistrationSerializer, LoginSerializer, AuthorizationTokenSerializer
 
@@ -43,8 +41,8 @@ class UserApiView(viewsets.ModelViewSet):
     serializer_class = UserSerializer
 
 
-class DeviceSerialNoView(generics.ListCreateAPIView):
-    serializer_class = DeviceSerialNoSerializer
+class DeviceView(generics.ListCreateAPIView):
+    serializer_class = DeviceSerializer
 
     def get_queryset(self):
         token = get_token_obj(self.request.auth)
@@ -52,7 +50,7 @@ class DeviceSerialNoView(generics.ListCreateAPIView):
 
     def list(self, request, *args, **kwargs):
         devices = self.get_queryset()
-        serializer = DeviceSerialNoSerializer(devices, many=True)
+        serializer = DeviceSerializer(devices, many=True)
         headers = self.get_success_headers(serializer.data)
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
@@ -65,7 +63,7 @@ class DeviceSerialNoView(generics.ListCreateAPIView):
 
     def create(self, request, *args, **kwargs):
         token = get_token_obj(request.auth)
-        serializer = DeviceSerialNoSerializer(data=request.data)
+        serializer = DeviceSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(user=token.user)
         headers = self.get_success_headers(serializer.data)
@@ -87,7 +85,7 @@ class DeviceDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def retrieve(self, request, *args, **kwargs):
         device = self.get_object()
-        serializer = DeviceSerialNoSerializer(device)
+        serializer = DeviceSerializer(device)
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Detail successfully fetched.",
@@ -98,11 +96,6 @@ class DeviceDetailView(generics.RetrieveUpdateDestroyAPIView):
     def update(self, request, *args, **kwargs):
         device = self.get_object()
         token = get_token_obj(self.request.auth)
-        serial_number = request.data.pop('serial_number', '')
-        if serial_number:
-            serializer = DeviceSerialNoSerializer(device, data={'serial_number': serial_number})
-            serializer.is_valid(raise_exception=True)
-            serializer.save(user=token.user)
 
         serializer = DeviceSerializer(device, data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -115,17 +108,44 @@ class DeviceDetailView(generics.RetrieveUpdateDestroyAPIView):
         return Response(data, status=status.HTTP_200_OK)
 
 
-class DeviceNetworkView(generics.RetrieveUpdateAPIView):
+class DeviceNetworkView(generics.ListCreateAPIView):
+    serializer_class = DeviceNetworkSerializer
+
+    def get_queryset(self):
+        return DeviceNetwork.objects.filter(device__id=self.kwargs['device_id'])
+
+    def list(self, request, *args, **kwargs):
+        network = self.get_queryset()
+        data = {
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
+            'message': "Detail successfully fetched.",
+            'data': DeviceNetworkSerializer(network[0]).data if network else {}
+        }
+        return Response(data, status=status.HTTP_200_OK)
+
+    def create(self, request, *args, **kwargs):
+        device = Device.objects.get(pk=self.kwargs['device_id'])
+        serializer = DeviceNetworkSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(device=device)
+        data = {
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
+            'message': "Device successfully updated.",
+            'data': serializer.data
+        }
+        return Response(data, status=status.HTTP_200_OK)
+
+
+class DeviceNetworkDetailView(generics.RetrieveUpdateAPIView):
     lookup_field = 'id'
     serializer_class = DeviceNetworkSerializer
 
     def get_queryset(self):
-        token = get_token_obj(self.request.auth)
-        return Device.objects.filter(user=token.user).filter(pk=self.kwargs['id'])
+        return DeviceNetwork.objects.filter(pk=self.kwargs['id'])
 
     def retrieve(self, request, *args, **kwargs):
-        device = self.get_object()
-        serializer = DeviceSerialNoSerializer(device)
+        network = self.get_object()
+        serializer = DeviceNetworkSerializer(network)
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Detail successfully fetched.",
@@ -134,17 +154,56 @@ class DeviceNetworkView(generics.RetrieveUpdateAPIView):
         return Response(data, status=status.HTTP_200_OK)
 
     def update(self, request, *args, **kwargs):
-        device = self.get_object()
-        token = get_token_obj(self.request.auth)
-        serializer = DeviceNetworkSerializer(device, data=request.data)
+        network = self.get_object()
+        device = Device.objects.get(pk=self.kwargs['device_id'])
+        serializer = DeviceNetworkSerializer(network, data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(user=token.user)
+        serializer.save(device=device)
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Device successfully updated.",
             'data': serializer.data
         }
         return Response(data, status=status.HTTP_200_OK)
+
+
+class DeviceLocationHoursView(generics.ListCreateAPIView):
+    serializer_class = DeviceLocationHoursSerializer
+
+    def get_queryset(self):
+        return DeviceLocationHours.objects.filter(device_id=self.kwargs['device_id'])
+
+    def list(self, request, *args, **kwargs):
+        location_hours = self.get_queryset()
+        serializer = DeviceLocationHoursSerializer(location_hours, many=True)
+        data = {
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
+            'message': "Detail successfully fetched.",
+            'data': {'location_hours': serializer.data}
+        }
+        return Response(data, status=status.HTTP_200_OK)
+
+    def create(self, request, *args, **kwargs):
+        serializer = DeviceLocationHoursSerializer(request.data, many=True)
+        serializer.is_valid(raise_exception=True)
+        data = {
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
+            'message': "Successfully createrd.",
+            'data': {'location_hours': serializer.data}
+        }
+        return Response(data, status=status.HTTP_201_CREATED)
+
+
+# class DeviceLocationHoursEditView(generics.UpdateAPIView):
+#     lookup_field = 'id'
+#     serializer_class = DeviceLocationHoursSerializer
+#
+#     def get_queryset(self):
+#         return DeviceLocationHours.objects.filter(device_id=self.kwargs['device_id'])
+#
+#     def update(self, request, *args, **kwargs):
+#         print(request.data)
+
 
 
 class BillingView(generics.ListCreateAPIView):
@@ -180,19 +239,6 @@ class BillingView(generics.ListCreateAPIView):
             'data': serializer.data
         }
         return Response(data, status=status.HTTP_201_CREATED, headers=headers)
-
-
-# Overwrites email confirmation url so that the correct url is sent in the email.
-# to change the actual address, see core.urls name: 'account_confirm_email'
-
-
-class MyAccountAdapter(DefaultAccountAdapter):
-    def get_email_confirmation_url(self, request, emailconfirmation):
-        url = reverse(
-            "account_confirm_email",
-            args=[emailconfirmation.key])
-        print("test:", url)
-        return settings.FRONTEND_HOST + url
 
 
 class BillingDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -377,13 +423,11 @@ class Login(generics.GenericAPIView):
     def login(self):
         self.user = self.serializer.validated_data['user']
         self.token = self.create_token()
-
         if getattr(settings, 'REST_SESSION_LOGIN', True):
             self.process_login()
 
     def get_response(self):
         serializer_class = self.get_response_serializer()
-
         serializer = serializer_class(instance=self.token,
                                       context={'request': self.request})
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -422,8 +466,7 @@ def logout(request, *args, **kwargs):
     Accepts/Returns nothing.
     """
     try:
-        print(request.user.auth_token)
-        AuthorizationToken.objects.get(pk=request.auth).delete()
+        AuthorizationToken.objects.filter(key=request.auth).delete()
     except (AttributeError, ObjectDoesNotExist) as err:
         return Response({
             "code": getattr(settings, 'SUCCESS_CODE', 1),
@@ -482,6 +525,7 @@ class ResetPasswordConfirmView(PasswordResetConfirmView):
             "message": "Password has been successfully reset with new password."
         }
         return response
+
 
 class ChangePasswordView(PasswordChangeView):
     serializer_class = PasswordChangeSerializer

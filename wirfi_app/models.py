@@ -116,12 +116,26 @@ class Device(models.Model):
     name = models.CharField(max_length=30)
     location_logo = models.ImageField(upload_to='device/images')
     location_photo = models.ImageField(upload_to='device/images')
-    # location_hours = models.DecimalField(max_digits=10, decimal_places=1, null=True)
-    ssid_name = models.CharField(max_length=50)
-    password = models.CharField(max_length=100)
+    latitude = models.DecimalField(max_digits=15, decimal_places=12)
+    longitude = models.DecimalField(max_digits=15, decimal_places=12)
 
     def __str__(self):
         return self.serial_number
+
+
+class DeviceNetwork(models.Model):
+    device = models.OneToOneField(Device, on_delete=models.CASCADE, related_name="device_network")
+    ssid_name = models.CharField(max_length=50)
+    password = models.CharField(max_length=50)
+
+
+class DeviceLocationHours(models.Model):
+    device = models.ForeignKey(Device, on_delete=models.CASCADE, related_name="location_hours")
+    day = models.CharField(max_length=8)
+    from_time = models.TimeField()
+    to_time = models.TimeField()
+    is_on = models.BooleanField(default=True)
+    whole_day = models.BooleanField(default=False)
 
 
 class ServicePlan(DateTimeModel):
@@ -142,7 +156,7 @@ class Subscription(DateTimeModel):
 class AuthorizationToken(models.Model):
     key = models.CharField(_("Key"), max_length=40, primary_key=True)
     created = models.DateTimeField(_("Created"), auto_now_add=True)
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="auth_token")
     device_id = models.CharField(max_length=128, blank=True)
     push_notification_token = models.CharField(max_length=128, blank=True, unique=True)
     device_type = models.IntegerField(null=True, blank=True)

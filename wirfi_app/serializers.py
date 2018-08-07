@@ -5,7 +5,9 @@ from django.conf import settings
 from rest_framework import serializers, exceptions
 # from rest_auth.registration.serializers import RegisterSerializer
 
-from wirfi_app.models import Profile, Billing, Business, Device, AuthorizationToken
+from wirfi_app.models import Profile, Billing, Business, \
+    Device, DeviceLocationHours, DeviceNetwork, \
+    AuthorizationToken
 
 try:
     from allauth.account import app_settings as allauth_settings
@@ -112,23 +114,25 @@ class UserDetailsSerializer(serializers.ModelSerializer):
         read_only_fields = ('email',)
 
 
-class DeviceSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Device
-        fields = ['id', 'name', 'serial_number', 'ssid_name', 'password']
-        read_only_fields = ['serial_number', 'ssid_name', 'password']
-
-
-class DeviceSerialNoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Device
-        fields = ('id', 'serial_number', 'name',)
-
-
 class DeviceNetworkSerializer(serializers.ModelSerializer):
     class Meta:
+        model = DeviceNetwork
+        exclude = ('device',)
+
+
+class DeviceLocationHoursSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DeviceLocationHours
+        exclude = ('device',)
+
+
+class DeviceSerializer(serializers.ModelSerializer):
+    network = DeviceNetworkSerializer(read_only=True)
+    location_hours = DeviceLocationHoursSerializer(many=True, read_only=True)
+
+    class Meta:
         model = Device
-        fields = ('id', 'ssid_name', 'password',)
+        fields = ['id', 'name', 'serial_number', 'network', 'location_hours']
 
 
 class UserRegistrationSerializer(serializers.Serializer):

@@ -19,12 +19,11 @@ from django.conf.urls.static import static
 from django.conf import settings
 
 from rest_framework_swagger.views import get_swagger_view
-# from rest_framework_jwt.views import obtain_jwt_token, refresh_jwt_token, verify_jwt_token
 
 schema_view = get_swagger_view(title='Wirfi API')
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    # path('admin/', admin.site.urls),
     path('list-api/', schema_view),
     path('', include('wirfi_app.urls')),
 
