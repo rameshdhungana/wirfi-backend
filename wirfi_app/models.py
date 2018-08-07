@@ -131,7 +131,7 @@ class DeviceNetwork(models.Model):
 
 class DeviceLocationHours(models.Model):
     device = models.ForeignKey(Device, on_delete=models.CASCADE, related_name="location_hours")
-    day = models.CharField(max_length=8)
+    day = models.CharField(max_length=9)
     from_time = models.TimeField()
     to_time = models.TimeField()
     is_on = models.BooleanField(default=True)

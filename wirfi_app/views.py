@@ -184,26 +184,41 @@ class DeviceLocationHoursView(generics.ListCreateAPIView):
         return Response(data, status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
-        serializer = DeviceLocationHoursSerializer(request.data, many=True)
+        device = Device.objects.get(pk=self.kwargs['device_id'])
+        serializer = DeviceLocationHoursSerializer(data=request.data, many=True)
         serializer.is_valid(raise_exception=True)
+        serializer.save(device=device)
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
-            'message': "Successfully createrd.",
+            'message': "Successfully created.",
             'data': {'location_hours': serializer.data}
         }
         return Response(data, status=status.HTTP_201_CREATED)
 
 
-# class DeviceLocationHoursEditView(generics.UpdateAPIView):
-#     lookup_field = 'id'
-#     serializer_class = DeviceLocationHoursSerializer
-#
-#     def get_queryset(self):
-#         return DeviceLocationHours.objects.filter(device_id=self.kwargs['device_id'])
-#
-#     def update(self, request, *args, **kwargs):
-#         print(request.data)
+class DeviceLocationHoursEditView(generics.UpdateAPIView):
+    lookup_field = 'id'
+    serializer_class = DeviceLocationHoursSerializer
 
+    def get_queryset(self):
+        return DeviceLocationHours.objects.filter(device_id=self.kwargs['device_id'])
+
+    def update(self, request, *args, **kwargs):
+        location_hours = []
+        device = Device.objects.get(pk=self.kwargs['device_id'])
+        for location_hour in self.get_queryset():
+            device_hr = [d for d in request.data if d['id']==location_hour.id][0]
+            serializer = DeviceLocationHoursSerializer(location_hour, data=device_hr)
+            serializer.is_valid(raise_exception=True)
+            serializer.save(device=device)
+            location_hours.append(serializer.data)
+
+        data = {
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
+            'message': "Successfully updated.",
+            'data': {'location_hours': location_hours}
+        }
+        return Response(data, status=status.HTTP_200_OK)
 
 
 class BillingView(generics.ListCreateAPIView):
