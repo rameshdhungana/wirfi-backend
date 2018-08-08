@@ -114,10 +114,10 @@ class Device(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     serial_number = models.CharField(max_length=30, unique=True)
     name = models.CharField(max_length=30)
-    location_logo = models.ImageField(upload_to='device/images')
-    location_photo = models.ImageField(upload_to='device/images')
-    latitude = models.DecimalField(max_digits=15, decimal_places=12)
-    longitude = models.DecimalField(max_digits=15, decimal_places=12)
+    location_logo = models.ImageField(upload_to='device/images', null=True)
+    location_photo = models.ImageField(upload_to='device/images', null=True)
+    latitude = models.DecimalField(max_digits=15, decimal_places=12, default=0)
+    longitude = models.DecimalField(max_digits=15, decimal_places=12, default=0)
 
     def __str__(self):
         return self.serial_number
@@ -158,8 +158,8 @@ class AuthorizationToken(models.Model):
     created = models.DateTimeField(_("Created"), auto_now_add=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="auth_token")
     device_id = models.CharField(max_length=128, blank=True)
-    push_notification_token = models.CharField(max_length=128, blank=True, unique=True)
-    device_type = models.IntegerField(null=True, blank=True)
+    push_notification_token = models.CharField(max_length=128, blank=True)
+    device_type = models.IntegerField()
 
     class Meta:
         verbose_name = _("Token")

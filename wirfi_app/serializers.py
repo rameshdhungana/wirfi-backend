@@ -23,6 +23,9 @@ User = get_user_model()
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True, allow_blank=False)
     password = serializers.CharField(style={'input_type': 'password'})
+    device_id = serializers.CharField()
+    device_type = serializers.IntegerField()
+    push_notification_token = serializers.CharField()
 
     def _validate_email(self, email, password):
         user = None
@@ -128,12 +131,21 @@ class DeviceLocationHoursSerializer(serializers.ModelSerializer):
 
 class DeviceSerializer(serializers.ModelSerializer):
     network = DeviceNetworkSerializer(read_only=True)
-    location_hours = DeviceLocationHoursSerializer(many=True, read_only=True)
+    location_hours = DeviceLocationHoursSerializer(many=True)
 
     class Meta:
         model = Device
         fields = ['id', 'name', 'serial_number', 'network', 'location_hours']
 
+    def create(self, validated_data):
+        location_hours_data = validated_data.pop('location_hours', [])
+        device = Device.objects.create(**validated_data)
+
+        for location_hour_data in location_hours_data:
+            location_hour_data['device'] = device
+            location_hour = DeviceLocationHours.objects.create(**location_hour_data)
+            device.location_hours.add(location_hour)
+        return device
 
 class UserRegistrationSerializer(serializers.Serializer):
     first_name = serializers.CharField(max_length=64)
