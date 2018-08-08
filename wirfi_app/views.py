@@ -495,6 +495,7 @@ def logout(request, *args, **kwargs):
 
 class RegisterUserView(RegisterView):
     serializer_class = UserRegistrationSerializer
+    token_model = AuthorizationToken
 
     def get_response_data(self, user):
         if allauth_settings.EMAIL_VERIFICATION == \
