@@ -147,6 +147,18 @@ class DeviceSerializer(serializers.ModelSerializer):
             device.location_hours.add(location_hour)
         return device
 
+    def update(self, instance, validated_data):
+        location_hours_data = validated_data.pop('location_hours', [])
+        device = super().update(instance, validated_data)
+
+        for location_hour_data in location_hours_data:
+            device_hour = DeviceLocationHours.objects.filter(device_id=device.id).get(day=location_hour_data['day'])
+            validated_data = DeviceLocationHoursSerializer().validate(location_hour_data)
+            location_hour = DeviceLocationHoursSerializer().update(device_hour, validated_data)
+            device.location_hours.add(location_hour)
+        return device
+
+
 class UserRegistrationSerializer(serializers.Serializer):
     first_name = serializers.CharField(max_length=64)
     last_name = serializers.CharField(max_length=64)
