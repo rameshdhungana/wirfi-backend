@@ -1,5 +1,6 @@
 import stripe
 import datetime
+from django.shortcuts import reverse
 
 from django.contrib.auth import get_user_model, logout as django_logout
 from django.conf import settings
@@ -7,7 +8,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils.decorators import method_decorator
 
 from django.views.decorators.debug import sensitive_post_parameters
-
 
 from rest_framework.decorators import api_view
 from rest_framework import viewsets, generics
@@ -236,7 +236,7 @@ class DeviceLocationHoursEditView(generics.UpdateAPIView):
         location_hours = []
         device = Device.objects.get(pk=self.kwargs['device_id'])
         for location_hour in self.get_queryset():
-            device_hr = [d for d in request.data if d['id']==location_hour.id][0]
+            device_hr = [d for d in request.data if d['id'] == location_hour.id][0]
             serializer = DeviceLocationHoursSerializer(location_hour, data=device_hr)
             serializer.is_valid(raise_exception=True)
             serializer.save(device=device)
@@ -254,28 +254,66 @@ class BillingView(generics.ListCreateAPIView):
     serializer_class = BillingSerializer
 
     def get_queryset(self):
+
         token = get_token_obj(self.request.auth)
+
         return Billing.objects.filter(user=token.user)
+
+    def retrieve_stripe_customer_info(self):
+        stripe.api_key = settings.STRIPE_API_KEY
+        token = get_token_obj(self.request.auth)
+
+        billing = Billing.objects.filter(user=token.user).first()
+        return stripe.Customer.retrieve(billing.customer_id)
 
     def list(self, request, *args, **kwargs):
         billings = self.get_queryset()
+        stripe_customer_info = self.retrieve_stripe_customer_info()
         serializer = BillingSerializer(billings, many=True)
         headers = self.get_success_headers(serializer.data)
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Details successfully fetched.",
             'data': {
-                'billing_info': serializer.data,
-                'email': request.user.email
+                'billing_info': stripe_customer_info,
+                'email': request.user.email,
             }
         }
+        print(data)
         return Response(data, status=status.HTTP_200_OK, headers=headers)
 
     def create(self, request, *args, **kwargs):
+
+        data = request.data
+        print(data)
+        # Set your secret key: remember to change this to your live secret key in production
+        # See your keys here: https://dashboard.stripe.com/account/apikeys
+        stripe.api_key = settings.STRIPE_API_KEY
+
+        # Token is created using Checkout or Elements!
+        # Get the payment token ID submitted by the form:
+        stripe_token = data['id'].strip()
+        email = data['email']
+        card_token = data['card']['id']
+        print(card_token)
+
         token = get_token_obj(request.auth)
+
+        billing_obj = Billing.objects.filter(user=token.user).first()
+        if billing_obj:
+            customer = stripe.Customer.retrieve(billing_obj.customer_id)
+            customer.sources.create(source=stripe_token)
+
+        else:
+            # # Create a Customer:
+            customer = stripe.Customer.create(
+                source=stripe_token,
+                email=email
+            )
+
         serializer = BillingSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(user=token.user)
+        serializer.save(user=token.user, stripe_token=stripe_token, customer_id=customer.id)
         headers = self.get_success_headers(serializer.data)
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
@@ -395,6 +433,7 @@ def get_token_obj(token):
 @api_view(['POST'])
 def stripe_token_registration(request):
     data = request.data
+    print(data)
     # Set your secret key: remember to change this to your live secret key in production
     # See your keys here: https://dashboard.stripe.com/account/apikeys
     stripe.api_key = settings.STRIPE_API_KEY
@@ -409,9 +448,10 @@ def stripe_token_registration(request):
         source=token,
         email=email
     )
+    Billing.objects.get_or_create(user=self.request.user, )
 
     # Charge the Customer instead of the card:
-    Subscription.objects.create(customer_id=customer.id, user=request.user, email=email, service_plan=1)
+    # Subscription.objects.create(customer_id=customer.id, user=request.user, email=email, service_plan=1)
 
     # charge = stripe.Charge.create(
     #     amount=999,
@@ -420,12 +460,12 @@ def stripe_token_registration(request):
     #     source=token,
     #     statement_descriptor='Custom descriptor'
     # )
-    charge = stripe.Charge.create(
-        amount=1000,
-        currency='usd',
-        customer=customer.id,
-        receipt_email=email
-    )
+    # charge = stripe.Charge.create(
+    #     amount=1000,
+    #     currency='usd',
+    #     customer=customer.id,
+    #     receipt_email=email
+    # )
     return Response({"code": 1, "message": "Got some data!", "data": data})
 
 
