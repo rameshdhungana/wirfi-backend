@@ -115,7 +115,7 @@ class Device(models.Model):
     serial_number = models.CharField(max_length=30, unique=True)
     name = models.CharField(max_length=30)
     location_logo = models.ImageField(upload_to='device/images', null=True)
-    location_photo = models.ImageField(upload_to='device/images', null=True)
+    machine_photo = models.ImageField(upload_to='device/images', null=True)
     latitude = models.DecimalField(max_digits=15, decimal_places=12, default=0)
     longitude = models.DecimalField(max_digits=15, decimal_places=12, default=0)
 

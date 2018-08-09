@@ -5,8 +5,7 @@ from rest_framework import routers
 from wirfi_app.views import UserApiView, ProfileApiView, \
     BusinessView, BusinessDetailView, \
     BillingView, BillingDetailView, \
-    DeviceView, DeviceDetailView, DeviceNetworkView, DeviceNetworkDetailView, \
-    DeviceLocationHoursView, DeviceLocationHoursEditView, \
+    DeviceView, DeviceDetailView, DeviceNetworkView, DeviceNetworkDetailView, device_images_view, \
     stripe_token_registration, \
     Login, logout, RegisterUserView, VerifyEmailRegisterView, \
     ResetPasswordView, ResetPasswordConfirmView, ChangePasswordView
@@ -24,10 +23,11 @@ urlpatterns = [
 
     path('device/', DeviceView.as_view(), name="device-serial-number"),
     path('device/<int:id>/', DeviceDetailView.as_view(), name="device-detail"),
+    path('device/<int:id>/images/', device_images_view, name="device-images"),
     path('device/<int:device_id>/network/', DeviceNetworkView.as_view(), name="device-network"),
     path('device/<int:device_id>/network/<int:id>/', DeviceNetworkDetailView.as_view(), name="device-network-detail"),
-    path('device/<int:device_id>/location-hours/', DeviceLocationHoursView.as_view(), name="device-location-hours"),
-    path('device/location-hours/<int:device_id>/', DeviceLocationHoursEditView.as_view(), name="device-location-hours-edit"),
+    # path('device/<int:device_id>/location-hours/', DeviceLocationHoursView.as_view(), name="device-location-hours"),
+    # path('device/location-hours/<int:device_id>/', DeviceLocationHoursEditView.as_view(), name="device-location-hours-edit"),
 
     path('stripe/register-token/', stripe_token_registration, name="stripe_token_registration"),
 

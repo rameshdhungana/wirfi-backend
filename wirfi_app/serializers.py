@@ -23,9 +23,9 @@ User = get_user_model()
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True, allow_blank=False)
     password = serializers.CharField(style={'input_type': 'password'})
-    device_id = serializers.CharField()
+    device_id = serializers.CharField(allow_blank=True)
     device_type = serializers.IntegerField()
-    push_notification_token = serializers.CharField()
+    push_notification_token = serializers.CharField(allow_blank=True)
 
     def _validate_email(self, email, password):
         user = None

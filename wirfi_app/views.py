@@ -3,8 +3,9 @@ import datetime
 
 from django.contrib.auth import get_user_model, logout as django_logout
 from django.conf import settings
-from django.core.exceptions import  ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist
 from django.utils.decorators import method_decorator
+
 from django.views.decorators.debug import sensitive_post_parameters
 
 
@@ -18,6 +19,7 @@ from rest_auth.views import LoginView, \
     PasswordResetSerializer, PasswordResetConfirmSerializer, PasswordChangeSerializer
 
 from allauth.account import app_settings as allauth_settings
+from allauth.account.utils import complete_signup
 
 from wirfi_app.models import Billing, Business, Profile, \
     Device, DeviceLocationHours, DeviceNetwork, \
@@ -73,6 +75,33 @@ class DeviceView(generics.ListCreateAPIView):
             'data': serializer.data
         }
         return Response(data, status=status.HTTP_201_CREATED, headers=headers)
+
+
+@api_view(['POST'])
+def device_images_view(request, id):
+    location_logo = request.FILES.get('location_logo', '')
+    machine_photo = request.FILES.get('machine_photo', '')
+    if not (location_logo and machine_photo):
+        return Response({
+            "code": getattr(settings, 'ERROR_CODE', 0),
+            "message": "Please upload both the images."},
+            status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        device = Device.objects.get(pk=id)
+        device.location_logo = location_logo
+        device.machine_photo = machine_photo
+        device.save()
+        return Response({
+            "code": getattr(settings, 'SUCCESS_CODE', 1),
+            "message": "Images Successfully uploaded."},
+            status=status.HTTP_200_OK)
+
+    except (AttributeError, ObjectDoesNotExist) as err:
+        return Response({
+            "code": getattr(settings, 'ERROR_CODE', 0),
+            "message": str(err)},
+            status=status.HTTP_400_BAD_REQUEST)
 
 
 class DeviceDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -470,7 +499,7 @@ def logout(request, *args, **kwargs):
         AuthorizationToken.objects.filter(key=request.auth).delete()
     except (AttributeError, ObjectDoesNotExist) as err:
         return Response({
-            "code": getattr(settings, 'SUCCESS_CODE', 1),
+            "code": getattr(settings, 'ERROR_CODE', 0),
             "message": str(err)},
             status=status.HTTP_400_BAD_REQUEST)
 
@@ -491,6 +520,13 @@ class RegisterUserView(RegisterView):
                 'message': "Please check your email for account validation link. Thank you.",
             }
             return data
+
+    def perform_create(self, serializer):
+        user = serializer.save(self.request)
+        complete_signup(self.request._request, user,
+                        allauth_settings.EMAIL_VERIFICATION,
+                        None)
+        return user
 
 
 class VerifyEmailRegisterView(VerifyEmailView):
