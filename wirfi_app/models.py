@@ -99,15 +99,13 @@ class Business(models.Model):
 
 class Billing(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    name = models.CharField(max_length=50)
-    address = models.CharField(max_length=100)
-    latitude = models.DecimalField(max_digits=15, decimal_places=12)
-    longitude = models.DecimalField(max_digits=15, decimal_places=12)
-    email = models.EmailField()
-    strip_token = models.TextField()
+    latitude = models.DecimalField(max_digits=15, decimal_places=12, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=15, decimal_places=12, null=True, blank=True)
+    stripe_token = models.TextField()
+    customer_id = models.CharField(max_length=64)
 
     def __str__(self):
-        return self.user
+        return self.user.email
 
 
 class Device(models.Model):

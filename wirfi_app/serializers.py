@@ -78,7 +78,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = '__all__'
-        read_only_fields = ('user', )
+        read_only_fields = ('user',)
 
 
 class BusinessSerializer(serializers.ModelSerializer):
@@ -90,7 +90,7 @@ class BusinessSerializer(serializers.ModelSerializer):
 class BillingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Billing
-        exclude = ('user',)
+        exclude = ('user', 'stripe_token', 'customer_id')
 
 
 class UserSerializer(serializers.ModelSerializer):
