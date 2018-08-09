@@ -2,7 +2,7 @@ import stripe
 import datetime
 from django.shortcuts import reverse
 
-from django.contrib.auth import get_user_model, login as django_login, logout as django_logout
+from django.contrib.auth import get_user_model, logout as django_logout
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.decorators import method_decorator
@@ -440,7 +440,7 @@ def stripe_token_registration(request):
     return Response({"code": 1, "message": "Got some data!", "data": data})
 
 
-class Login(generics.GenericAPIView):
+class Login(LoginView):
     """
         Check the credentials and return the REST Token
         if the credentials are valid and authenticated.
@@ -454,22 +454,15 @@ class Login(generics.GenericAPIView):
     serializer_class = LoginSerializer
     token_model = AuthorizationToken
 
-    @sensitive_post_parameters_m
-    def dispatch(self, *args, **kwargs):
-        return super().dispatch(*args, **kwargs)
-
     def create_token(self):
-        push_notification = self.request.data['push_notification_token']
-        device_id = self.request.data['device_id']
-        device_type = self.request.data['device_type']
+        push_notification = self.serializer.validated_data['push_notification_token']
+        device_id = self.serializer.validated_data['device_id']
+        device_type = self.serializer.validated_data['device_type']
         token, _ = self.token_model.objects.get_or_create(user=self.user,
                                                           push_notification_token=push_notification,
                                                           device_id=device_id,
                                                           device_type=device_type)
         return token
-
-    def process_login(self):
-        django_login(self.request, self.user)
 
     def get_response_serializer(self):
         response_serializer = AuthorizationTokenSerializer
@@ -480,22 +473,16 @@ class Login(generics.GenericAPIView):
         self.token = self.create_token()
         if getattr(settings, 'REST_SESSION_LOGIN', True):
             self.process_login()
-
-    def get_response(self):
-        serializer_class = self.get_response_serializer()
-        serializer = serializer_class(instance=self.token,
-                                      context={'request': self.request})
-        return Response(serializer.data, status=status.HTTP_200_OK)
+            self.user.last_login = datetime.datetime.now()
+            self.user.save()
 
     def post(self, request, *args, **kwargs):
         self.request = request
         self.serializer = self.get_serializer(data=self.request.data,
                                               context={'request': request})
         self.serializer.is_valid(raise_exception=True)
-        user = self.serializer.validated_data['user']
+        first_login = False if self.serializer.validated_data['user'].last_login else True
         self.login()
-        self.user.last_login = datetime.datetime.now()
-        self.user.save()
         response = self.get_response()
         response.data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
@@ -505,8 +492,7 @@ class Login(generics.GenericAPIView):
                 'device_id': response.data.get('device_id'),
                 'device_type': response.data.get('device_type'),
                 'push_notification_token': response.data.get('push_notification_token'),
-                'is_first_login': False if user.last_login else True,
-                'last_login': user.last_login
+                'is_first_login': first_login
             }
         }
         return response
