@@ -114,8 +114,9 @@ class Device(models.Model):
     name = models.CharField(max_length=30)
     location_logo = models.ImageField(upload_to='device/images', null=True)
     machine_photo = models.ImageField(upload_to='device/images', null=True)
-    latitude = models.DecimalField(max_digits=15, decimal_places=12, default=0)
-    longitude = models.DecimalField(max_digits=15, decimal_places=12, default=0)
+    address = models.CharField(max_length=50)
+    latitude = models.FloatField(default=0)
+    longitude = models.FloatField(default=0)
 
     def __str__(self):
         return self.serial_number
@@ -129,11 +130,10 @@ class DeviceNetwork(models.Model):
 
 class DeviceLocationHours(models.Model):
     device = models.ForeignKey(Device, on_delete=models.CASCADE, related_name="location_hours")
-    day = models.CharField(max_length=9)
+    day_id = models.PositiveSmallIntegerField()
     from_time = models.TimeField()
     to_time = models.TimeField()
     is_on = models.BooleanField(default=True)
-    whole_day = models.BooleanField(default=False)
 
 
 class ServicePlan(DateTimeModel):

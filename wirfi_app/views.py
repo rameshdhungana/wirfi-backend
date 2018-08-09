@@ -92,9 +92,11 @@ def device_images_view(request, id):
         device.location_logo = location_logo
         device.machine_photo = machine_photo
         device.save()
+        data = DeviceSerializer(device).data
         return Response({
             "code": getattr(settings, 'SUCCESS_CODE', 1),
-            "message": "Images Successfully uploaded."},
+            "message": "Images Successfully uploaded.",
+            "data": data},
             status=status.HTTP_200_OK)
 
     except (AttributeError, ObjectDoesNotExist) as err:

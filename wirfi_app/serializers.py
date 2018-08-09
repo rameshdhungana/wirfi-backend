@@ -135,7 +135,8 @@ class DeviceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Device
-        fields = ['id', 'name', 'serial_number', 'network', 'location_hours']
+        exclude = ('user',)
+        read_only_fields = ('location_logo', 'machine_photo',)
 
     def create(self, validated_data):
         location_hours_data = validated_data.pop('location_hours', [])
@@ -152,7 +153,7 @@ class DeviceSerializer(serializers.ModelSerializer):
         device = super().update(instance, validated_data)
 
         for location_hour_data in location_hours_data:
-            device_hour = DeviceLocationHours.objects.filter(device_id=device.id).get(day=location_hour_data['day'])
+            device_hour = DeviceLocationHours.objects.filter(device_id=device.id).get(day_id=location_hour_data['day_id'])
             validated_data = DeviceLocationHoursSerializer().validate(location_hour_data)
             location_hour = DeviceLocationHoursSerializer().update(device_hour, validated_data)
             device.location_hours.add(location_hour)
