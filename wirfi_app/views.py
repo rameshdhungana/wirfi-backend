@@ -287,7 +287,6 @@ class BillingView(generics.ListCreateAPIView):
         return Response(data, status=status.HTTP_200_OK, headers=headers)
 
     def create(self, request, *args, **kwargs):
-
         data = request.data
         # Set your secret key: remember to change this to your live secret key in production
         # See your keys here: https://dashboard.stripe.com/account/apikeys
