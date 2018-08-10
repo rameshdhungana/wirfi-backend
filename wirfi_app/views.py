@@ -264,9 +264,11 @@ class BillingView(generics.ListCreateAPIView):
     def retrieve_stripe_customer_info(self):
         stripe.api_key = settings.STRIPE_API_KEY
         token = get_token_obj(self.request.auth)
-
         billing = Billing.objects.filter(user=token.user).first()
-        return stripe.Customer.retrieve(billing.customer_id)
+        if billing:
+            return stripe.Customer.retrieve(billing.customer_id)
+        else:
+            return "No any billing data"
 
     def list(self, request, *args, **kwargs):
         billings = self.get_queryset()
@@ -287,7 +289,6 @@ class BillingView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
 
         data = request.data
-        print(data)
         # Set your secret key: remember to change this to your live secret key in production
         # See your keys here: https://dashboard.stripe.com/account/apikeys
         stripe.api_key = settings.STRIPE_API_KEY
@@ -296,8 +297,6 @@ class BillingView(generics.ListCreateAPIView):
         # Get the payment token ID submitted by the form:
         stripe_token = data['id'].strip()
         email = data['email']
-        card_token = data['card']['id']
-        print(card_token)
 
         token = get_token_obj(request.auth)
 
