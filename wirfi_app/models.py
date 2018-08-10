@@ -20,7 +20,7 @@ class DateTimeModel(models.Model):
     deleted_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        abstract: True
+        abstract = True
 
 
 class User(AbstractBaseUser, PermissionsMixin):

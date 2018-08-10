@@ -187,8 +187,11 @@ TIME_ZONE = 'UTC'
 
 USE_I18N = True
 
-USE_L10N = TrueFRONTEND_HOST = "localhost:4200"
+USE_L10N = True
 
+FRONTEND_HOST = "localhost:4200"
+
+DEFAULT_FROM_EMAIL = "no.reply@gmail.com"
 
 USE_TZ = True
 
