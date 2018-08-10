@@ -156,6 +156,8 @@ REST_AUTH_SERIALIZERS = {
     'LOGIN_SERIALIZER': 'wirfi_app.serializers.LoginSerializer',
 }
 
+REST_SESSION_LOGIN = False
+
 EMAIL_HOST = config('EMAIL_HOST')
 EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
@@ -163,8 +165,9 @@ EMAIL_PORT = config('EMAIL_PORT')
 
 FRONTEND_HOST = config('FRONTEND_HOST')
 
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL')
+
 ACCOUNT_ADAPTER = 'wirfi_app.all_auth_adapter.MyAccountAdapter'
-REST_SESSION_LOGIN = False
 
 AUTHENTICATION_BACKENDS = (
     # `allauth` specific authentication methods, such as login by e-mail
@@ -189,10 +192,6 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_L10N = True
-
-FRONTEND_HOST = "localhost:4200"
-
-DEFAULT_FROM_EMAIL = "no.reply@gmail.com"
 
 USE_TZ = True
 
