@@ -426,10 +426,6 @@ class ProfileApiView(viewsets.ModelViewSet):
     serializer_class = UserProfileSerializer
 
 
-def get_token_obj(token):
-    return AuthorizationToken.objects.get(key=token)
-
-
 @api_view(['POST'])
 def stripe_token_registration(request):
     data = request.data
@@ -615,3 +611,21 @@ class ChangePasswordView(PasswordChangeView):
             "message": "New password has been saved."
         }
         return response
+
+
+@api_view(['GET'])
+def get_logged_in_user(request):
+    serializer = UserSerializer(request.user)
+    serializer_data = serializer.data
+    [serializer_data.pop(k) for k in ['profile', 'business']]
+    data = {
+        "code": getattr(settings, 'SUCCESS_CODE', 1),
+        "message": "Successfully fetched.",
+        "data": serializer_data
+    }
+
+    return Response(data, status=status.HTTP_200_OK)
+
+
+def get_token_obj(token):
+    return AuthorizationToken.objects.get(key=token)

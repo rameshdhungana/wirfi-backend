@@ -8,7 +8,7 @@ from wirfi_app.views import UserApiView, ProfileApiView, \
     DeviceView, DeviceDetailView, DeviceNetworkView, DeviceNetworkDetailView, device_images_view, \
     stripe_token_registration, \
     Login, logout, RegisterUserView, VerifyEmailRegisterView, \
-    ResetPasswordView, ResetPasswordConfirmView, ChangePasswordView
+    ResetPasswordView, ResetPasswordConfirmView, ChangePasswordView, get_logged_in_user
 
 router = routers.DefaultRouter()
 router.register(r'user', UserApiView)
@@ -44,6 +44,7 @@ urlpatterns = [
     path('reset/<uidb64>/<token>/', ResetPasswordConfirmView.as_view(), name='password_reset_confirm'),
 
     path('change-password/', ChangePasswordView.as_view(), name="change-password"),
+    path('me/', get_logged_in_user, name="me"),
 
 ]
 
