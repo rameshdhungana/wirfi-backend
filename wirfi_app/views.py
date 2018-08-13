@@ -268,16 +268,23 @@ class BillingView(generics.ListCreateAPIView):
         if billing:
             return stripe.Customer.retrieve(billing.customer_id)
         else:
-            return "No any billing data"
+            return None
 
     def list(self, request, *args, **kwargs):
         billings = self.get_queryset()
         stripe_customer_info = self.retrieve_stripe_customer_info()
+        if stripe_customer_info:
+            message = "Details successfully fetched"
+            code = getattr(settings, 'SUCCESS_CODE', 1)
+        else:
+            message = "No any billing data"
+            code = 2
+
         serializer = BillingSerializer(billings, many=True)
         headers = self.get_success_headers(serializer.data)
         data = {
-            'code': getattr(settings, 'SUCCESS_CODE', 1),
-            'message': "Details successfully fetched.",
+            'code': code,
+            'message': message,
             'data': {
                 'billing_info': stripe_customer_info,
                 'email': request.user.email,
