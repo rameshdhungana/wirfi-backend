@@ -505,8 +505,6 @@ class Login(LoginView):
         self.token = self.create_token()
         if getattr(settings, 'REST_SESSION_LOGIN', True):
             self.process_login()
-            self.user.last_login = datetime.datetime.now()
-            self.user.save()
 
     def post(self, request, *args, **kwargs):
         self.request = request
@@ -515,6 +513,8 @@ class Login(LoginView):
         self.serializer.is_valid(raise_exception=True)
         first_login = False if self.serializer.validated_data['user'].last_login else True
         self.login()
+        self.user.last_login = datetime.datetime.now()
+        self.user.save()
         response = self.get_response()
         response.data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
