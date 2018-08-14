@@ -298,6 +298,7 @@ class BillingView(generics.ListCreateAPIView):
         # Set your secret key: remember to change this to your live secret key in production
         # See your keys here: https://dashboard.stripe.com/account/apikeys
         stripe.api_key = settings.STRIPE_API_KEY
+        print(data,111111111111111)
 
         # Token is created using Checkout or Elements!
         # Get the payment token ID submitted by the form:
