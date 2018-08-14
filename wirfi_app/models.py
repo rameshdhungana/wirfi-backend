@@ -78,7 +78,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 
 class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     profile_picture = models.ImageField(upload_to='users/profile_pictures', null=True, blank=True)
     phone_number = models.CharField(max_length=15)
 
