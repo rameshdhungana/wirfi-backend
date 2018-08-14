@@ -434,10 +434,6 @@ class ProfileApiView(viewsets.ModelViewSet):
     serializer_class = UserProfileSerializer
 
 
-def get_token_obj(token):
-    return AuthorizationToken.objects.get(key=token)
-
-
 @api_view(['POST'])
 def stripe_token_registration(request):
     data = request.data
@@ -507,11 +503,10 @@ class Login(LoginView):
 
     def login(self):
         self.user = self.serializer.validated_data['user']
+        print(type(self.user))
         self.token = self.create_token()
         if getattr(settings, 'REST_SESSION_LOGIN', True):
             self.process_login()
-            self.user.last_login = datetime.datetime.now()
-            self.user.save()
 
     def post(self, request, *args, **kwargs):
         self.request = request
@@ -520,11 +515,16 @@ class Login(LoginView):
         self.serializer.is_valid(raise_exception=True)
         first_login = False if self.serializer.validated_data['user'].last_login else True
         self.login()
+        self.user.last_login = datetime.datetime.now()
+        self.user.save()
         response = self.get_response()
         response.data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Successfully Logged In.",
             'data': {
+                'first_name': self.user.first_name,
+                'last_name': self.user.last_name,
+                'profile_picture': self.user.profile.profile_picture if hasattr(self.user, 'profile') else '',
                 'auth_token': response.data.get('key'),
                 'device_id': response.data.get('device_id'),
                 'device_type': response.data.get('device_type'),
@@ -623,3 +623,21 @@ class ChangePasswordView(PasswordChangeView):
             "message": "New password has been saved."
         }
         return response
+
+
+@api_view(['GET'])
+def get_logged_in_user(request):
+    serializer = UserSerializer(request.user)
+    serializer_data = serializer.data
+    [serializer_data.pop(k) for k in ['profile', 'business']]
+    data = {
+        "code": getattr(settings, 'SUCCESS_CODE', 1),
+        "message": "Successfully fetched.",
+        "data": serializer_data
+    }
+
+    return Response(data, status=status.HTTP_200_OK)
+
+
+def get_token_obj(token):
+    return AuthorizationToken.objects.get(key=token)
