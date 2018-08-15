@@ -13,6 +13,15 @@ from .managers import UserManager
 PLAN_INTERVAL = 'month'
 PLAN_CURRENCY = 'usd'
 
+DEVICE_STATUS = (
+    (1, 'ONLINE'),
+    (2, 'USING CELLULAR'),
+    (3, 'WITH POOR SIGNAL'),
+    (4, 'MISSED PING'),
+    (5, 'OFFLINE'),
+    (6, 'ASLEEP'),
+)
+
 
 class DateTimeModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
@@ -81,9 +90,10 @@ class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     profile_picture = models.ImageField(upload_to='users/profile_pictures', null=True, blank=True)
     phone_number = models.CharField(max_length=15)
+    address = models.CharField(max_length=50)
 
     def __str__(self):
-        return self.user.first_name + ' ' + self.user.last_name
+        return self.user.full_name
 
 
 class Business(models.Model):
@@ -135,6 +145,11 @@ class DeviceLocationHours(models.Model):
     from_time = models.TimeField()
     to_time = models.TimeField()
     is_on = models.BooleanField(default=True)
+
+
+class DeviceStatus(models.Model):
+    device = models.OneToOneField(Device, on_delete=models.CASCADE)
+    status = models.IntegerField(choices=DEVICE_STATUS, default=6)
 
 
 class ServicePlan(DateTimeModel):

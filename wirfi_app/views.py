@@ -521,6 +521,7 @@ class Login(LoginView):
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Successfully Logged In.",
             'data': {
+                'id': self.user.id,
                 'first_name': self.user.first_name,
                 'last_name': self.user.last_name,
                 'profile_picture': self.user.profile.profile_picture if hasattr(self.user, 'profile') else '',
@@ -628,7 +629,7 @@ class ChangePasswordView(PasswordChangeView):
 def get_logged_in_user(request):
     serializer = UserSerializer(request.user)
     serializer_data = serializer.data
-    [serializer_data.pop(k) for k in ['profile', 'business']]
+    # [serializer_data.pop(k) for k in ['profile', 'business']]
     data = {
         "code": getattr(settings, 'SUCCESS_CODE', 1),
         "message": "Successfully fetched.",
