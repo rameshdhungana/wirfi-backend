@@ -102,7 +102,6 @@ class Billing(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     latitude = models.DecimalField(max_digits=15, decimal_places=12, null=True, blank=True)
     longitude = models.DecimalField(max_digits=15, decimal_places=12, null=True, blank=True)
-    stripe_token = models.TextField()
     customer_id = models.CharField(max_length=64)
 
     def __str__(self):

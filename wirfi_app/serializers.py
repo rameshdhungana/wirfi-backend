@@ -93,7 +93,7 @@ class BusinessSerializer(serializers.ModelSerializer):
 class BillingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Billing
-        exclude = ('user', 'stripe_token', 'customer_id')
+        exclude = ('user', 'customer_id')
 
 
 class UserSerializer(serializers.ModelSerializer):
