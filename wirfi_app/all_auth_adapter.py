@@ -8,3 +8,4 @@ class MyAccountAdapter(DefaultAccountAdapter):
     def get_email_confirmation_url(self, request, emailconfirmation):
         url = "/account_confirm_email/{}/".format(emailconfirmation.key)
         return settings.FRONTEND_HOST + url
+

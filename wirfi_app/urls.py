@@ -2,16 +2,16 @@ from django.urls import path, re_path
 
 from rest_framework import routers
 
-from wirfi_app.views import UserApiView, ProfileApiView, \
+from wirfi_app.views import UserDetailView, \
     BusinessView, BusinessDetailView, \
     BillingView, BillingDetailView, \
     DeviceView, DeviceDetailView, DeviceNetworkView, DeviceNetworkDetailView, device_images_view, \
     Login, logout, RegisterUserView, VerifyEmailRegisterView, \
-    ResetPasswordView, ResetPasswordConfirmView, ChangePasswordView, get_logged_in_user, delete_billing_card
+    ResetPasswordView, ResetPasswordConfirmView, ChangePasswordView, get_logged_in_user, delete_billing_card, \
+    profile_images_view
 
 router = routers.DefaultRouter()
-router.register(r'user', UserApiView)
-router.register(r'profile', ProfileApiView)
+# router.register(r'profile', ProfileApiView)
 
 urlpatterns = [
     path('billing/', BillingView.as_view()),
@@ -19,6 +19,9 @@ urlpatterns = [
 
     path('business/', BusinessView.as_view()),
     path('business/<int:id>/', BusinessDetailView.as_view()),
+
+    path('user/<int:id>/', UserDetailView.as_view(), name="user-detail"),
+    path('user/<int:id>/image/', profile_images_view, name="user-image"),
 
     path('device/', DeviceView.as_view(), name="device-serial-number"),
     path('device/<int:id>/', DeviceDetailView.as_view(), name="device-detail"),

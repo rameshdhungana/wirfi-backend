@@ -40,9 +40,68 @@ sensitive_post_parameters_m = method_decorator(
 User = get_user_model()
 
 
-class UserApiView(viewsets.ModelViewSet):
-    queryset = User.objects.all()
+class UserDetailView(generics.RetrieveUpdateAPIView):
+    lookup_field = 'id'
     serializer_class = UserSerializer
+
+    def get_queryset(self):
+        return User.objects.filter(id=self.kwargs['id'])
+
+    def retrieve(self, request, *args, **kwargs):
+        user = self.get_object()
+        serializer = UserSerializer(user)
+        data = {
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
+            'message': "Detail successfully fetched.",
+            'data': serializer.data
+        }
+        return Response(data, status=status.HTTP_200_OK)
+
+    def update(self, request, *args, **kwargs):
+        user = self.get_object()
+        token = get_token_obj(self.request.auth)
+        serializer = UserSerializer(user, data=request.data)
+
+        # if hasattr(user, 'profile'):
+        #     serializer = UserProfileSerializer(user.profile, data=request.data, partial=True)
+        # else:
+        #     serializer = UserProfileSerializer(data=request.data)
+
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=token.user)
+        data = {
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
+            'message': "",
+            'data': serializer.data
+        }
+        return Response(data, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+def profile_images_view(request, id):
+    profile_picture = request.FILES.get('profile_picture', '')
+    if not profile_picture:
+        return Response({
+            "code": getattr(settings, 'ERROR_CODE', 0),
+            "message": "Please upload the image."},
+            status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        profile = Profile.objects.get(user__id=id)
+        profile.profile_picture = profile_picture
+        profile.save()
+        user = UserSerializer(profile.user).data
+        return Response({
+            "code": getattr(settings, 'SUCCESS_CODE', 1),
+            "message": "Images Successfully uploaded.",
+            "data": user},
+            status=status.HTTP_200_OK)
+
+    except (AttributeError, ObjectDoesNotExist) as err:
+        return Response({
+            "code": getattr(settings, 'ERROR_CODE', 0),
+            "message": str(err)},
+            status=status.HTTP_400_BAD_REQUEST)
 
 
 class DeviceView(generics.ListCreateAPIView):
@@ -432,9 +491,9 @@ class BusinessDetailView(generics.UpdateAPIView, generics.DestroyAPIView):
         return Response(data, status=status.HTTP_200_OK)
 
 
-class ProfileApiView(viewsets.ModelViewSet):
-    queryset = Profile.objects.all()
-    serializer_class = UserProfileSerializer
+# class ProfileApiView(viewsets.ModelViewSet):
+#     queryset = Profile.objects.all()
+#     serializer_class = UserProfileSerializer
 
 
 class Login(LoginView):
@@ -486,6 +545,7 @@ class Login(LoginView):
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Successfully Logged In.",
             'data': {
+                'id': self.user.id,
                 'first_name': self.user.first_name,
                 'last_name': self.user.last_name,
                 'profile_picture': self.user.profile.profile_picture if hasattr(self.user, 'profile') else '',
@@ -593,7 +653,7 @@ class ChangePasswordView(PasswordChangeView):
 def get_logged_in_user(request):
     serializer = UserSerializer(request.user)
     serializer_data = serializer.data
-    [serializer_data.pop(k) for k in ['profile', 'business']]
+    serializer_data.pop('profile')
     data = {
         "code": getattr(settings, 'SUCCESS_CODE', 1),
         "message": "Successfully fetched.",
