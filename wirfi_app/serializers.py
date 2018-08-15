@@ -76,12 +76,12 @@ class AuthorizationTokenSerializer(serializers.ModelSerializer):
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
-    profile_picture = serializers.ImageField()
-
+    profile_picture = serializers.ImageField(allow_null=True)
+    
     class Meta:
         model = Profile
         fields = '__all__'
-        read_only_fields = ('user',)
+        read_only_fields = ('user', 'profile_picture',)
 
 
 class BusinessSerializer(serializers.ModelSerializer):
@@ -98,10 +98,17 @@ class BillingSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     profile = UserProfileSerializer(read_only=True)
+    # billing = BillingSerializer(read_only=True, many=True)
+    # business = BusinessSerializer(read_only=True)
 
     class Meta:
         model = User
         fields = ('id', 'email', 'first_name', 'last_name', 'full_name', 'profile',)
+    
+    # def update(self, instance, validated_data):
+
+        
+        
 
 
 class UserDetailsSerializer(serializers.ModelSerializer):
