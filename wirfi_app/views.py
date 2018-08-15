@@ -38,7 +38,7 @@ sensitive_post_parameters_m = method_decorator(
 User = get_user_model()
 
 
-class UserApiView(generics.RetrieveUpdateAPIView):
+class UserDetailView(generics.RetrieveUpdateAPIView):
     lookup_field = 'id'
     serializer_class = UserSerializer
 
@@ -58,11 +58,12 @@ class UserApiView(generics.RetrieveUpdateAPIView):
     def update(self, request, *args, **kwargs):
         user = self.get_object()
         token = get_token_obj(self.request.auth)
+        serializer = UserSerializer(user, data=request.data)
 
-        if hasattr(user, 'profile'):
-            serializer = UserProfileSerializer(user.profile, data=request.data, partial=True)
-        else: 
-            serializer = UserProfileSerializer(data=request.data)
+        # if hasattr(user, 'profile'):
+        #     serializer = UserProfileSerializer(user.profile, data=request.data, partial=True)
+        # else:
+        #     serializer = UserProfileSerializer(data=request.data)
 
         serializer.is_valid(raise_exception=True)
         serializer.save(user=token.user)
@@ -73,10 +74,11 @@ class UserApiView(generics.RetrieveUpdateAPIView):
         }
         return Response(data, status=status.HTTP_200_OK)
 
+
 @api_view(['POST'])
 def profile_images_view(request, id):
     profile_picture = request.FILES.get('profile_picture', '')
-    if not (profile_picture):
+    if not profile_picture:
         return Response({
             "code": getattr(settings, 'ERROR_CODE', 0),
             "message": "Please upload the image."},
@@ -98,7 +100,6 @@ def profile_images_view(request, id):
             "code": getattr(settings, 'ERROR_CODE', 0),
             "message": str(err)},
             status=status.HTTP_400_BAD_REQUEST)
-
 
 
 class DeviceView(generics.ListCreateAPIView):
@@ -486,9 +487,9 @@ class BusinessDetailView(generics.UpdateAPIView, generics.DestroyAPIView):
         return Response(data, status=status.HTTP_200_OK)
 
 
-class ProfileApiView(viewsets.ModelViewSet):
-    queryset = Profile.objects.all()
-    serializer_class = UserProfileSerializer
+# class ProfileApiView(viewsets.ModelViewSet):
+#     queryset = Profile.objects.all()
+#     serializer_class = UserProfileSerializer
 
 
 @api_view(['POST'])
@@ -687,7 +688,7 @@ class ChangePasswordView(PasswordChangeView):
 def get_logged_in_user(request):
     serializer = UserSerializer(request.user)
     serializer_data = serializer.data
-    # [serializer_data.pop(k) for k in ['profile', 'business']]
+    serializer_data.pop('profile')
     data = {
         "code": getattr(settings, 'SUCCESS_CODE', 1),
         "message": "Successfully fetched.",
