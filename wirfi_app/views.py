@@ -668,7 +668,7 @@ def get_token_obj(token):
 
 
 @api_view(['POST'])
-def delete_billing_card(self, request, *args, **kwargs):
+def delete_billing_card(request):
     stripe.api_key = settings.STRIPE_API_KEY
     card_id = request.data
     print(card_id, 222222222222222)
