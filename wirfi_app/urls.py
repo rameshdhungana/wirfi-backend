@@ -6,9 +6,9 @@ from wirfi_app.views import UserDetailView, dashboard_view, add_device_status_vi
     BusinessView, BusinessDetailView, \
     BillingView, BillingDetailView, \
     DeviceView, DeviceDetailView, DeviceNetworkView, DeviceNetworkDetailView, device_images_view, \
-    stripe_token_registration, \
     Login, logout, RegisterUserView, VerifyEmailRegisterView, \
-    ResetPasswordView, ResetPasswordConfirmView, ChangePasswordView, get_logged_in_user,profile_images_view
+    ResetPasswordView, ResetPasswordConfirmView, ChangePasswordView, get_logged_in_user, delete_billing_card, \
+    profile_images_view
 
 router = routers.DefaultRouter()
 # router.register(r'profile', ProfileApiView)
@@ -34,8 +34,6 @@ urlpatterns = [
     # path('device/<int:device_id>/location-hours/', DeviceLocationHoursView.as_view(), name="device-location-hours"),
     # path('device/location-hours/<int:device_id>/', DeviceLocationHoursEditView.as_view(), name="device-location-hours-edit"),
 
-    path('stripe/register-token/', stripe_token_registration, name="stripe_token_registration"),
-
     path('login/', Login.as_view(), name='user_login'),
     path('logout/', logout, name='user_logout'),
 
@@ -50,6 +48,7 @@ urlpatterns = [
 
     path('change-password/', ChangePasswordView.as_view(), name="change-password"),
     path('me/', get_logged_in_user, name="me"),
+    path('delete-billing-card/', delete_billing_card, )
 
 ]
 

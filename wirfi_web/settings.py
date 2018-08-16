@@ -86,7 +86,6 @@ REST_FRAMEWORK = {
     'EXCEPTION_HANDLER': 'wirfi_app.utils.custom_exception_handler',
 }
 
-
 ROOT_URLCONF = 'wirfi_web.urls'
 
 TEMPLATES = [

@@ -91,7 +91,7 @@ class BusinessSerializer(serializers.ModelSerializer):
 class BillingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Billing
-        exclude = ('user', 'stripe_token', 'customer_id')
+        exclude = ('user', 'customer_id')
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -171,7 +171,8 @@ class DeviceSerializer(serializers.ModelSerializer):
         device = super().update(instance, validated_data)
 
         for location_hour_data in location_hours_data:
-            device_hour = DeviceLocationHours.objects.filter(device_id=device.id).get(day_id=location_hour_data['day_id'])
+            device_hour = DeviceLocationHours.objects.filter(device_id=device.id).get(
+                day_id=location_hour_data['day_id'])
             validated_data = DeviceLocationHoursSerializer().validate(location_hour_data)
             location_hour = DeviceLocationHoursSerializer().update(device_hour, validated_data)
             device.location_hours.add(location_hour)
