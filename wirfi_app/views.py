@@ -24,10 +24,10 @@ from allauth.account import app_settings as allauth_settings
 from allauth.account.utils import complete_signup
 
 from wirfi_app.models import Billing, Business, Profile, \
-    Device, DeviceLocationHours, DeviceNetwork, \
+    Device, DeviceLocationHours, DeviceNetwork, DeviceStatus, \
     Subscription, AuthorizationToken
-from wirfi_app.serializers import UserSerializer, UserProfileSerializer, \
-    DeviceSerializer, DeviceLocationHoursSerializer, DeviceNetworkSerializer, \
+from wirfi_app.serializers import UserSerializer, \
+    DeviceSerializer, DeviceLocationHoursSerializer, DeviceNetworkSerializer, DeviceStatusSerializer, \
     BusinessSerializer, BillingSerializer, \
     UserRegistrationSerializer, LoginSerializer, AuthorizationTokenSerializer
 
@@ -496,6 +496,73 @@ class BusinessDetailView(generics.UpdateAPIView, generics.DestroyAPIView):
 #     serializer_class = UserProfileSerializer
 
 
+@api_view(['POST'])
+def stripe_token_registration(request):
+    data = request.data
+    print(data)
+    # Set your secret key: remember to change this to your live secret key in production
+    # See your keys here: https://dashboard.stripe.com/account/apikeys
+    stripe.api_key = settings.STRIPE_API_KEY
+
+    # Token is created using Checkout or Elements!
+    # Get the payment token ID submitted by the form:
+    token = data['id'].strip()
+    email = data['email']
+
+    # # Create a Customer:
+    customer = stripe.Customer.create(
+        source=token,
+        email=email
+    )
+    Billing.objects.get_or_create(user=self.request.user, )
+
+    # Charge the Customer instead of the card:
+    # Subscription.objects.create(customer_id=customer.id, user=request.user, email=email, service_plan=1)
+
+    # charge = stripe.Charge.create(
+    #     amount=999,
+    #     currency='usd',
+    #     description='Example charge',
+    #     source=token,
+    #     statement_descriptor='Custom descriptor'
+    # )
+    # charge = stripe.Charge.create(
+    #     amount=1000,
+    #     currency='usd',
+    #     customer=customer.id,
+    #     receipt_email=email
+    # )
+    return Response({"code": getattr(settings, 'SUCCESS_CODE', 1), "message": "Got some data!", "data": data})
+
+
+@api_view(['POST'])
+def add_device_status_view(request, id):
+    device_status = DeviceStatus()
+    device_status.status = request.data['status']
+    device_status.device_id = id
+    device_status.save()
+    return Response({
+        'code': getattr(settings, 'SUCCESS_CODE', 1),
+        'message': 'Device status successfully added.'
+    }, status=status.HTTP_201_CREATED)
+
+
+@api_view(['GET'])
+def dashboard_view(request):
+    token = get_token_obj(request.auth)
+    print(datetime.date)
+    device_status = DeviceStatus.objects.filter(device__user=token.user)  #.filter(date=datetime.date)
+    data = DeviceStatusSerializer(device_status, many=True).data
+    return Response({
+        'code': getattr(settings, 'SUCCESS_CODE', 1),
+        'message': "Successfully data fetched.",
+        'data': {
+            'donut_chart': data,
+            'signal_graph': '2'
+        }
+    }, status=status.HTTP_200_OK)
+
+
 class Login(LoginView):
     """
         Check the credentials and return the REST Token
@@ -526,7 +593,6 @@ class Login(LoginView):
 
     def login(self):
         self.user = self.serializer.validated_data['user']
-        print(type(self.user))
         self.token = self.create_token()
         if getattr(settings, 'REST_SESSION_LOGIN', True):
             self.process_login()
@@ -548,7 +614,7 @@ class Login(LoginView):
                 'id': self.user.id,
                 'first_name': self.user.first_name,
                 'last_name': self.user.last_name,
-                'profile_picture': self.user.profile.profile_picture if hasattr(self.user, 'profile') else '',
+                'profile_picture': self.user.profile.profile_picture.url if hasattr(self.user, 'profile') else '',
                 'auth_token': response.data.get('key'),
                 'device_id': response.data.get('device_id'),
                 'device_type': response.data.get('device_type'),
@@ -653,7 +719,6 @@ class ChangePasswordView(PasswordChangeView):
 def get_logged_in_user(request):
     serializer = UserSerializer(request.user)
     serializer_data = serializer.data
-    serializer_data.pop('profile')
     data = {
         "code": getattr(settings, 'SUCCESS_CODE', 1),
         "message": "Successfully fetched.",
