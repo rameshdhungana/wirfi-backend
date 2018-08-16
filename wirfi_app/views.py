@@ -334,7 +334,7 @@ class BillingView(generics.ListCreateAPIView):
     def list(self, request, *args, **kwargs):
         billings = self.get_queryset()
         stripe_customer_info = self.retrieve_stripe_customer_info()
-        if stripe_customer_info:
+        if stripe_customer_info['sources']['data']:
             message = "Details successfully fetched"
             code = getattr(settings, 'SUCCESS_CODE', 1)
         else:
