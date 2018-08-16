@@ -670,8 +670,7 @@ def get_token_obj(token):
 @api_view(['POST'])
 def delete_billing_card(request):
     stripe.api_key = settings.STRIPE_API_KEY
-    card_id = request.data
-    print(card_id, 222222222222222)
+    card_id = request.data['id']
     token = get_token_obj(request.auth)
     billing_obj = Billing.objects.get(user=token.user)
     customer = stripe.Customer.retrieve(billing_obj.customer_id)
