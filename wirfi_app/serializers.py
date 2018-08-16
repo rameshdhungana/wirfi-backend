@@ -6,7 +6,7 @@ from rest_framework import serializers, exceptions
 # from rest_auth.registration.serializers import RegisterSerializer
 
 from wirfi_app.models import Profile, Billing, Business, \
-    Device, DeviceLocationHours, DeviceNetwork, \
+    Device, DeviceLocationHours, DeviceStatus, DeviceNetwork, \
     AuthorizationToken
 
 try:
@@ -96,23 +96,23 @@ class BillingSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     profile = UserProfileSerializer()
-    # billing = BillingSerializer(read_only=True, many=True)
-    # business = BusinessSerializer(read_only=True)
 
     class Meta:
         model = User
         fields = ('id', 'email', 'first_name', 'last_name', 'full_name', 'profile',)
 
     def update(self, instance, validated_data):
-        print(validated_data)
         profile_data = validated_data.pop('profile')
         user = super().update(instance, validated_data)
         profile = Profile.objects.filter(user=user)
-        profile_validated_data = UserProfileSerializer().validate(profile_data)
         if profile:
+            profile_validated_data = UserProfileSerializer().validate(profile_data)
             profile_obj = UserProfileSerializer().update(profile.first(), profile_validated_data)
         else:
-            profile_obj = UserProfileSerializer().create(profile_validated_data)
+            serializer = UserProfileSerializer(data=profile_data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save(user=user)
+            profile_obj = Profile.objects.get(pk=serializer.data['id'])
         user.profile = profile_obj
         return user
 
@@ -138,6 +138,13 @@ class DeviceLocationHoursSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeviceLocationHours
         exclude = ('device',)
+
+
+class DeviceStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DeviceStatus
+        fields = '__all__'
+        read_only_fields = ('_date', '_time')
 
 
 class DeviceSerializer(serializers.ModelSerializer):

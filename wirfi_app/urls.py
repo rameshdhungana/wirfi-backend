@@ -2,7 +2,7 @@ from django.urls import path, re_path
 
 from rest_framework import routers
 
-from wirfi_app.views import UserDetailView, \
+from wirfi_app.views import UserDetailView, dashboard_view, add_device_status_view, \
     BusinessView, BusinessDetailView, \
     BillingView, BillingDetailView, \
     DeviceView, DeviceDetailView, DeviceNetworkView, DeviceNetworkDetailView, device_images_view, \
@@ -14,6 +14,8 @@ router = routers.DefaultRouter()
 # router.register(r'profile', ProfileApiView)
 
 urlpatterns = [
+    path('dashboard/', dashboard_view, name='dashboard'),
+
     path('billing/', BillingView.as_view()),
     path('billing/<int:id>/', BillingDetailView.as_view()),
 
@@ -24,6 +26,7 @@ urlpatterns = [
     path('user/<int:id>/image/', profile_images_view, name="user-image"),
 
     path('device/', DeviceView.as_view(), name="device-serial-number"),
+    path('device/<int:id>/status/', add_device_status_view, name="device_status"),
     path('device/<int:id>/', DeviceDetailView.as_view(), name="device-detail"),
     path('device/<int:id>/images/', device_images_view, name="device-images"),
     path('device/<int:device_id>/network/', DeviceNetworkView.as_view(), name="device-network"),

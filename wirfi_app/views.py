@@ -1,6 +1,5 @@
 import stripe
 import datetime
-from django.shortcuts import reverse
 
 from django.contrib.auth import get_user_model, logout as django_logout
 from django.conf import settings
@@ -22,10 +21,10 @@ from allauth.account import app_settings as allauth_settings
 from allauth.account.utils import complete_signup
 
 from wirfi_app.models import Billing, Business, Profile, \
-    Device, DeviceLocationHours, DeviceNetwork, \
+    Device, DeviceLocationHours, DeviceNetwork, DeviceStatus, \
     Subscription, AuthorizationToken
-from wirfi_app.serializers import UserSerializer, UserProfileSerializer, \
-    DeviceSerializer, DeviceLocationHoursSerializer, DeviceNetworkSerializer, \
+from wirfi_app.serializers import UserSerializer, \
+    DeviceSerializer, DeviceLocationHoursSerializer, DeviceNetworkSerializer, DeviceStatusSerializer, \
     BusinessSerializer, BillingSerializer, \
     UserRegistrationSerializer, LoginSerializer, AuthorizationTokenSerializer
 
@@ -528,7 +527,35 @@ def stripe_token_registration(request):
     #     customer=customer.id,
     #     receipt_email=email
     # )
-    return Response({"code": 1, "message": "Got some data!", "data": data})
+    return Response({"code": getattr(settings, 'SUCCESS_CODE', 1), "message": "Got some data!", "data": data})
+
+
+@api_view(['POST'])
+def add_device_status_view(request, id):
+    device_status = DeviceStatus()
+    device_status.status = request.data['status']
+    device_status.device_id = id
+    device_status.save()
+    return Response({
+        'code': getattr(settings, 'SUCCESS_CODE', 1),
+        'message': 'Device status successfully added.'
+    }, status=status.HTTP_201_CREATED)
+
+
+@api_view(['GET'])
+def dashboard_view(request):
+    token = get_token_obj(request.auth)
+    print(datetime.date)
+    device_status = DeviceStatus.objects.filter(device__user=token.user)  #.filter(date=datetime.date)
+    data = DeviceStatusSerializer(device_status, many=True).data
+    return Response({
+        'code': getattr(settings, 'SUCCESS_CODE', 1),
+        'message': "Successfully data fetched.",
+        'data': {
+            'donut_chart': data,
+            'signal_graph': '2'
+        }
+    }, status=status.HTTP_200_OK)
 
 
 class Login(LoginView):
@@ -561,7 +588,6 @@ class Login(LoginView):
 
     def login(self):
         self.user = self.serializer.validated_data['user']
-        print(type(self.user))
         self.token = self.create_token()
         if getattr(settings, 'REST_SESSION_LOGIN', True):
             self.process_login()
