@@ -330,7 +330,7 @@ class BillingView(generics.ListCreateAPIView):
     def list(self, request, *args, **kwargs):
         billings = self.get_queryset()
         stripe_customer_info = self.retrieve_stripe_customer_info()
-        if stripe_customer_info:
+        if stripe_customer_info['sources']['data']:
             message = "Details successfully fetched"
             code = getattr(settings, 'SUCCESS_CODE', 1)
         else:
@@ -606,7 +606,7 @@ class Login(LoginView):
                 'id': self.user.id,
                 'first_name': self.user.first_name,
                 'last_name': self.user.last_name,
-                'profile_picture': self.user.profile.profile_picture if hasattr(self.user, 'profile') else '',
+                'profile_picture': self.user.profile.profile_picture.url if hasattr(self.user, 'profile') else '',
                 'auth_token': response.data.get('key'),
                 'device_id': response.data.get('device_id'),
                 'device_type': response.data.get('device_type'),
@@ -711,7 +711,6 @@ class ChangePasswordView(PasswordChangeView):
 def get_logged_in_user(request):
     serializer = UserSerializer(request.user)
     serializer_data = serializer.data
-    serializer_data.pop('profile')
     data = {
         "code": getattr(settings, 'SUCCESS_CODE', 1),
         "message": "Successfully fetched.",
