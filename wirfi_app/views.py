@@ -334,27 +334,28 @@ class BillingView(generics.ListCreateAPIView):
     def list(self, request, *args, **kwargs):
         billings = self.get_queryset()
         stripe_customer_info = self.retrieve_stripe_customer_info()
-        if stripe_customer_info['sources']['data']:
-            message = "Details successfully fetched"
-            code = getattr(settings, 'SUCCESS_CODE', 1)
-        else:
-            message = "No any billing data"
-            code = 2
-
         serializer = BillingSerializer(billings, many=True)
+        if stripe_customer_info:
+            data = {
+                'code': getattr(settings, 'SUCCESS_CODE', 1),
+                'message': "Details successfully fetched",
+                'data': {
+                    'billing_info': stripe_customer_info,
+                    'email': request.user.email,
+                    'billings': [dict(data) for data in serializer.data][0]
+
+                },
+
+            }
+
+        else:
+            data = {
+                'code': 2,
+                'message': "No any billing data"
+            }
+
         headers = self.get_success_headers(serializer.data)
 
-        data = {
-            'code': code,
-            'message': message,
-            'data': {
-                'billing_info': stripe_customer_info,
-                'email': request.user.email,
-                'billings': [dict(data) for data in serializer.data][0]
-
-            },
-
-        }
         print(data)
         return Response(data, status=status.HTTP_200_OK, headers=headers)
 
@@ -551,7 +552,7 @@ def add_device_status_view(request, id):
 def dashboard_view(request):
     token = get_token_obj(request.auth)
     print(datetime.date)
-    device_status = DeviceStatus.objects.filter(device__user=token.user)  #.filter(date=datetime.date)
+    device_status = DeviceStatus.objects.filter(device__user=token.user)  # .filter(date=datetime.date)
     data = DeviceStatusSerializer(device_status, many=True).data
     return Response({
         'code': getattr(settings, 'SUCCESS_CODE', 1),
