@@ -330,7 +330,10 @@ class BillingView(generics.ListCreateAPIView):
     def list(self, request, *args, **kwargs):
         billings = self.get_queryset()
         stripe_customer_info = self.retrieve_stripe_customer_info()
-        if stripe_customer_info['sources']['data']:
+        print("########")
+        print(stripe_customer_info)
+        print("#############################")
+        if stripe_customer_info:
             message = "Details successfully fetched"
             code = getattr(settings, 'SUCCESS_CODE', 1)
         else:
@@ -345,13 +348,13 @@ class BillingView(generics.ListCreateAPIView):
             'message': message,
             'data': {
                 'billing_info': stripe_customer_info,
-                'email': request.user.email,
-                'billings': [dict(data) for data in serializer.data][0]
+                'email': request.user.email
+                # 'billings': [dict(data) for data in serializer.data][0]
 
             },
 
         }
-        print(data)
+        # print(data)
         return Response(data, status=status.HTTP_200_OK, headers=headers)
 
     def create(self, request, *args, **kwargs):
@@ -388,7 +391,7 @@ class BillingView(generics.ListCreateAPIView):
         return Response(data, status=status.HTTP_201_CREATED, headers=headers)
 
 
-class BillingDetailView(generics.RetrieveUpdateDestroyAPIView):
+class BillingDetailView(generics.RetrieveUpdateAPIView):
     lookup_field = 'id'
     serializer_class = BillingSerializer
 
