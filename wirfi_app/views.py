@@ -61,12 +61,6 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
         user = self.get_object()
         token = get_token_obj(self.request.auth)
         serializer = UserSerializer(user, data=request.data)
-
-        # if hasattr(user, 'profile'):
-        #     serializer = UserProfileSerializer(user.profile, data=request.data, partial=True)
-        # else:
-        #     serializer = UserProfileSerializer(data=request.data)
-
         serializer.is_valid(raise_exception=True)
         serializer.save(user=token.user)
         data = {
@@ -80,7 +74,8 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
 @api_view(['POST'])
 def profile_images_view(request, id):
     profile_picture = request.FILES.get('profile_picture', '')
-    if not profile_picture:
+    user = get_token_obj(request.auth).user
+    if not profile_picture and not user.profile.profile_picture:
         return Response({
             "code": getattr(settings, 'ERROR_CODE', 0),
             "message": "Please upload the image."},
@@ -88,8 +83,9 @@ def profile_images_view(request, id):
 
     try:
         profile = Profile.objects.get(user__id=id)
-        profile.profile_picture = profile_picture
-        profile.save()
+        if profile_picture:
+            profile.profile_picture = profile_picture
+            profile.save()
         user = UserSerializer(profile.user).data
         return Response({
             "code": getattr(settings, 'SUCCESS_CODE', 1),
@@ -363,7 +359,6 @@ class BillingView(generics.ListCreateAPIView):
         # Set your secret key: remember to change this to your live secret key in production
         # See your keys here: https://dashboard.stripe.com/account/apikeys
         stripe.api_key = settings.STRIPE_API_KEY
-        print(data)
 
         # Token is created using Checkout or Elements!
         # Get the payment token ID submitted by the form:
@@ -491,11 +486,6 @@ class BusinessDetailView(generics.UpdateAPIView, generics.DestroyAPIView):
         return Response(data, status=status.HTTP_200_OK)
 
 
-# class ProfileApiView(viewsets.ModelViewSet):
-#     queryset = Profile.objects.all()
-#     serializer_class = UserProfileSerializer
-
-
 @api_view(['POST'])
 def stripe_token_registration(request):
     data = request.data
@@ -550,8 +540,10 @@ def add_device_status_view(request, id):
 @api_view(['GET'])
 def dashboard_view(request):
     token = get_token_obj(request.auth)
-    print(datetime.date)
-    device_status = DeviceStatus.objects.filter(device__user=token.user)  #.filter(date=datetime.date)
+    today_date = datetime.date.today()
+    device_status = DeviceStatus.objects.filter(device__user=token.user)\
+        .filter(date__year=2018, date__month=8, date__day=16)\
+        .order_by('time')
     data = DeviceStatusSerializer(device_status, many=True).data
     return Response({
         'code': getattr(settings, 'SUCCESS_CODE', 1),
@@ -566,7 +558,7 @@ def dashboard_view(request):
 class Login(LoginView):
     """
         Check the credentials and return the REST Token
-        if the credentials are valid and authenticated.
+        if the credentials are valid and authenticated.k
         Calls Django Auth login method to register User ID
         in Django session framework
 
