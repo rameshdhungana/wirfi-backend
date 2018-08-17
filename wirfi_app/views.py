@@ -341,17 +341,26 @@ class BillingView(generics.ListCreateAPIView):
             code = 2
 
         serializer = BillingSerializer(billings, many=True)
+
+        if stripe_customer_info:
+            data = {
+                'code': getattr(settings, 'SUCCESS_CODE', 1),
+                'message': "Details successfully fetched",
+                'data': {
+                    'billing_info': stripe_customer_info,
+                    'email': request.user.email,
+
+                },
+
+            }
+
+        else:
+            data = {
+                'code': 2,
+                'message': "No any billing data"
+            }
+
         headers = self.get_success_headers(serializer.data)
-
-        data = {
-            'code': code,
-            'message': message,
-            'data': {
-                'billing_info': stripe_customer_info,
-                'email': request.user.email
-                # 'billings': [dict(data) for data in serializer.data][0]
-
-            },
 
         }
         # print(data)
@@ -543,9 +552,11 @@ def add_device_status_view(request, id):
 @api_view(['GET'])
 def dashboard_view(request):
     token = get_token_obj(request.auth)
+    print(datetime.date)
+    device_status = DeviceStatus.objects.filter(device__user=token.user)  # .filter(date=datetime.date)
     today_date = datetime.date.today()
-    device_status = DeviceStatus.objects.filter(device__user=token.user)\
-        .filter(date__year=2018, date__month=8, date__day=16)\
+    device_status = DeviceStatus.objects.filter(device__user=token.user) \
+        .filter(date__year=2018, date__month=8, date__day=16) \
         .order_by('time')
     data = DeviceStatusSerializer(device_status, many=True).data
     return Response({
