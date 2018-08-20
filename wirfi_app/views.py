@@ -362,7 +362,6 @@ class BillingView(generics.ListCreateAPIView):
 
         headers = self.get_success_headers(serializer.data)
 
-        
         # print(data)
         return Response(data, status=status.HTTP_200_OK, headers=headers)
 
