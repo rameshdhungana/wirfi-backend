@@ -13,9 +13,9 @@ def combine_multiple(exceptions):
             key = ''
 
         if message:
-            message += ", '{0}': {1}".format(key, ''.join(val))
+            message += ", '{0}': {1}".format(key, ''.join(val)) if key else ", '{}".format(''.join(val))
         else:
-            message += "'{0}': {1}".format(key, ''.join(val))
+            message += "'{0}': {1}".format(key, ''.join(val)) if key else ", '{}".format(''.join(val))
     return message
 
 
