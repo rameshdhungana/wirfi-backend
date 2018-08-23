@@ -27,9 +27,10 @@ from wirfi_app.models import Billing, Business, Profile, \
     Device, Industry, DeviceLocationHours, DeviceNetwork, DeviceStatus, \
     Subscription, AuthorizationToken
 from wirfi_app.serializers import UserSerializer, \
-    DeviceSerializer, DeviceLocationHoursSerializer, DeviceNetworkSerializer, DeviceStatusSerializer, \
-    IndustryTypeSerializer, BusinessSerializer, BillingSerializer, \
-    UserRegistrationSerializer, LoginSerializer, AuthorizationTokenSerializer
+    DeviceSerializer,DevicePrioritySerializer, DeviceLocationHoursSerializer, DeviceNetworkSerializer, DeviceStatusSerializer, \
+    BusinessSerializer, BillingSerializer, \
+    UserRegistrationSerializer, LoginSerializer, AuthorizationTokenSerializer,\
+    IndustryTypeSerializer
 
 sensitive_post_parameters_m = method_decorator(
     sensitive_post_parameters(
@@ -175,6 +176,18 @@ class DeviceView(generics.ListCreateAPIView):
         }
         return Response(data, status=status.HTTP_201_CREATED, headers=headers)
 
+@api_view(['PUT'])
+def device_priority_view(request,id):
+    device = Device.objects.get(pk=id)
+    serializer = DevicePrioritySerializer(device,data=request.data)
+    serializer.is_valid(raise_exception = True)
+    serializer.save()
+    data = {
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
+            'message': "Sucesfully priority updated.",
+            'data': serializer.data
+        }
+    return Response(data, status=status.HTTP_200_OK)     
 
 @api_view(['POST'])
 def device_images_view(request, id):
@@ -203,6 +216,7 @@ def device_images_view(request, id):
             "code": getattr(settings, 'ERROR_CODE', 0),
             "message": str(err)},
             status=status.HTTP_400_BAD_REQUEST)
+
 
 
 class DeviceDetailView(generics.RetrieveUpdateDestroyAPIView):

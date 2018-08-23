@@ -157,6 +157,10 @@ class IndustryTypeSerializer(serializers.ModelSerializer):
     def get_user_created(self, obj):
         return True if obj.user else False
 
+class DevicePrioritySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Device
+        fields = ('id','priority')
 
 class DeviceSerializer(serializers.ModelSerializer):
     industry_type = IndustryTypeSerializer(read_only=True)

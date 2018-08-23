@@ -133,6 +133,7 @@ class Device(models.Model):
     latitude = models.FloatField(default=0)
     longitude = models.FloatField(default=0)
     industry_type = models.ForeignKey(Industry, on_delete=models.CASCADE, related_name="industry_type")
+    priority = models.BooleanField(default=False)
 
     def __str__(self):
         return self.serial_number

@@ -4,8 +4,8 @@ from rest_framework import routers
 
 from wirfi_app.views import UserDetailView, dashboard_view, add_device_status_view, \
     BusinessView, BusinessDetailView, \
-    BillingView, BillingDetailView, IndustryTypeView, \
-    DeviceView, DeviceDetailView, DeviceNetworkView, DeviceNetworkDetailView, device_images_view, \
+    BillingView, BillingDetailView, \
+    DeviceView, device_priority_view, DeviceDetailView, IndustryTypeView, DeviceNetworkView, DeviceNetworkDetailView, device_images_view, \
     Login, logout, RegisterUserView, VerifyEmailRegisterView, \
     ResetPasswordView, ResetPasswordConfirmView, ChangePasswordView, get_logged_in_user, delete_billing_card, \
     profile_images_view
@@ -31,6 +31,7 @@ urlpatterns = [
     path('device/<int:id>/status/', add_device_status_view, name="device_status"),
     path('device/<int:id>/', DeviceDetailView.as_view(), name="device-detail"),
     path('device/<int:id>/images/', device_images_view, name="device-images"),
+    path('device/<int:id>/priority/',device_priority_view,name= "device-priority"),
     path('device/<int:device_id>/network/', DeviceNetworkView.as_view(), name="device-network"),
     path('device/<int:device_id>/network/<int:id>/', DeviceNetworkDetailView.as_view(), name="device-network-detail"),
     # path('device/<int:device_id>/location-hours/', DeviceLocationHoursView.as_view(), name="device-location-hours"),
