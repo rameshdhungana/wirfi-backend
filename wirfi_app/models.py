@@ -15,9 +15,9 @@ PLAN_CURRENCY = 'usd'
 
 DEVICE_STATUS = (
     (1, 'ONLINE'),
-    (2, 'USING CELLULAR'),
-    (3, 'WITH POOR SIGNAL'),
-    (4, 'MISSED PING'),
+    (2, 'CELL'),
+    (3, 'AUTO RECOVER'),
+    (4, 'WEAK SIGNAL'),
     (5, 'OFFLINE'),
     (6, 'ASLEEP'),
 )
@@ -86,6 +86,11 @@ class User(AbstractBaseUser, PermissionsMixin):
         return self.email
 
 
+class Industry(models.Model):
+    name = models.CharField(max_length=50)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
+
+
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     profile_picture = models.ImageField(upload_to='users/profile_pictures', null=True, blank=True)
@@ -127,6 +132,7 @@ class Device(models.Model):
     address = models.CharField(max_length=100)
     latitude = models.FloatField(default=0)
     longitude = models.FloatField(default=0)
+    industry_type = models.ForeignKey(Industry, on_delete=models.CASCADE, related_name="industry_type")
 
     def __str__(self):
         return self.serial_number

@@ -6,7 +6,7 @@ from rest_framework import serializers, exceptions
 # from rest_auth.registration.serializers import RegisterSerializer
 
 from wirfi_app.models import Profile, Billing, Business, \
-    Device, DeviceLocationHours, DeviceStatus, DeviceNetwork, \
+    Device, Industry, DeviceLocationHours, DeviceStatus, DeviceNetwork, \
     AuthorizationToken
 
 try:
@@ -147,7 +147,19 @@ class DeviceStatusSerializer(serializers.ModelSerializer):
         read_only_fields = ('_date', '_time')
 
 
+class IndustryTypeSerializer(serializers.ModelSerializer):
+    user_created = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Industry
+        fields = ('id', 'name', 'user_created',)
+
+    def get_user_created(self, obj):
+        return True if obj.user else False
+
+
 class DeviceSerializer(serializers.ModelSerializer):
+    industry_type = IndustryTypeSerializer(read_only=True)
     network = DeviceNetworkSerializer(read_only=True)
     location_hours = DeviceLocationHoursSerializer(many=True)
 
