@@ -169,7 +169,7 @@ class DeviceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Device
-        exclude = ('user',)
+        exclude = ('user','priority')
         read_only_fields = ('location_logo', 'machine_photo',)
 
     def create(self, validated_data):
