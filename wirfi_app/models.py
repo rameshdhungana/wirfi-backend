@@ -154,7 +154,7 @@ class DeviceLocationHours(models.Model):
 
 
 class DeviceStatus(models.Model):
-    device = models.OneToOneField(Device, on_delete=models.CASCADE)
+    device = models.ForeignKey(Device, on_delete=models.CASCADE)
     status = models.IntegerField(choices=DEVICE_STATUS, default=6)
     date = models.DateField(auto_now_add=True)
     time = models.TimeField(auto_now_add=True)

@@ -168,7 +168,8 @@ class DeviceSerializer(serializers.ModelSerializer):
     industry_type = IndustryTypeSerializer(read_only=True)
     network = DeviceNetworkSerializer(read_only=True)
     location_hours = DeviceLocationHoursSerializer(many=True)
-    industry_type = serializers.CharField(allow_blank=True, write_only=True)
+
+    industry_type_id = serializers.CharField(allow_blank=True, write_only=True)
     industry_name = serializers.CharField(allow_blank=True, write_only=True)
 
     class Meta:
@@ -178,6 +179,8 @@ class DeviceSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         location_hours_data = validated_data.pop('location_hours', [])
+        validated_data.pop('industry_type_id')
+        validated_data.pop('industry_name')
         device = Device.objects.create(**validated_data)
 
         for location_hour_data in location_hours_data:

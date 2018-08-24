@@ -1,8 +1,5 @@
 import stripe
 import datetime
-from django.shortcuts import reverse
-from django.core import serializers
-from django.forms.models import model_to_dict
 
 from django.db.models import Q
 from django.contrib.auth import get_user_model, logout as django_logout
@@ -152,7 +149,7 @@ class DeviceView(generics.ListCreateAPIView):
 
     def create(self, request, *args, **kwargs):
         token = get_token_obj(request.auth)
-        industry_id = request.data.get('industry_type', '')
+        industry_id = request.data.get('industry_id', '')
         industry_name = request.data.get('industry_name', '')
         if not industry_id and not industry_name:
             return Response({
@@ -187,7 +184,7 @@ def device_priority_view(request,id):
             'message': "Sucesfully priority updated.",
             'data': serializer.data
         }
-    return Response(data, status=status.HTTP_200_OK)     
+    return Response(data, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
 def device_images_view(request, id):
@@ -240,7 +237,7 @@ class DeviceDetailView(generics.RetrieveUpdateDestroyAPIView):
     def update(self, request, *args, **kwargs):
         device = self.get_object()
         token = get_token_obj(self.request.auth)
-        industry_id = request.data.get('industry_type', '')
+        industry_id = request.data.get('industry_type_id', '')
         industry_name = request.data.get('industry_name', '')
         if not industry_id and not industry_name:
             return Response({
@@ -611,12 +608,11 @@ def add_device_status_view(request, id):
 @api_view(['GET'])
 def dashboard_view(request):
     token = get_token_obj(request.auth)
-    print(datetime.date)
-    device_status = DeviceStatus.objects.filter(device__user=token.user)  # .filter(date=datetime.date)
-    today_date = datetime.date.today()
-    device_status = DeviceStatus.objects.filter(device__user=token.user) \
-        .filter(date__year=2018, date__month=8, date__day=16) \
-        .order_by('time')
+    # device_status = DeviceStatus.objects.filter(device__user=token.user)  # .filter(date=datetime.date)
+    # today_date = datetime.date.today()
+    device_status = DeviceStatus.objects.filter(device__user=token.user)#.order_by("device")#.distinct('device')
+        # .filter(date__year=2018, date__month=8, date__day=16) \
+
     data = DeviceStatusSerializer(device_status, many=True).data
     return Response({
         'code': getattr(settings, 'SUCCESS_CODE', 1),
