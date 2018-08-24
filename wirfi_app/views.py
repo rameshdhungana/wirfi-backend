@@ -1,9 +1,7 @@
 import stripe
 import datetime
-from django.shortcuts import reverse
-from django.core import serializers
-from django.forms.models import model_to_dict
 
+from django.db.models import Q
 from django.contrib.auth import get_user_model, logout as django_logout
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
@@ -15,7 +13,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.views.decorators.debug import sensitive_post_parameters
 
 from rest_framework.decorators import api_view
-from rest_framework import viewsets, generics
+from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework import status
 from rest_auth.registration.views import RegisterView, VerifyEmailView, VerifyEmailSerializer
@@ -27,12 +25,14 @@ from allauth.account import app_settings as allauth_settings
 from allauth.account.utils import complete_signup
 
 from wirfi_app.models import Billing, Business, Profile, \
-    Device, DeviceLocationHours, DeviceNetwork, DeviceStatus, \
+    Device, Industry, DeviceLocationHours, DeviceNetwork, DeviceStatus, \
     Subscription, AuthorizationToken
 from wirfi_app.serializers import UserSerializer, \
-    DeviceSerializer, DeviceLocationHoursSerializer, DeviceNetworkSerializer, DeviceStatusSerializer, \
+    DeviceSerializer, DevicePrioritySerializer, DeviceLocationHoursSerializer, DeviceNetworkSerializer, \
+    DeviceStatusSerializer, \
     BusinessSerializer, BillingSerializer, \
-    UserRegistrationSerializer, LoginSerializer, AuthorizationTokenSerializer
+    UserRegistrationSerializer, LoginSerializer, AuthorizationTokenSerializer, \
+    IndustryTypeSerializer
 
 sensitive_post_parameters_m = method_decorator(
     sensitive_post_parameters(
@@ -103,6 +103,35 @@ def profile_images_view(request, id):
             status=status.HTTP_400_BAD_REQUEST)
 
 
+class IndustryTypeView(generics.ListCreateAPIView):
+    serializer_class = IndustryTypeSerializer
+
+    def get_queryset(self):
+        token = get_token_obj(self.request.auth)
+        return Industry.objects.filter(Q(user__isnull=True) | Q(user=token.user))
+
+    def list(self, request, *args, **kwargs):
+        industry_types = self.get_queryset()
+        serializer = IndustryTypeSerializer(industry_types, many=True)
+        return Response({
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
+            'message': "Successfully fetched industry types.",
+            'data': serializer.data
+        }, status=status.HTTP_200_OK)
+
+    def create(self, request, *args, **kwargs):
+        data = request.data
+        token = get_token_obj(self.request.auth)
+        serializer = IndustryTypeSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=token.user)
+        return Response({
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
+            'message': "Successfully added industry type.",
+            'data': serializer.data
+        }, status=status.HTTP_201_CREATED)
+
+
 class DeviceView(generics.ListCreateAPIView):
     serializer_class = DeviceSerializer
 
@@ -125,9 +154,22 @@ class DeviceView(generics.ListCreateAPIView):
 
     def create(self, request, *args, **kwargs):
         token = get_token_obj(request.auth)
+        industry_id = request.data.get('industry_type_id', '')
+        industry_name = request.data.get('industry_name', '')
+        if not industry_id and not industry_name:
+            return Response({
+                'code': getattr(settings, 'ERROR_CODE', 0),
+                'message': "Industry Type can't be null/blank."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if industry_name:
+            industry = Industry.objects.create(name=industry_name, user=token.user)
+        else:
+            industry = Industry.objects.get(pk=industry_id)
+
         serializer = DeviceSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(user=token.user)
+        serializer.save(user=token.user, industry_type=industry)
         headers = self.get_success_headers(serializer.data)
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
@@ -135,6 +177,20 @@ class DeviceView(generics.ListCreateAPIView):
             'data': serializer.data
         }
         return Response(data, status=status.HTTP_201_CREATED, headers=headers)
+
+
+@api_view(['PUT'])
+def device_priority_view(request, id):
+    device = Device.objects.get(pk=id)
+    serializer = DevicePrioritySerializer(device, data=request.data)
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
+    data = {
+        'code': getattr(settings, 'SUCCESS_CODE', 1),
+        'message': "Sucesfully priority updated.",
+        'data': serializer.data
+    }
+    return Response(data, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
@@ -187,10 +243,22 @@ class DeviceDetailView(generics.RetrieveUpdateDestroyAPIView):
     def update(self, request, *args, **kwargs):
         device = self.get_object()
         token = get_token_obj(self.request.auth)
+        industry_id = request.data.get('industry_type_id', '')
+        industry_name = request.data.get('industry_name', '')
+        if not industry_id and not industry_name:
+            return Response({
+                'code': getattr(settings, 'ERROR_CODE', 0),
+                'message': "Industry Type can't be null/blank."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if industry_name:
+            industry = Industry.objects.create(name=industry_name, user=token.user)
+        else:
+            industry = Industry.objects.get(pk=industry_id)
 
         serializer = DeviceSerializer(device, data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(user=token.user)
+        serializer.save(user=token.user, industry_type=industry)
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Device successfully updated.",
@@ -333,9 +401,6 @@ class BillingView(generics.ListCreateAPIView):
     def list(self, request, *args, **kwargs):
         billings = self.get_queryset()
         stripe_customer_info = self.retrieve_stripe_customer_info()
-        print("########")
-        print(stripe_customer_info)
-        print("#############################")
         if stripe_customer_info:
             message = "Details successfully fetched"
             code = getattr(settings, 'SUCCESS_CODE', 1)
@@ -352,17 +417,13 @@ class BillingView(generics.ListCreateAPIView):
                 'data': {
                     'billing_info': stripe_customer_info,
                     'email': request.user.email,
-
                 },
-
             }
-
         else:
             data = {
                 'code': 2,
                 'message': "No any billing data"
             }
-
         headers = self.get_success_headers(serializer.data)
 
         # print(data)
@@ -382,6 +443,7 @@ class BillingView(generics.ListCreateAPIView):
         token = get_token_obj(request.auth)
         serializer = BillingSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
         try:
             billing_obj = Billing.objects.get(user=token.user)
             customer = stripe.Customer.retrieve(billing_obj.customer_id)
@@ -501,45 +563,6 @@ class BusinessDetailView(generics.UpdateAPIView, generics.DestroyAPIView):
 
 
 @api_view(['POST'])
-def stripe_token_registration(request):
-    data = request.data
-    print(data)
-    # Set your secret key: remember to change this to your live secret key in production
-    # See your keys here: https://dashboard.stripe.com/account/apikeys
-    stripe.api_key = settings.STRIPE_API_KEY
-
-    # Token is created using Checkout or Elements!
-    # Get the payment token ID submitted by the form:
-    token = data['id'].strip()
-    email = data['email']
-
-    # # Create a Customer:
-    customer = stripe.Customer.create(
-        source=token,
-        email=email
-    )
-    Billing.objects.get_or_create(user=self.request.user, )
-
-    # Charge the Customer instead of the card:
-    # Subscription.objects.create(customer_id=customer.id, user=request.user, email=email, service_plan=1)
-
-    # charge = stripe.Charge.create(
-    #     amount=999,
-    #     currency='usd',
-    #     description='Example charge',
-    #     source=token,
-    #     statement_descriptor='Custom descriptor'
-    # )
-    # charge = stripe.Charge.create(
-    #     amount=1000,
-    #     currency='usd',
-    #     customer=customer.id,
-    #     receipt_email=email
-    # )
-    return Response({"code": getattr(settings, 'SUCCESS_CODE', 1), "message": "Got some data!", "data": data})
-
-
-@api_view(['POST'])
 def add_device_status_view(request, id):
     device_status = DeviceStatus()
     device_status.status = request.data['status']
@@ -554,12 +577,11 @@ def add_device_status_view(request, id):
 @api_view(['GET'])
 def dashboard_view(request):
     token = get_token_obj(request.auth)
-    print(datetime.date)
-    device_status = DeviceStatus.objects.filter(device__user=token.user)  # .filter(date=datetime.date)
-    today_date = datetime.date.today()
-    device_status = DeviceStatus.objects.filter(device__user=token.user) \
-        .filter(date__year=2018, date__month=8, date__day=16) \
-        .order_by('time')
+    # device_status = DeviceStatus.objects.filter(device__user=token.user)  # .filter(date=datetime.date)
+    # today_date = datetime.date.today()
+    device_status = DeviceStatus.objects.filter(device__user=token.user)  # .order_by("device")#.distinct('device')
+    # .filter(date__year=2018, date__month=8, date__day=16) \
+
     data = DeviceStatusSerializer(device_status, many=True).data
     return Response({
         'code': getattr(settings, 'SUCCESS_CODE', 1),
