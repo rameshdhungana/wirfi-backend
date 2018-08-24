@@ -149,7 +149,7 @@ class DeviceView(generics.ListCreateAPIView):
 
     def create(self, request, *args, **kwargs):
         token = get_token_obj(request.auth)
-        industry_id = request.data.get('industry_id', '')
+        industry_id = request.data.get('industry_type_id', '')
         industry_name = request.data.get('industry_name', '')
         if not industry_id and not industry_name:
             return Response({
@@ -213,7 +213,6 @@ def device_images_view(request, id):
             "code": getattr(settings, 'ERROR_CODE', 0),
             "message": str(err)},
             status=status.HTTP_400_BAD_REQUEST)
-
 
 
 class DeviceDetailView(generics.RetrieveUpdateDestroyAPIView):
