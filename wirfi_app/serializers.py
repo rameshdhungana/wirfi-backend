@@ -157,15 +157,19 @@ class IndustryTypeSerializer(serializers.ModelSerializer):
     def get_user_created(self, obj):
         return True if obj.user else False
 
+
 class DevicePrioritySerializer(serializers.ModelSerializer):
     class Meta:
         model = Device
         fields = ('id','priority')
 
+
 class DeviceSerializer(serializers.ModelSerializer):
     industry_type = IndustryTypeSerializer(read_only=True)
     network = DeviceNetworkSerializer(read_only=True)
     location_hours = DeviceLocationHoursSerializer(many=True)
+    industry_type = serializers.CharField(allow_blank=True, write_only=True)
+    industry_name = serializers.CharField(allow_blank=True, write_only=True)
 
     class Meta:
         model = Device

@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='device',
             name='industry_type',
-            field=models.ForeignKey(default=6, on_delete=django.db.models.deletion.CASCADE, related_name='industry_type', to='wirfi_app.Industry'),
+            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE, related_name='industry_type', to='wirfi_app.Industry'),
             preserve_default=False,
         ),
         migrations.AlterField(
