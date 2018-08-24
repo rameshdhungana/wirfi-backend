@@ -8,7 +8,7 @@ from wirfi_app.views import UserDetailView, dashboard_view, add_device_status_vi
     DeviceView, DeviceDetailView, DeviceNetworkView, DeviceNetworkDetailView, device_images_view, \
     Login, logout, RegisterUserView, VerifyEmailRegisterView, \
     ResetPasswordView, ResetPasswordConfirmView, ChangePasswordView, get_logged_in_user, delete_billing_card, \
-    profile_images_view
+    profile_images_view,validate_reset_password
 
 router = routers.DefaultRouter()
 # router.register(r'profile', ProfileApiView)
@@ -43,6 +43,8 @@ urlpatterns = [
             name='account_email_verification_sent'),
 
     path('reset-password/', ResetPasswordView.as_view(), name="reset-password"),
+    path('validate-reset-password/<slug:uid>/<slug:token>/', validate_reset_password, name="validate_reset_password"),
+
     path('reset-password/confirm/', ResetPasswordConfirmView.as_view(), name="confirm-reset"),
     path('reset/<uidb64>/<token>/', ResetPasswordConfirmView.as_view(), name='password_reset_confirm'),
 

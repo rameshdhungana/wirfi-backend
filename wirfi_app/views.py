@@ -8,6 +8,9 @@ from django.contrib.auth import get_user_model, logout as django_logout
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.decorators import method_decorator
+from django.utils.encoding import force_text
+from django.utils.http import urlsafe_base64_decode as uid_decoder
+from django.contrib.auth.tokens import default_token_generator
 
 from django.views.decorators.debug import sensitive_post_parameters
 
@@ -761,3 +764,32 @@ def delete_billing_card(request):
     }
 
     return Response(data, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+def validate_reset_password(request, uid, token):
+    # Decode the uidb64 to uid to get User object
+    try:
+        uid = force_text(uid_decoder(uid))
+        user = User.objects.get(pk=uid)
+        if default_token_generator.check_token(user, token):
+            data = {
+                "code": getattr(settings, 'SUCCESS_CODE', 1),
+                "message": "Password Reset Link is valid",
+                "data": {
+                    "email": user.email
+                }
+            }
+        else:
+            data = {
+                "code": 0,
+                "message": "Password Reset Link is Invalid",
+            }
+        return Response(data, status=status.HTTP_200_OK)
+
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        data = {
+            "code": 0,
+            "message": "Password Reset Link is Invalid",
+        }
+        return Response(data, status=status.HTTP_400_BAD_REQUEST)
