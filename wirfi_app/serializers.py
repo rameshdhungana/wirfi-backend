@@ -174,8 +174,8 @@ class DeviceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Device
-        exclude = ('user','priority')
-        read_only_fields = ('location_logo', 'machine_photo',)
+        exclude = ('user',)
+        read_only_fields = ('location_logo', 'machine_photo', 'priority',)
 
     def create(self, validated_data):
         location_hours_data = validated_data.pop('location_hours', [])
