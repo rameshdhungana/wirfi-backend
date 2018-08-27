@@ -132,6 +132,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 6,
+        }
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
@@ -139,6 +142,7 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
+
 ]
 
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
@@ -193,6 +197,8 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
+
+PASSWORD_VALIDATION_REGEX_PATTERN = config('PASSWORD_VALIDATION_REGEX_PATTERN')
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.0/howto/static-files/

@@ -148,13 +148,13 @@ class DeviceStatusSerializer(serializers.ModelSerializer):
 
 
 class IndustryTypeSerializer(serializers.ModelSerializer):
-    is_user_created = serializers.SerializerMethodField()
+    user_created = serializers.SerializerMethodField()
 
     class Meta:
         model = Industry
-        fields = ('id', 'name', 'is_user_created',)
+        fields = ('id', 'name', 'user_created',)
 
-    def get_is_user_created(self, obj):
+    def get_user_created(self, obj):
         return True if obj.user else False
 
 
@@ -174,7 +174,7 @@ class DeviceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Device
         exclude = ('user',)
-        read_only_fields = ('location_logo', 'machine_photo', 'priority')
+        read_only_fields = ('location_logo', 'machine_photo','priority',)
 
     def create(self, validated_data):
         location_hours_data = validated_data.pop('location_hours', [])

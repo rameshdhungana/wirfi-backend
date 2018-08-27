@@ -1,5 +1,6 @@
 import stripe
 import datetime
+import re
 
 from django.db.models import Q
 from django.contrib.auth import get_user_model, logout as django_logout
@@ -41,6 +42,11 @@ sensitive_post_parameters_m = method_decorator(
 )
 
 User = get_user_model()
+
+
+def valid_password_regex(password):
+    valid = re.match(settings.PASSWORD_VALIDATION_REGEX_PATTERN, password)
+    return valid
 
 
 class UserDetailView(generics.RetrieveUpdateAPIView):
@@ -200,7 +206,7 @@ class DeviceView(generics.ListCreateAPIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         industry = Industry.objects.get(pk=industry_id)
-        
+
         serializer = DeviceSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(user=token.user, industry_type=industry)
@@ -214,7 +220,7 @@ class DeviceView(generics.ListCreateAPIView):
 
 
 @api_view(['POST'])
-def device_priority_view(request,id):
+def device_priority_view(request, id):
     device = Device.objects.get(pk=id)
     serializer = DevicePrioritySerializer(device, data=request.data)
     serializer.is_valid(raise_exception=True)
@@ -617,7 +623,7 @@ def dashboard_view(request):
 
     # today_date = datetime.date.today()
     device_status = DeviceStatus.objects.filter(device__user=token.user).order_by('device', '-id').distinct('device')
-        #.filter(date__year=2018, date__month=8, date__day=16)
+    # .filter(date__year=2018, date__month=8, date__day=16)
 
     for device in device_status:
         donut[device_status_dict[device.status]] += 1
@@ -775,6 +781,13 @@ class ResetPasswordConfirmView(PasswordResetConfirmView):
     serializer_class = PasswordResetConfirmSerializer
 
     def post(self, request, *args, **kwargs):
+        print(request.data)
+        if not valid_password_regex(request.data['new_password1']):
+            data = {
+                "code": 0,
+                "message": "Password must be 6 characters long with at least 1 capital, 1 small and 1 special character."
+            }
+            return Response(data)
         response = super(ResetPasswordConfirmView, self).post(request, *args, **kwargs)
         response.data = {
             "code": getattr(settings, 'SUCCESS_CODE', 1),
@@ -787,6 +800,12 @@ class ChangePasswordView(PasswordChangeView):
     serializer_class = PasswordChangeSerializer
 
     def post(self, request, *args, **kwargs):
+        if not valid_password_regex(request.data['new_password1']):
+            data = {
+                "code": 0,
+                "message": "Password must be 6 characters long with at least 1 capital, 1 small and 1 special character."
+            }
+            return Response(data)
         response = super(ChangePasswordView, self).post(request, *args, **kwargs)
         response.data = {
             "code": getattr(settings, 'SUCCESS_CODE', 1),
