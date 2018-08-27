@@ -193,18 +193,14 @@ class DeviceView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         token = get_token_obj(request.auth)
         industry_id = request.data.get('industry_type_id', '')
-        industry_name = request.data.get('industry_name', '')
-        if not industry_id and not industry_name:
+        if not industry_id:
             return Response({
                 'code': getattr(settings, 'ERROR_CODE', 0),
                 'message': "Industry Type can't be null/blank."
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        if industry_name:
-            industry = Industry.objects.create(name=industry_name, user=token.user)
-        else:
-            industry = Industry.objects.get(pk=industry_id)
-
+        industry = Industry.objects.get(pk=industry_id)
+        
         serializer = DeviceSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(user=token.user, industry_type=industry)
