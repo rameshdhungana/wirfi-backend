@@ -22,7 +22,7 @@ from allauth.account.utils import complete_signup
 
 from wirfi_app.models import Billing, Business, Profile, \
     Device, Industry, DeviceLocationHours, DeviceNetwork, DeviceStatus, \
-    Subscription, AuthorizationToken
+    Subscription, AuthorizationToken, DEVICE_STATUS
 from wirfi_app.serializers import UserSerializer, \
     DeviceSerializer,DevicePrioritySerializer, DeviceLocationHoursSerializer, DeviceNetworkSerializer, DeviceStatusSerializer, \
     BusinessSerializer, BillingSerializer, \
@@ -98,7 +98,7 @@ def profile_images_view(request, id):
             status=status.HTTP_400_BAD_REQUEST)
 
 
-class IndustryTypeView(generics.ListCreateAPIView):
+class IndustryTypeListView(generics.ListCreateAPIView):
     serializer_class = IndustryTypeSerializer
 
     def get_queryset(self):
@@ -125,6 +125,44 @@ class IndustryTypeView(generics.ListCreateAPIView):
             'message': "Successfully added industry type.",
             'data': serializer.data
         }, status=status.HTTP_201_CREATED)
+
+
+class IndustryTypeDetailView(generics.RetrieveUpdateDestroyAPIView):
+    lookup_field = 'id'
+    serializer_class = IndustryTypeSerializer
+
+    def get_queryset(self):
+        token = get_token_obj(self.request.auth)
+        return Industry.objects.filter(Q(user__isnull=True) | Q(user=token.user)).filter(pk=self.kwargs['id'])
+
+    def retrieve(self, request, *args, **kwargs):
+        industry_type = self.get_object()
+        serializer = IndustryTypeSerializer(industry_type)
+        return Response({
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
+            'message': "Successfully fetched industry type.",
+            'data': serializer.data
+        }, status=status.HTTP_200_OK)
+
+    def update(self, request, *args, **kwargs):
+        industry_type = self.get_object()
+        token = get_token_obj(self.request.auth)
+        serializer = IndustryTypeSerializer(industry_type, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=token.user)
+        return Response({
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
+            'message': "Successfully updated industry type.",
+            'data': serializer.data
+        }, status=status.HTTP_200_OK)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response({
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
+            'message': "Successfully deleted industry type."
+        }, status=status.HTTP_200_OK)
 
 
 class DeviceView(generics.ListCreateAPIView):
@@ -173,7 +211,8 @@ class DeviceView(generics.ListCreateAPIView):
         }
         return Response(data, status=status.HTTP_201_CREATED, headers=headers)
 
-@api_view(['PUT'])
+
+@api_view(['POST'])
 def device_priority_view(request,id):
     device = Device.objects.get(pk=id)
     serializer = DevicePrioritySerializer(device,data=request.data)
@@ -609,8 +648,8 @@ def dashboard_view(request):
     token = get_token_obj(request.auth)
     # device_status = DeviceStatus.objects.filter(device__user=token.user)  # .filter(date=datetime.date)
     # today_date = datetime.date.today()
-    device_status = DeviceStatus.objects.filter(device__user=token.user)#.order_by("device")#.distinct('device')
-        # .filter(date__year=2018, date__month=8, date__day=16) \
+    device_status = DeviceStatus.objects.filter(device__user=token.user).order_by('device', '-id').distinct('device')
+        #.filter(date__year=2018, date__month=8, date__day=16)
 
     data = DeviceStatusSerializer(device_status, many=True).data
     return Response({
@@ -618,7 +657,8 @@ def dashboard_view(request):
         'message': "Successfully data fetched.",
         'data': {
             'donut_chart': data,
-            'signal_graph': '2'
+            'signal_graph': '2',
+            'status': dict((x,y) for x, y in DEVICE_STATUS)
         }
     }, status=status.HTTP_200_OK)
 
