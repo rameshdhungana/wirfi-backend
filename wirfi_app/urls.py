@@ -5,7 +5,8 @@ from rest_framework import routers
 from wirfi_app.views import UserDetailView, dashboard_view, add_device_status_view, \
     BusinessView, BusinessDetailView, \
     BillingView, BillingDetailView, \
-    DeviceView, device_priority_view, DeviceDetailView, IndustryTypeView, DeviceNetworkView, DeviceNetworkDetailView, device_images_view, \
+    IndustryTypeListView, IndustryTypeDetailView, \
+    DeviceView, device_priority_view, DeviceDetailView, DeviceNetworkView, DeviceNetworkDetailView, device_images_view, \
     Login, logout, RegisterUserView, VerifyEmailRegisterView, \
     ResetPasswordView, ResetPasswordConfirmView, ChangePasswordView, get_logged_in_user, delete_billing_card, \
     profile_images_view,validate_reset_password
@@ -25,7 +26,8 @@ urlpatterns = [
     path('user/<int:id>/', UserDetailView.as_view(), name="user-detail"),
     path('user/<int:id>/image/', profile_images_view, name="user-image"),
 
-    path('industry-type/', IndustryTypeView.as_view(), name="industry-type"),
+    path('industry-type/', IndustryTypeListView.as_view(), name="industry-type"),
+    path('industry-type/<int:id>/', IndustryTypeDetailView.as_view(), name="industry-type-detail"),
 
     path('device/', DeviceView.as_view(), name="device-serial-number"),
     path('device/<int:id>/status/', add_device_status_view, name="device_status"),
