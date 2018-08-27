@@ -1,14 +1,15 @@
 import stripe
 import datetime
-from django.shortcuts import reverse
-from django.core import serializers
-from django.forms.models import model_to_dict
 
 from django.db.models import Q
 from django.contrib.auth import get_user_model, logout as django_logout
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.decorators import method_decorator
+from django.utils.encoding import force_text
+from django.utils.http import urlsafe_base64_decode as uid_decoder
+from django.contrib.auth.tokens import default_token_generator
+
 from django.views.decorators.debug import sensitive_post_parameters
 
 from rest_framework.decorators import api_view
@@ -27,9 +28,10 @@ from wirfi_app.models import Billing, Business, Profile, \
     Device, Industry, DeviceLocationHours, DeviceNetwork, DeviceStatus, \
     Subscription, AuthorizationToken
 from wirfi_app.serializers import UserSerializer, \
-    DeviceSerializer,DevicePrioritySerializer, DeviceLocationHoursSerializer, DeviceNetworkSerializer, DeviceStatusSerializer, \
+    DeviceSerializer, DevicePrioritySerializer, DeviceLocationHoursSerializer, DeviceNetworkSerializer, \
+    DeviceStatusSerializer, \
     BusinessSerializer, BillingSerializer, \
-    UserRegistrationSerializer, LoginSerializer, AuthorizationTokenSerializer,\
+    UserRegistrationSerializer, LoginSerializer, AuthorizationTokenSerializer, \
     IndustryTypeSerializer
 
 sensitive_post_parameters_m = method_decorator(
@@ -152,7 +154,7 @@ class DeviceView(generics.ListCreateAPIView):
 
     def create(self, request, *args, **kwargs):
         token = get_token_obj(request.auth)
-        industry_id = request.data.get('industry_type', '')
+        industry_id = request.data.get('industry_type_id', '')
         industry_name = request.data.get('industry_name', '')
         if not industry_id and not industry_name:
             return Response({
@@ -176,18 +178,20 @@ class DeviceView(generics.ListCreateAPIView):
         }
         return Response(data, status=status.HTTP_201_CREATED, headers=headers)
 
+
 @api_view(['PUT'])
-def device_priority_view(request,id):
+def device_priority_view(request, id):
     device = Device.objects.get(pk=id)
-    serializer = DevicePrioritySerializer(device,data=request.data)
-    serializer.is_valid(raise_exception = True)
+    serializer = DevicePrioritySerializer(device, data=request.data)
+    serializer.is_valid(raise_exception=True)
     serializer.save()
     data = {
-            'code': getattr(settings, 'SUCCESS_CODE', 1),
-            'message': "Sucesfully priority updated.",
-            'data': serializer.data
-        }
-    return Response(data, status=status.HTTP_200_OK)     
+        'code': getattr(settings, 'SUCCESS_CODE', 1),
+        'message': "Sucesfully priority updated.",
+        'data': serializer.data
+    }
+    return Response(data, status=status.HTTP_200_OK)
+
 
 @api_view(['POST'])
 def device_images_view(request, id):
@@ -218,7 +222,6 @@ def device_images_view(request, id):
             status=status.HTTP_400_BAD_REQUEST)
 
 
-
 class DeviceDetailView(generics.RetrieveUpdateDestroyAPIView):
     lookup_field = 'id'
     serializer_class = DeviceSerializer
@@ -240,7 +243,7 @@ class DeviceDetailView(generics.RetrieveUpdateDestroyAPIView):
     def update(self, request, *args, **kwargs):
         device = self.get_object()
         token = get_token_obj(self.request.auth)
-        industry_id = request.data.get('industry_type', '')
+        industry_id = request.data.get('industry_type_id', '')
         industry_name = request.data.get('industry_name', '')
         if not industry_id and not industry_name:
             return Response({
@@ -422,6 +425,8 @@ class BillingView(generics.ListCreateAPIView):
                 'message': "No any billing data"
             }
         headers = self.get_success_headers(serializer.data)
+
+        # print(data)
         return Response(data, status=status.HTTP_200_OK, headers=headers)
 
     def create(self, request, *args, **kwargs):
@@ -558,45 +563,6 @@ class BusinessDetailView(generics.UpdateAPIView, generics.DestroyAPIView):
 
 
 @api_view(['POST'])
-def stripe_token_registration(request):
-    data = request.data
-    print(data)
-    # Set your secret key: remember to change this to your live secret key in production
-    # See your keys here: https://dashboard.stripe.com/account/apikeys
-    stripe.api_key = settings.STRIPE_API_KEY
-
-    # Token is created using Checkout or Elements!
-    # Get the payment token ID submitted by the form:
-    token = data['id'].strip()
-    email = data['email']
-
-    # # Create a Customer:
-    customer = stripe.Customer.create(
-        source=token,
-        email=email
-    )
-    Billing.objects.get_or_create(user=self.request.user, )
-
-    # Charge the Customer instead of the card:
-    # Subscription.objects.create(customer_id=customer.id, user=request.user, email=email, service_plan=1)
-
-    # charge = stripe.Charge.create(
-    #     amount=999,
-    #     currency='usd',
-    #     description='Example charge',
-    #     source=token,
-    #     statement_descriptor='Custom descriptor'
-    # )
-    # charge = stripe.Charge.create(
-    #     amount=1000,
-    #     currency='usd',
-    #     customer=customer.id,
-    #     receipt_email=email
-    # )
-    return Response({"code": getattr(settings, 'SUCCESS_CODE', 1), "message": "Got some data!", "data": data})
-
-
-@api_view(['POST'])
 def add_device_status_view(request, id):
     device_status = DeviceStatus()
     device_status.status = request.data['status']
@@ -611,12 +577,11 @@ def add_device_status_view(request, id):
 @api_view(['GET'])
 def dashboard_view(request):
     token = get_token_obj(request.auth)
-    print(datetime.date)
-    device_status = DeviceStatus.objects.filter(device__user=token.user)  # .filter(date=datetime.date)
-    today_date = datetime.date.today()
-    device_status = DeviceStatus.objects.filter(device__user=token.user) \
-        .filter(date__year=2018, date__month=8, date__day=16) \
-        .order_by('time')
+    # device_status = DeviceStatus.objects.filter(device__user=token.user)  # .filter(date=datetime.date)
+    # today_date = datetime.date.today()
+    device_status = DeviceStatus.objects.filter(device__user=token.user)  # .order_by("device")#.distinct('device')
+    # .filter(date__year=2018, date__month=8, date__day=16) \
+
     data = DeviceStatusSerializer(device_status, many=True).data
     return Response({
         'code': getattr(settings, 'SUCCESS_CODE', 1),
@@ -749,10 +714,18 @@ class ResetPasswordView(PasswordResetView):
 
     def post(self, request, *args, **kwargs):
         response = super(ResetPasswordView, self).post(request, *args, **kwargs)
-        response.data = {
-            "code": getattr(settings, 'SUCCESS_CODE', 1),
-            "message": "Password reset e-mail has been sent. Please check your e-mail."
-        }
+        try:
+            User.objects.get(email=request.data['email'])
+
+            response.data = {
+                "code": getattr(settings, 'SUCCESS_CODE', 1),
+                "message": "Password reset e-mail has been sent. Please check your e-mail."
+            }
+        except ObjectDoesNotExist:
+            response.data = {
+                "code": 0,
+                "message": "User with this email does not exit"
+            }
         return response
 
 
@@ -813,3 +786,32 @@ def delete_billing_card(request):
     }
 
     return Response(data, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+def validate_reset_password(request, uid, token):
+    # Decode the uidb64 to uid to get User object
+    try:
+        uid = force_text(uid_decoder(uid))
+        user = User.objects.get(pk=uid)
+        if default_token_generator.check_token(user, token):
+            data = {
+                "code": getattr(settings, 'SUCCESS_CODE', 1),
+                "message": "Password Reset Link is valid",
+                "data": {
+                    "email": user.email
+                }
+            }
+        else:
+            data = {
+                "code": 0,
+                "message": "Password Reset Link is Invalid",
+            }
+        return Response(data, status=status.HTTP_200_OK)
+
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        data = {
+            "code": 0,
+            "message": "Password Reset Link is Invalid",
+        }
+        return Response(data, status=status.HTTP_400_BAD_REQUEST)
