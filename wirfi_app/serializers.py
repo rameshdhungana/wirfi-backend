@@ -1,3 +1,4 @@
+import re
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth import get_user_model, authenticate
 from django.conf import settings
@@ -161,7 +162,7 @@ class IndustryTypeSerializer(serializers.ModelSerializer):
 class DevicePrioritySerializer(serializers.ModelSerializer):
     class Meta:
         model = Device
-        fields = ('id','priority')
+        fields = ('id', 'priority')
 
 
 class DeviceSerializer(serializers.ModelSerializer):
@@ -174,7 +175,7 @@ class DeviceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Device
-        exclude = ('user','priority')
+        exclude = ('user', 'priority')
         read_only_fields = ('location_logo', 'machine_photo',)
 
     def create(self, validated_data):
@@ -218,7 +219,13 @@ class UserRegistrationSerializer(serializers.Serializer):
         return email
 
     def validate_password1(self, password):
-        return get_adapter().clean_password(password)
+        password = get_adapter().clean_password(password)
+        valid = re.match(settings.PASSWORD_VALIDATION_REGEX_PATTERN, password)
+
+        if not valid:
+            raise serializers.ValidationError(
+                _("Password must be 6 characters long with at least 1 capital, 1 small and 1 special character."))
+        return password
 
     def validate(self, data):
         if data['password1'] != data['password2']:

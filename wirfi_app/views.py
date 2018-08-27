@@ -1,5 +1,6 @@
 import stripe
 import datetime
+import re
 
 from django.db.models import Q
 from django.contrib.auth import get_user_model, logout as django_logout
@@ -41,6 +42,11 @@ sensitive_post_parameters_m = method_decorator(
 )
 
 User = get_user_model()
+
+
+def valid_password_regex(password):
+    valid = re.match(settings.PASSWORD_VALIDATION_REGEX_PATTERN, password)
+    return valid
 
 
 class UserDetailView(generics.RetrieveUpdateAPIView):
@@ -746,6 +752,13 @@ class ChangePasswordView(PasswordChangeView):
 
     def post(self, request, *args, **kwargs):
         response = super(ChangePasswordView, self).post(request, *args, **kwargs)
+        if not valid_password_regex(request.data['new_password1']):
+            print('inside invaild')
+            data = {
+                "code": 0,
+                "message": "Password must be 6 characters long with at least 1 capital, 1 small and 1 special character."
+            }
+            return Response(data)
         response.data = {
             "code": getattr(settings, 'SUCCESS_CODE', 1),
             "message": "New password has been saved."
