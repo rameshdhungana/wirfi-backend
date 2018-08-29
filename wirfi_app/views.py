@@ -648,7 +648,7 @@ def add_device_status_view(request, id):
 @api_view(['GET'])
 def dashboard_view(request):
     token = get_token_obj(request.auth)
-    device_status_dict = {x: y for x,y in DEVICE_STATUS}
+    device_status_dict = {x: y for x, y in DEVICE_STATUS}
 
     donut = {value: 0 for key, value in device_status_dict.items()}
 
@@ -846,7 +846,7 @@ class ChangePasswordView(PasswordChangeView):
 
 @api_view(['GET'])
 def get_logged_in_user(request):
-    serializer = UserSerializer(request.user)
+    serializer = UserSerializer(request.user, context={'request': request})
     serializer_data = serializer.data
     data = {
         "code": getattr(settings, 'SUCCESS_CODE', 1),

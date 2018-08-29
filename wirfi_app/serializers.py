@@ -1,3 +1,4 @@
+import stripe
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth import get_user_model, authenticate
 from django.conf import settings
@@ -97,11 +98,11 @@ class BillingSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     profile = UserProfileSerializer()
     business = BusinessSerializer(read_only=True)
-    billing = BillingSerializer(read_only=True)
+    billing = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ('id', 'email', 'first_name', 'last_name', 'full_name', 'profile', 'business', 'billing', )
+        fields = ('id', 'email', 'first_name', 'last_name', 'full_name', 'profile', 'business', 'billing',)
 
     def update(self, instance, validated_data):
         profile_data = validated_data.pop('profile')
@@ -118,6 +119,17 @@ class UserSerializer(serializers.ModelSerializer):
         user.profile = profile_obj
         return user
 
+    def get_billing(self, obj):
+        stripe.api_key = settings.STRIPE_API_KEY
+        try:
+            request = self.context.get("request")
+            if request and hasattr(request, "user"):
+                billing = Billing.objects.get(user=request.user)
+                return stripe.Customer.retrieve(billing.customer_id)
+
+        except:
+            return None
+
 
 class UserDetailsSerializer(serializers.ModelSerializer):
     """
@@ -133,7 +145,7 @@ class UserDetailsSerializer(serializers.ModelSerializer):
 class DeviceSettingSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeviceSetting
-        fields = ('id','is_muted', 'mute_start', 'mute_duration')
+        fields = ('id', 'is_muted', 'mute_start', 'mute_duration')
 
 
 class DeviceNetworkSerializer(serializers.ModelSerializer):
