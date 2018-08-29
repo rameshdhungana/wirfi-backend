@@ -96,10 +96,12 @@ class BillingSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     profile = UserProfileSerializer()
+    business = BusinessSerializer(read_only=True)
+    billing = BillingSerializer(read_only=True)
 
     class Meta:
         model = User
-        fields = ('id', 'email', 'first_name', 'last_name', 'full_name', 'profile',)
+        fields = ('id', 'email', 'first_name', 'last_name', 'full_name', 'profile', 'business', 'billing', )
 
     def update(self, instance, validated_data):
         profile_data = validated_data.pop('profile')
