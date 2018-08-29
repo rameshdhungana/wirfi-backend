@@ -160,6 +160,13 @@ class DeviceStatus(models.Model):
     time = models.TimeField(auto_now_add=True)
 
 
+class DeviceSetting(models.Model):
+    device = models.OneToOneField(Device, on_delete=models.CASCADE,related_name='device_settings')
+    is_muted = models.BooleanField(default=False)
+    mute_start = models.DateTimeField(auto_now=True)
+    mute_duration = models.IntegerField(null=True, blank=True)
+
+
 class ServicePlan(DateTimeModel):
     stripe_id = models.CharField(max_length=255)
     name = models.CharField(max_length=128)

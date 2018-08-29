@@ -7,7 +7,7 @@ from rest_framework import serializers, exceptions
 
 from wirfi_app.models import Profile, Billing, Business, \
     Device, Industry, DeviceLocationHours, DeviceStatus, DeviceNetwork, \
-    AuthorizationToken
+    AuthorizationToken, DeviceSetting
 
 try:
     from allauth.account import app_settings as allauth_settings
@@ -128,6 +128,12 @@ class UserDetailsSerializer(serializers.ModelSerializer):
         read_only_fields = ('email',)
 
 
+class DeviceSettingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DeviceSetting
+        fields = ('id','is_muted', 'mute_start', 'mute_duration')
+
+
 class DeviceNetworkSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeviceNetwork
@@ -161,20 +167,21 @@ class IndustryTypeSerializer(serializers.ModelSerializer):
 class DevicePrioritySerializer(serializers.ModelSerializer):
     class Meta:
         model = Device
-        fields = ('id','priority')
+        fields = ('id', 'priority')
 
 
 class DeviceSerializer(serializers.ModelSerializer):
     industry_type = IndustryTypeSerializer(read_only=True)
     network = DeviceNetworkSerializer(read_only=True)
     location_hours = DeviceLocationHoursSerializer(many=True)
+    device_settings = DeviceSettingSerializer(read_only=True)
 
     industry_type_id = serializers.CharField(allow_blank=True, write_only=True)
 
     class Meta:
         model = Device
         exclude = ('user',)
-        read_only_fields = ('location_logo', 'machine_photo','priority',)
+        read_only_fields = ('location_logo', 'machine_photo', 'priority', 'device_settings',)
 
     def create(self, validated_data):
         location_hours_data = validated_data.pop('location_hours', [])

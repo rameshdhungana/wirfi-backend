@@ -27,13 +27,13 @@ from allauth.account.utils import complete_signup
 
 from wirfi_app.models import Billing, Business, Profile, \
     Device, Industry, DeviceLocationHours, DeviceNetwork, DeviceStatus, \
-    Subscription, AuthorizationToken, DEVICE_STATUS
+    Subscription, AuthorizationToken, DEVICE_STATUS, DeviceSetting
 from wirfi_app.serializers import UserSerializer, \
     DeviceSerializer, DevicePrioritySerializer, DeviceLocationHoursSerializer, DeviceNetworkSerializer, \
     DeviceStatusSerializer, \
     BusinessSerializer, BillingSerializer, \
     UserRegistrationSerializer, LoginSerializer, AuthorizationTokenSerializer, \
-    IndustryTypeSerializer
+    IndustryTypeSerializer, DeviceSettingSerializer
 
 sensitive_post_parameters_m = method_decorator(
     sensitive_post_parameters(
@@ -217,6 +217,37 @@ class DeviceView(generics.ListCreateAPIView):
             'data': serializer.data
         }
         return Response(data, status=status.HTTP_201_CREATED, headers=headers)
+
+
+@api_view(['POST'])
+def mute_device_view(request, device_id):
+    try:
+
+        device_obj = Device.objects.get(id=device_id)
+
+        serializer = DeviceSettingSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.save(device=device_obj)
+        except:
+            device_setting_obj = DeviceSetting.objects.get(device=device_obj)
+            # device_setting_obj.mute_duration = request.data['mute_duration']
+            print(device_setting_obj)
+
+            device_setting_obj.is_muted = request.data['is_muted']
+            device_setting_obj.mute_duration = request.data['mute_duration']
+            device_setting_obj.save()
+
+        data = {
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
+            'message': "Device Mute status is Changed.",
+        }
+        return Response(data, status=status.HTTP_200_OK)
+    except (AttributeError, ObjectDoesNotExist) as err:
+        return Response({
+            "code": getattr(settings, 'ERROR_CODE', 0),
+            "message": str(err)},
+            status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
@@ -774,7 +805,6 @@ class ResetPasswordConfirmView(PasswordResetConfirmView):
     serializer_class = PasswordResetConfirmSerializer
 
     def post(self, request, *args, **kwargs):
-        print(request.data)
         if not valid_password_regex(request.data['new_password1']):
             data = {
                 "code": 0,
