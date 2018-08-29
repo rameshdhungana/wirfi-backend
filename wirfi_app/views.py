@@ -648,19 +648,26 @@ def add_device_status_view(request, id):
 @api_view(['GET'])
 def dashboard_view(request):
     token = get_token_obj(request.auth)
-    # device_status = DeviceStatus.objects.filter(device__user=token.user)  # .filter(date=datetime.date)
+    device_status_dict = {x: y for x,y in DEVICE_STATUS}
+
+    donut = {value: 0 for key, value in device_status_dict.items()}
+
     # today_date = datetime.date.today()
     device_status = DeviceStatus.objects.filter(device__user=token.user).order_by('device', '-id').distinct('device')
     # .filter(date__year=2018, date__month=8, date__day=16)
 
-    data = DeviceStatusSerializer(device_status, many=True).data
+    for device in device_status:
+        donut[device_status_dict[device.status]] += 1
+
+    donut_chart = [{'status': key, 'value': value} for key, value in donut.items()]
+
     return Response({
         'code': getattr(settings, 'SUCCESS_CODE', 1),
         'message': "Successfully data fetched.",
         'data': {
-            'donut_chart': data,
-            'signal_graph': '2',
-            'status': dict((x, y) for x, y in DEVICE_STATUS)
+            'donut_chart': donut_chart,
+            'signal_graph': '2'
+            # 'status': device_status_dict
         }
     }, status=status.HTTP_200_OK)
 

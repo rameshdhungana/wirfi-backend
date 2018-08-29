@@ -14,12 +14,12 @@ PLAN_INTERVAL = 'month'
 PLAN_CURRENCY = 'usd'
 
 DEVICE_STATUS = (
-    (1, 'ONLINE'),
-    (2, 'CELL'),
-    (3, 'AUTO RECOVER'),
-    (4, 'WEAK SIGNAL'),
-    (5, 'OFFLINE'),
-    (6, 'ASLEEP'),
+    (6, 'ONLINE'),
+    (5, 'CELL'),
+    (4, 'AUTO RECOVER'),
+    (3, 'WEAK SIGNAL'),
+    (2, 'OFFLINE'),
+    (1, 'ASLEEP'),
 )
 
 
