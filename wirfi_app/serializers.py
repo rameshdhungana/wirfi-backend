@@ -168,13 +168,13 @@ class DeviceStatusSerializer(serializers.ModelSerializer):
 
 
 class IndustryTypeSerializer(serializers.ModelSerializer):
-    user_created = serializers.SerializerMethodField()
+    is_user_created = serializers.SerializerMethodField()
 
     class Meta:
         model = Industry
         fields = ('id', 'name', 'user_created',)
 
-    def get_user_created(self, obj):
+    def get_in_user_created(self, obj):
         return True if obj.user else False
 
 
