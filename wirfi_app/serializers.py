@@ -145,7 +145,7 @@ class UserDetailsSerializer(serializers.ModelSerializer):
 class DeviceSettingSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeviceSetting
-        fields = ('id', 'is_muted', 'mute_start', 'mute_duration')
+        fields = ('is_muted', 'mute_start', 'mute_duration')
 
 
 class DeviceNetworkSerializer(serializers.ModelSerializer):

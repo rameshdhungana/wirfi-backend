@@ -229,6 +229,8 @@ def mute_device_view(request, device_id):
         serializer.is_valid(raise_exception=True)
         try:
             serializer.save(device=device_obj)
+            payload = serializer.data
+
         except:
             device_setting_obj = DeviceSetting.objects.get(device=device_obj)
             # device_setting_obj.mute_duration = request.data['mute_duration']
@@ -237,10 +239,17 @@ def mute_device_view(request, device_id):
             device_setting_obj.is_muted = request.data['is_muted']
             device_setting_obj.mute_duration = request.data['mute_duration']
             device_setting_obj.save()
+            payload = {
+                'is_muted': device_setting_obj.is_muted,
+                'mute_start': device_setting_obj.mute_start,
+                'mute_duration': device_setting_obj.mute_duration
+
+            }
 
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Device Mute status is Changed.",
+            'data': payload
         }
         return Response(data, status=status.HTTP_200_OK)
     except (AttributeError, ObjectDoesNotExist) as err:
