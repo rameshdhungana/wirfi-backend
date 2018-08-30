@@ -174,7 +174,7 @@ class IndustryTypeSerializer(serializers.ModelSerializer):
         model = Industry
         fields = ('id', 'name', 'is_user_created',)
 
-    def get_in_user_created(self, obj):
+    def get_is_user_created(self, obj):
         return True if obj.user else False
 
 
