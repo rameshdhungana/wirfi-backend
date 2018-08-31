@@ -1,6 +1,7 @@
 import stripe
 import datetime
 import re
+import copy
 
 from django.db.models import Q
 from django.contrib.auth import get_user_model, logout as django_logout
@@ -656,27 +657,33 @@ def add_device_status_view(request, id):
 
 @api_view(['GET'])
 def dashboard_view(request):
+    industry_type = []
+    donut_chart = {}
     token = get_token_obj(request.auth)
     device_status_dict = {x: y for x, y in DEVICE_STATUS}
-
     donut = {value: 0 for key, value in device_status_dict.items()}
+    device_industries = Industry.objects.filter(Q(user=token.user) | Q(user_id__isnull=True))
+    for industry in device_industries:
+        industry_type.append(industry.name)
+        donut_chart[industry.name] = copy.deepcopy(donut)
 
     # today_date = datetime.date.today()
     device_status = DeviceStatus.objects.filter(device__user=token.user).order_by('device', '-id').distinct('device')
     # .filter(date__year=2018, date__month=8, date__day=16)
 
     for device in device_status:
-        donut[device_status_dict[device.status]] += 1
+        donut_chart[device.device.industry_type.name][device_status_dict[device.status]] += 1
 
-    donut_chart = [{'status': key, 'value': value} for key, value in donut.items()]
+    donut_chart = {key: [{'status': device_status, 'value': count} for device_status, count in value.items()] for
+                   key, value in donut_chart.items()}
 
     return Response({
         'code': getattr(settings, 'SUCCESS_CODE', 1),
         'message': "Successfully data fetched.",
         'data': {
             'donut_chart': donut_chart,
-            'signal_graph': '2'
-            # 'status': device_status_dict
+            'signal_graph': '2',
+            'industry_type': industry_type
         }
     }, status=status.HTTP_200_OK)
 
@@ -744,7 +751,7 @@ class Login(LoginView):
 
 
 @api_view(['POST'])
-def logout(request, *args, **kwargs):
+def logout(request):
     """
     Calls Django logout method and delete the Token object
     assigned to the current User object.
