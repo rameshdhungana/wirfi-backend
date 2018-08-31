@@ -27,13 +27,13 @@ from allauth.account.utils import complete_signup
 
 from wirfi_app.models import Billing, Business, Profile, \
     Device, Industry, DeviceLocationHours, DeviceNetwork, DeviceStatus, \
-    Subscription, AuthorizationToken, DEVICE_STATUS, DeviceSetting
+    Subscription, AuthorizationToken, DEVICE_STATUS, DeviceSetting, DeviceNotification
 from wirfi_app.serializers import UserSerializer, \
     DeviceSerializer, DevicePrioritySerializer, DeviceLocationHoursSerializer, DeviceNetworkSerializer, \
     DeviceStatusSerializer, \
     BusinessSerializer, BillingSerializer, \
     UserRegistrationSerializer, LoginSerializer, AuthorizationTokenSerializer, \
-    IndustryTypeSerializer, DeviceSettingSerializer
+    IndustryTypeSerializer, DeviceMuteSettingSerializer, DevicePrioritySettingSerializer, DeviceNotificationSerializer
 
 sensitive_post_parameters_m = method_decorator(
     sensitive_post_parameters(
@@ -225,24 +225,23 @@ def mute_device_view(request, device_id):
 
         device_obj = Device.objects.get(id=device_id)
 
-        serializer = DeviceSettingSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        mute_serializer = DeviceMuteSettingSerializer(data=request.data)
+        serializer = DevicePrioritySettingSerializer()
         try:
-            serializer.save(device=device_obj)
-            payload = serializer.data
+            mute_serializer.save(device=device_obj)
+            payload = mute_serializer.data
 
         except:
             device_setting_obj = DeviceSetting.objects.get(device=device_obj)
-            # device_setting_obj.mute_duration = request.data['mute_duration']
-            print(device_setting_obj)
-
             device_setting_obj.is_muted = request.data['is_muted']
             device_setting_obj.mute_duration = request.data['mute_duration']
             device_setting_obj.save()
             payload = {
-                'is_muted': device_setting_obj.is_muted,
-                'mute_start': device_setting_obj.mute_start,
-                'mute_duration': device_setting_obj.mute_duration
+                "mute_settings": {
+                    'is_muted': device_setting_obj.is_muted,
+                    'mute_start': device_setting_obj.mute_start,
+                    'mute_duration': device_setting_obj.mute_duration
+                },
 
             }
 
@@ -457,6 +456,40 @@ class DeviceLocationHoursEditView(generics.UpdateAPIView):
             'message': "Successfully updated.",
             'data': {'location_hours': location_hours}
         }
+        return Response(data, status=status.HTTP_200_OK)
+
+
+class DeviceNotificationView(generics.ListCreateAPIView):
+    serializer_class = DeviceNotificationSerializer
+
+    def get_queryset(self):
+        return DeviceNotification.objects.filter(device_id=self.kwargs['device_id'])
+
+    def list(self, request, *args, **kwargs):
+        notifications = self.get_queryset()
+        serializer = DeviceNotificationSerializer(notifications, many=True)
+        data = {
+            "code": getattr(settings, 'SUCCESS_CODE', 1),
+            'message': "Notifications fetched successfully",
+            "data": serializer.data
+
+        }
+
+        return Response(data, status=status.HTTP_200_OK)
+
+    def create(self, request, *args, **kwargs):
+        print(request.data)
+        device = Device.objects.get(pk=self.kwargs['device_id'])
+        serializer = DeviceNotificationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(device=device)
+        data = {
+            "code": getattr(settings, 'SUCCESS_CODE', 1),
+            'message': "Notifications created successfully",
+            "data": serializer.data
+
+        }
+
         return Response(data, status=status.HTTP_200_OK)
 
 

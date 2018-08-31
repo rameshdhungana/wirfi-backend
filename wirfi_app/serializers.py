@@ -8,7 +8,7 @@ from rest_framework import serializers, exceptions
 
 from wirfi_app.models import Profile, Billing, Business, \
     Device, Industry, DeviceLocationHours, DeviceStatus, DeviceNetwork, \
-    AuthorizationToken, DeviceSetting
+    AuthorizationToken, DeviceSetting, DeviceNotification
 
 try:
     from allauth.account import app_settings as allauth_settings
@@ -142,10 +142,22 @@ class UserDetailsSerializer(serializers.ModelSerializer):
         read_only_fields = ('email',)
 
 
-class DeviceSettingSerializer(serializers.ModelSerializer):
+class DeviceMuteSettingSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeviceSetting
         fields = ('is_muted', 'mute_start', 'mute_duration')
+
+
+class DevicePrioritySettingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DeviceSetting
+        fields = ('priority',)
+
+
+class DeviceSettingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DeviceSetting
+        fields = ('is_muted', 'mute_start', 'mute_duration', 'priority')
 
 
 class DeviceNetworkSerializer(serializers.ModelSerializer):
@@ -192,10 +204,16 @@ class DeviceSerializer(serializers.ModelSerializer):
 
     industry_type_id = serializers.CharField(allow_blank=True, write_only=True)
 
+    def to_representation(self, instance):
+        data = super(DeviceSerializer, self).to_representation(instance)
+        print(data)
+        return data
+
     class Meta:
         model = Device
         exclude = ('user',)
-        read_only_fields = ('location_logo', 'machine_photo', 'priority', 'device_settings',)
+        read_only_fields = (
+            'location_logo', 'machine_photo', 'priority', 'device_settings')
 
     def create(self, validated_data):
         location_hours_data = validated_data.pop('location_hours', [])
@@ -219,6 +237,20 @@ class DeviceSerializer(serializers.ModelSerializer):
             location_hour = DeviceLocationHoursSerializer().update(device_hour, validated_data)
             device.location_hours.add(location_hour)
         return device
+
+
+class DeviceSerializerForNotification(serializers.ModelSerializer):
+    class Meta:
+        model = Device
+        fields = ('name', 'industry_type')
+
+
+class DeviceNotificationSerializer(serializers.ModelSerializer):
+    device_info = DeviceSerializerForNotification(read_only=True)
+
+    class Meta:
+        model = DeviceNotification
+        fields = ('device_info', 'type', 'created_at', 'message')
 
 
 class UserRegistrationSerializer(serializers.Serializer):
