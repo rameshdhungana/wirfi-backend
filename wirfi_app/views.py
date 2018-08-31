@@ -683,7 +683,8 @@ def dashboard_view(request):
         'data': {
             'donut_chart': donut_chart,
             'signal_graph': '2',
-            'industry_type': industry_type
+            'industry_type': industry_type,
+            'donut_count': len(device_status)
         }
     }, status=status.HTTP_200_OK)
 
