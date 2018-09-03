@@ -147,17 +147,56 @@ class DeviceMuteSettingSerializer(serializers.ModelSerializer):
         model = DeviceSetting
         fields = ('is_muted', 'mute_start', 'mute_duration')
 
+    def to_representation(self, instance):
+        data = super(DeviceMuteSettingSerializer, self).to_representation(instance)
+        data = {
+            "mute_settings": {
+                "is_muted": data['is_muted'],
+                "mute_start": data['mute_start'],
+                "mute_duration": data["mute_duration"],
+
+            },
+
+        }
+        return data
+
 
 class DevicePrioritySettingSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeviceSetting
         fields = ('priority',)
 
+    def to_representation(self, instance):
+        data = super(DevicePrioritySettingSerializer, self).to_representation(instance)
+        data = {
+            "priority_settings":
+                {
+                    "priority": data['priority']
+                }
+        }
+        return data
+
 
 class DeviceSettingSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeviceSetting
         fields = ('is_muted', 'mute_start', 'mute_duration', 'priority')
+
+    def to_representation(self, instance):
+        data = super(DeviceSettingSerializer, self).to_representation(instance)
+        data = {
+            "mute_settings": {
+                "is_muted": data['is_muted'],
+                "mute_start": data['mute_start'],
+                "mute_duration": data["mute_duration"],
+
+            },
+            "priority_settings":
+                {
+                    "priority": data['priority']
+                }
+        }
+        return data
 
 
 class DeviceNetworkSerializer(serializers.ModelSerializer):

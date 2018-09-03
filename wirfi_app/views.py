@@ -226,7 +226,6 @@ def mute_device_view(request, device_id):
         device_obj = Device.objects.get(id=device_id)
 
         mute_serializer = DeviceMuteSettingSerializer(data=request.data)
-        serializer = DevicePrioritySettingSerializer()
         try:
             mute_serializer.save(device=device_obj)
             payload = mute_serializer.data

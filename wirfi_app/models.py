@@ -172,8 +172,6 @@ class DeviceNotification(models.Model):
     type = models.IntegerField(choices=NOTIFICATION_TYPE, default=2)
     message = models.CharField(max_length=255)
     description = models.TextField(blank=True)
-    priority = models.BooleanField(default=False)
-
 
 
 class DeviceSetting(models.Model):
@@ -181,6 +179,7 @@ class DeviceSetting(models.Model):
     is_muted = models.BooleanField(default=False)
     mute_start = models.DateTimeField(auto_now=True)
     mute_duration = models.IntegerField(null=True, blank=True)
+    priority = models.BooleanField(default=False)
 
 
 class ServicePlan(DateTimeModel):
