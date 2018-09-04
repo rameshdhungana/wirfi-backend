@@ -486,7 +486,7 @@ class DeviceNotificationView(generics.ListCreateAPIView):
         serializer.save(device=device)
         data = {
             "code": getattr(settings, 'SUCCESS_CODE', 1),
-            'message': "Notifications created successfully",
+            'message': "Device Notifications created successfully",
             "data": serializer.data
 
         }
@@ -496,7 +496,21 @@ class DeviceNotificationView(generics.ListCreateAPIView):
 
 class AllNotificationView(generics.ListAPIView):
     serializer_class = AllNotificationSerializer
-    queryset = DeviceNotification.objects.all()
+
+    def get_queryset(self):
+        return DeviceNotification.objects.all()
+
+    def list(self, request, *args, **kwargs):
+        notifications = self.get_queryset()
+        serializer = AllNotificationSerializer(notifications, many=True)
+        data = {
+            "code": getattr(settings, 'SUCCESS_CODE', 1),
+            'message': "All Notifications fetched successfully",
+            "data": serializer.data
+
+        }
+
+        return Response(data, status=status.HTTP_200_OK)
 
 
 class BillingView(generics.ListCreateAPIView):
