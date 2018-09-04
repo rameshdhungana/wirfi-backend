@@ -684,7 +684,8 @@ def dashboard_view(request):
             'donut_chart': donut_chart,
             'signal_graph': '2',
             'industry_type': industry_type,
-            'donut_count': len(device_status)
+            'donut_count': len(device_status),
+            'donut_data_format': [{'status': key, 'value':0} for key in donut.keys()]
         }
     }, status=status.HTTP_200_OK)
 
