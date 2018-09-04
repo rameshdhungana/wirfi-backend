@@ -22,6 +22,12 @@ DEVICE_STATUS = (
     (1, 'ASLEEP'),
 )
 
+NOTIFICATION_TYPE = (
+    (1, 'Urgent'),
+    (2, 'Unread'),
+    (3, 'Read')
+)
+
 
 class DateTimeModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
@@ -160,11 +166,20 @@ class DeviceStatus(models.Model):
     time = models.TimeField(auto_now_add=True)
 
 
+class DeviceNotification(models.Model):
+    device = models.ForeignKey(Device, on_delete=models.CASCADE, related_name='device_notification')
+    created_at = models.DateTimeField(auto_now_add=True)
+    type = models.IntegerField(choices=NOTIFICATION_TYPE, default=2)
+    message = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+
+
 class DeviceSetting(models.Model):
-    device = models.OneToOneField(Device, on_delete=models.CASCADE,related_name='device_settings')
+    device = models.OneToOneField(Device, on_delete=models.CASCADE, related_name='device_settings')
     is_muted = models.BooleanField(default=False)
     mute_start = models.DateTimeField(auto_now=True)
     mute_duration = models.IntegerField(null=True, blank=True)
+    priority = models.BooleanField(default=False)
 
 
 class ServicePlan(DateTimeModel):
