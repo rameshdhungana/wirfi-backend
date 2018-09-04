@@ -292,6 +292,14 @@ class DeviceNotificationSerializer(serializers.ModelSerializer):
         fields = ('device_info', 'type', 'created_at', 'message')
 
 
+class AllNotificationSerializer(serializers.ModelSerializer):
+    device_info = DeviceSerializerForNotification(read_only=True)
+
+    class Meta:
+        model = DeviceNotification
+        fields = ('device_info', 'type', 'created_at', 'message')
+
+
 class UserRegistrationSerializer(serializers.Serializer):
     first_name = serializers.CharField(max_length=64)
     last_name = serializers.CharField(max_length=64)

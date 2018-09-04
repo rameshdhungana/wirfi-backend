@@ -9,7 +9,7 @@ from wirfi_app.views import UserDetailView, dashboard_view, add_device_status_vi
     DeviceView, device_priority_view, DeviceDetailView, DeviceNetworkView, DeviceNetworkDetailView, device_images_view, \
     Login, logout, RegisterUserView, VerifyEmailRegisterView, \
     ResetPasswordView, ResetPasswordConfirmView, ChangePasswordView, get_logged_in_user, delete_billing_card, \
-    profile_images_view, validate_reset_password, mute_device_view, DeviceNotificationView
+    profile_images_view, validate_reset_password, mute_device_view, DeviceNotificationView, AllNotificationView
 
 router = routers.DefaultRouter()
 # router.register(r'profile', ProfileApiView)
@@ -38,6 +38,7 @@ urlpatterns = [
     path('device/<int:device_id>/network/<int:id>/', DeviceNetworkDetailView.as_view(), name="device-network-detail"),
     path('device/mute/<int:device_id>/', mute_device_view, name='mute_device'),
     path('device/<int:device_id>/notification/', DeviceNotificationView.as_view(), name='device_notification'),
+    path('device/notifications/', AllNotificationView.as_view(), name='all_notification'),
     # path('device/<int:device_id>/location-hours/', DeviceLocationHoursView.as_view(), name="device-location-hours"),
     # path('device/location-hours/<int:device_id>/', DeviceLocationHoursEditView.as_view(), name="device-location-hours-edit"),
 

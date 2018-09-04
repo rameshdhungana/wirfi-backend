@@ -34,7 +34,8 @@ from wirfi_app.serializers import UserSerializer, \
     DeviceStatusSerializer, \
     BusinessSerializer, BillingSerializer, \
     UserRegistrationSerializer, LoginSerializer, AuthorizationTokenSerializer, \
-    IndustryTypeSerializer, DeviceMuteSettingSerializer, DevicePrioritySettingSerializer, DeviceNotificationSerializer
+    IndustryTypeSerializer, DeviceMuteSettingSerializer, DevicePrioritySettingSerializer, DeviceNotificationSerializer, \
+    AllNotificationSerializer
 
 sensitive_post_parameters_m = method_decorator(
     sensitive_post_parameters(
@@ -491,6 +492,11 @@ class DeviceNotificationView(generics.ListCreateAPIView):
         }
 
         return Response(data, status=status.HTTP_200_OK)
+
+
+class AllNotificationView(generics.ListAPIView):
+    serializer_class = AllNotificationSerializer
+    queryset = DeviceNotification.objects.all()
 
 
 class BillingView(generics.ListCreateAPIView):
