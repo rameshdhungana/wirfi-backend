@@ -268,7 +268,7 @@ class DeviceSerializerForNotification(serializers.ModelSerializer):
 
     class Meta:
         model = Device
-        fields = ('id', 'name', 'industry_type')
+        fields = ('id', 'name', 'industry_type', 'machine_photo',)
 
 
 class DeviceNotificationSerializer(serializers.ModelSerializer):
