@@ -34,8 +34,7 @@ from wirfi_app.serializers import UserSerializer, \
     DeviceStatusSerializer, \
     BusinessSerializer, BillingSerializer, \
     UserRegistrationSerializer, LoginSerializer, AuthorizationTokenSerializer, \
-    IndustryTypeSerializer, DeviceMuteSettingSerializer, DevicePrioritySettingSerializer, DeviceNotificationSerializer, \
-    AllNotificationSerializer
+    IndustryTypeSerializer, DeviceMuteSettingSerializer, DevicePrioritySettingSerializer, DeviceNotificationSerializer
 
 sensitive_post_parameters_m = method_decorator(
     sensitive_post_parameters(
@@ -495,14 +494,14 @@ class DeviceNotificationView(generics.ListCreateAPIView):
 
 
 class AllNotificationView(generics.ListAPIView):
-    serializer_class = AllNotificationSerializer
+    serializer_class = DeviceNotificationSerializer
 
     def get_queryset(self):
         return DeviceNotification.objects.all()
 
     def list(self, request, *args, **kwargs):
         notifications = self.get_queryset()
-        serializer = AllNotificationSerializer(notifications, many=True)
+        serializer = DeviceNotificationSerializer(notifications, many=True)
         data = {
             "code": getattr(settings, 'SUCCESS_CODE', 1),
             'message': "All Notifications fetched successfully",

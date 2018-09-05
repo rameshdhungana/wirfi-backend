@@ -285,19 +285,11 @@ class DeviceSerializerForNotification(serializers.ModelSerializer):
 
 
 class DeviceNotificationSerializer(serializers.ModelSerializer):
-    device_info = DeviceSerializerForNotification(read_only=True)
+    device = DeviceSerializerForNotification(read_only=True)
 
     class Meta:
         model = DeviceNotification
-        fields = ('device_info', 'type', 'created_at', 'message')
-
-
-class AllNotificationSerializer(serializers.ModelSerializer):
-    device_info = DeviceSerializerForNotification(read_only=True)
-
-    class Meta:
-        model = DeviceNotification
-        fields = ('device_info', 'type', 'created_at', 'message')
+        fields = ('device', 'type', 'created_at', 'message')
 
 
 class UserRegistrationSerializer(serializers.Serializer):
