@@ -145,18 +145,17 @@ class UserDetailsSerializer(serializers.ModelSerializer):
 class DeviceMuteSettingSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeviceSetting
-        fields = ('is_muted', 'mute_start', 'mute_duration')
+        fields = ('is_muted', 'mute_start', 'mute_duration',)
+        read_only_fields = ['mute_start']
 
     def to_representation(self, instance):
-        data = super(DeviceMuteSettingSerializer, self).to_representation(instance)
+        data = super().to_representation(instance)
         data = {
             "mute_settings": {
                 "is_muted": data['is_muted'],
                 "mute_start": data['mute_start'],
                 "mute_duration": data["mute_duration"],
-
-            },
-
+            }
         }
         return data
 
@@ -167,12 +166,11 @@ class DevicePrioritySettingSerializer(serializers.ModelSerializer):
         fields = ('priority',)
 
     def to_representation(self, instance):
-        data = super(DevicePrioritySettingSerializer, self).to_representation(instance)
+        data = super().to_representation(instance)
         data = {
-            "priority_settings":
-                {
-                    "priority": data['priority']
-                }
+            "priority_settings": {
+                "priority": data['priority']
+            }
         }
         return data
 
@@ -183,7 +181,7 @@ class DeviceSettingSerializer(serializers.ModelSerializer):
         fields = ('is_muted', 'mute_start', 'mute_duration', 'priority')
 
     def to_representation(self, instance):
-        data = super(DeviceSettingSerializer, self).to_representation(instance)
+        data = super().to_representation(instance)
         data = {
             "mute_settings": {
                 "is_muted": data['is_muted'],
@@ -191,10 +189,9 @@ class DeviceSettingSerializer(serializers.ModelSerializer):
                 "mute_duration": data["mute_duration"],
 
             },
-            "priority_settings":
-                {
-                    "priority": data['priority']
-                }
+            "priority_settings": {
+                "priority": data['priority']
+            }
         }
         return data
 
@@ -229,30 +226,18 @@ class IndustryTypeSerializer(serializers.ModelSerializer):
         return True if obj.user else False
 
 
-class DevicePrioritySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Device
-        fields = ('id', 'priority')
-
-
 class DeviceSerializer(serializers.ModelSerializer):
     industry_type = IndustryTypeSerializer(read_only=True)
     network = DeviceNetworkSerializer(read_only=True)
     location_hours = DeviceLocationHoursSerializer(many=True)
     device_settings = DeviceSettingSerializer(read_only=True)
-
     industry_type_id = serializers.CharField(allow_blank=True, write_only=True)
-
-    def to_representation(self, instance):
-        data = super(DeviceSerializer, self).to_representation(instance)
-        print(data)
-        return data
 
     class Meta:
         model = Device
         exclude = ('user',)
         read_only_fields = (
-            'location_logo', 'machine_photo', 'priority', 'device_settings')
+            'location_logo', 'machine_photo', 'device_settings')
 
     def create(self, validated_data):
         location_hours_data = validated_data.pop('location_hours', [])
@@ -279,9 +264,11 @@ class DeviceSerializer(serializers.ModelSerializer):
 
 
 class DeviceSerializerForNotification(serializers.ModelSerializer):
+    industry_type = IndustryTypeSerializer(read_only=True)
+
     class Meta:
         model = Device
-        fields = ('name', 'industry_type')
+        fields = ('id', 'name', 'industry_type')
 
 
 class DeviceNotificationSerializer(serializers.ModelSerializer):
@@ -289,7 +276,7 @@ class DeviceNotificationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DeviceNotification
-        fields = ('device', 'type', 'created_at', 'message')
+        exclude = ('description',)
 
 
 class UserRegistrationSerializer(serializers.Serializer):

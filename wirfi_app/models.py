@@ -121,8 +121,6 @@ class Business(models.Model):
 
 class Billing(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    latitude = models.DecimalField(max_digits=15, decimal_places=12, null=True, blank=True)
-    longitude = models.DecimalField(max_digits=15, decimal_places=12, null=True, blank=True)
     customer_id = models.CharField(max_length=64)
 
     def __str__(self):
@@ -139,7 +137,6 @@ class Device(models.Model):
     latitude = models.FloatField(default=0)
     longitude = models.FloatField(default=0)
     industry_type = models.ForeignKey(Industry, on_delete=models.CASCADE, related_name="industry_type")
-    priority = models.BooleanField(default=False)
 
     def __str__(self):
         return self.serial_number

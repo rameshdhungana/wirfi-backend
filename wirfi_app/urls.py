@@ -36,11 +36,9 @@ urlpatterns = [
     path('device/<int:id>/priority/', device_priority_view, name="device-priority"),
     path('device/<int:device_id>/network/', DeviceNetworkView.as_view(), name="device-network"),
     path('device/<int:device_id>/network/<int:id>/', DeviceNetworkDetailView.as_view(), name="device-network-detail"),
-    path('device/mute/<int:device_id>/', mute_device_view, name='mute_device'),
+    path('device/<int:device_id>/mute/', mute_device_view, name='mute_device'),
     path('device/<int:device_id>/notification/', DeviceNotificationView.as_view(), name='device_notification'),
     path('device/notifications/', AllNotificationView.as_view(), name='all_notification'),
-    # path('device/<int:device_id>/location-hours/', DeviceLocationHoursView.as_view(), name="device-location-hours"),
-    # path('device/location-hours/<int:device_id>/', DeviceLocationHoursEditView.as_view(), name="device-location-hours-edit"),
 
     path('login/', Login.as_view(), name='usnotier_login'),
     path('logout/', logout, name='user_logout'),

@@ -30,7 +30,7 @@ from wirfi_app.models import Billing, Business, Profile, \
     Device, Industry, DeviceLocationHours, DeviceNetwork, DeviceStatus, \
     Subscription, AuthorizationToken, DEVICE_STATUS, DeviceSetting, DeviceNotification
 from wirfi_app.serializers import UserSerializer, \
-    DeviceSerializer, DevicePrioritySerializer, DeviceLocationHoursSerializer, DeviceNetworkSerializer, \
+    DeviceSerializer, DeviceLocationHoursSerializer, DeviceNetworkSerializer, \
     DeviceStatusSerializer, \
     BusinessSerializer, BillingSerializer, \
     UserRegistrationSerializer, LoginSerializer, AuthorizationTokenSerializer, \
@@ -211,6 +211,7 @@ class DeviceView(generics.ListCreateAPIView):
         serializer = DeviceSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(user=token.user, industry_type=industry)
+        DeviceSetting.objects.create(device_id=serializer.data['id'])
         headers = self.get_success_headers(serializer.data)
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
@@ -223,34 +224,32 @@ class DeviceView(generics.ListCreateAPIView):
 @api_view(['POST'])
 def mute_device_view(request, device_id):
     try:
+        device_obj = Device.objects.get(pk=device_id)
+        device_setting, _ = DeviceSetting.objects.get_or_create(device=device_obj)
+        mute_serializer = DeviceMuteSettingSerializer(device_setting, data=request.data)
+        mute_serializer.is_valid(raise_exception=True)
+        mute_serializer.save()
+        # payload = mute_serializer.data
 
-        device_obj = Device.objects.get(id=device_id)
-
-        mute_serializer = DeviceMuteSettingSerializer(data=request.data)
-        try:
-            mute_serializer.save(device=device_obj)
-            payload = mute_serializer.data
-
-        except:
-            device_setting_obj = DeviceSetting.objects.get(device=device_obj)
-            device_setting_obj.is_muted = request.data['is_muted']
-            device_setting_obj.mute_duration = request.data['mute_duration']
-            device_setting_obj.save()
-            payload = {
-                "mute_settings": {
-                    'is_muted': device_setting_obj.is_muted,
-                    'mute_start': device_setting_obj.mute_start,
-                    'mute_duration': device_setting_obj.mute_duration
-                },
-
-            }
-
+        # except:
+        #     device_setting_obj = DeviceSetting.objects.get(device=device_obj)
+        #     device_setting_obj.is_muted = request.data['is_muted']
+        #     device_setting_obj.mute_duration = request.data['mute_duration']
+        #     device_setting_obj.save()
+        #     payload = {
+        #         "mute_settings": {
+        #             'is_muted': device_setting_obj.is_muted,
+        #             'mute_start': device_setting_obj.mute_start,
+        #             'mute_duration': device_setting_obj.mute_duration
+        #         },
+        #     }
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Device Mute status is Changed.",
-            'data': payload
+            'data': mute_serializer.data
         }
         return Response(data, status=status.HTTP_200_OK)
+
     except (AttributeError, ObjectDoesNotExist) as err:
         return Response({
             "code": getattr(settings, 'ERROR_CODE', 0),
@@ -260,16 +259,23 @@ def mute_device_view(request, device_id):
 
 @api_view(['POST'])
 def device_priority_view(request, id):
-    device = Device.objects.get(pk=id)
-    serializer = DevicePrioritySerializer(device, data=request.data)
-    serializer.is_valid(raise_exception=True)
-    serializer.save()
-    data = {
-        'code': getattr(settings, 'SUCCESS_CODE', 1),
-        'message': "Sucesfully priority updated.",
-        'data': serializer.data
-    }
-    return Response(data, status=status.HTTP_200_OK)
+    try:
+        device = Device.objects.get(pk=id)
+        device_setting, _ = DeviceSetting.objects.get_or_create(device=device)
+        serializer = DevicePrioritySettingSerializer(device_setting, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        data = {
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
+            'message': "Sucesfully priority updated.",
+            'data': serializer.data
+        }
+        return Response(data, status=status.HTTP_200_OK)
+    except (AttributeError, ObjectDoesNotExist) as err:
+        return Response({
+            "code": getattr(settings, 'ERROR_CODE', 0),
+            "message": str(err) },
+            status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
@@ -405,65 +411,11 @@ class DeviceNetworkDetailView(generics.RetrieveUpdateAPIView):
         return Response(data, status=status.HTTP_200_OK)
 
 
-class DeviceLocationHoursView(generics.ListCreateAPIView):
-    serializer_class = DeviceLocationHoursSerializer
-
-    def get_queryset(self):
-        return DeviceLocationHours.objects.filter(device_id=self.kwargs['device_id'])
-
-    def list(self, request, *args, **kwargs):
-        location_hours = self.get_queryset()
-        serializer = DeviceLocationHoursSerializer(location_hours, many=True)
-        data = {
-            'code': getattr(settings, 'SUCCESS_CODE', 1),
-            'message': "Detail successfully fetched.",
-            'data': {'location_hours': serializer.data}
-        }
-        return Response(data, status=status.HTTP_200_OK)
-
-    def create(self, request, *args, **kwargs):
-        device = Device.objects.get(pk=self.kwargs['device_id'])
-        serializer = DeviceLocationHoursSerializer(data=request.data, many=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save(device=device)
-        data = {
-            'code': getattr(settings, 'SUCCESS_CODE', 1),
-            'message': "Successfully created.",
-            'data': {'location_hours': serializer.data}
-        }
-        return Response(data, status=status.HTTP_201_CREATED)
-
-
-class DeviceLocationHoursEditView(generics.UpdateAPIView):
-    lookup_field = 'id'
-    serializer_class = DeviceLocationHoursSerializer
-
-    def get_queryset(self):
-        return DeviceLocationHours.objects.filter(device_id=self.kwargs['device_id'])
-
-    def update(self, request, *args, **kwargs):
-        location_hours = []
-        device = Device.objects.get(pk=self.kwargs['device_id'])
-        for location_hour in self.get_queryset():
-            device_hr = [d for d in request.data if d['id'] == location_hour.id][0]
-            serializer = DeviceLocationHoursSerializer(location_hour, data=device_hr)
-            serializer.is_valid(raise_exception=True)
-            serializer.save(device=device)
-            location_hours.append(serializer.data)
-
-        data = {
-            'code': getattr(settings, 'SUCCESS_CODE', 1),
-            'message': "Successfully updated.",
-            'data': {'location_hours': location_hours}
-        }
-        return Response(data, status=status.HTTP_200_OK)
-
-
 class DeviceNotificationView(generics.ListCreateAPIView):
     serializer_class = DeviceNotificationSerializer
 
     def get_queryset(self):
-        return DeviceNotification.objects.filter(device_id=self.kwargs['device_id'])
+        return DeviceNotification.objects.filter(device_id=self.kwargs['device_id']).order_by('-id')
 
     def list(self, request, *args, **kwargs):
         notifications = self.get_queryset()
@@ -472,9 +424,7 @@ class DeviceNotificationView(generics.ListCreateAPIView):
             "code": getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Notifications fetched successfully",
             "data": serializer.data
-
         }
-
         return Response(data, status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
@@ -487,7 +437,6 @@ class DeviceNotificationView(generics.ListCreateAPIView):
             "code": getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Device Notifications created successfully",
             "data": serializer.data
-
         }
 
         return Response(data, status=status.HTTP_200_OK)
@@ -495,9 +444,7 @@ class DeviceNotificationView(generics.ListCreateAPIView):
 
 class AllNotificationView(generics.ListAPIView):
     serializer_class = DeviceNotificationSerializer
-
-    def get_queryset(self):
-        return DeviceNotification.objects.all()
+    queryset = DeviceNotification.objects.all().order_by('-id')
 
     def list(self, request, *args, **kwargs):
         notifications = self.get_queryset()
@@ -506,9 +453,7 @@ class AllNotificationView(generics.ListAPIView):
             "code": getattr(settings, 'SUCCESS_CODE', 1),
             'message': "All Notifications fetched successfully",
             "data": serializer.data
-
         }
-
         return Response(data, status=status.HTTP_200_OK)
 
 
@@ -516,9 +461,7 @@ class BillingView(generics.ListCreateAPIView):
     serializer_class = BillingSerializer
 
     def get_queryset(self):
-
         token = get_token_obj(self.request.auth)
-
         return Billing.objects.filter(user=token.user)
 
     def retrieve_stripe_customer_info(self):
@@ -557,8 +500,6 @@ class BillingView(generics.ListCreateAPIView):
                 'message': "No any billing data"
             }
         headers = self.get_success_headers(serializer.data)
-
-        # print(data)
         return Response(data, status=status.HTTP_200_OK, headers=headers)
 
     def create(self, request, *args, **kwargs):
