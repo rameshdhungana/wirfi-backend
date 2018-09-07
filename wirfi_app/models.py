@@ -220,6 +220,14 @@ class AuthorizationToken(models.Model):
         return self.key
 
 
+class UserActivationCode(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    code = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    count = models.PositiveIntegerField()
+
+
 class PresetFilter(models.Model):
     user = models.ForeignKey("User", on_delete=models.CASCADE)
     name = models.CharField(max_length=50)

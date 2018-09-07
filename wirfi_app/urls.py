@@ -44,7 +44,7 @@ urlpatterns = [
     path('preset-filter/', PresetFilterView.as_view()),
     path('preset-filter/<int:id>/', PresetFilterDeleteView.as_view()),
 
-    path('login/', Login.as_view(), name='usnotier_login'),
+    path('login/', Login.as_view(), name='user_login'),
     path('logout/', logout, name='user_logout'),
 
     path('register/', RegisterUserView.as_view(), name='user_registration'),
