@@ -28,13 +28,15 @@ from allauth.account.utils import complete_signup
 
 from wirfi_app.models import Billing, Business, Profile, \
     Device, Industry, DeviceLocationHours, DeviceNetwork, DeviceStatus, \
-    Subscription, AuthorizationToken, DEVICE_STATUS, DeviceSetting, DeviceNotification, NOTIFICATION_TYPE, READ
+    Subscription, AuthorizationToken, DEVICE_STATUS, DeviceSetting, DeviceNotification, NOTIFICATION_TYPE, READ, \
+    PresetFilter
 from wirfi_app.serializers import UserSerializer, \
     DeviceSerializer, DeviceLocationHoursSerializer, DeviceNetworkSerializer, \
     DeviceStatusSerializer, \
     BusinessSerializer, BillingSerializer, \
     UserRegistrationSerializer, LoginSerializer, AuthorizationTokenSerializer, \
-    IndustryTypeSerializer, DeviceMuteSettingSerializer, DevicePrioritySettingSerializer, DeviceNotificationSerializer
+    IndustryTypeSerializer, DeviceMuteSettingSerializer, DevicePrioritySettingSerializer, DeviceNotificationSerializer, \
+    PresetFilterSerializer
 
 sensitive_post_parameters_m = method_decorator(
     sensitive_post_parameters(
@@ -707,6 +709,52 @@ def dashboard_view(request):
             'donut_data_format': [{'status': key, 'value': 0} for key in donut.keys()]
         }
     }, status=status.HTTP_200_OK)
+
+
+class PresetFilterView(generics.ListCreateAPIView):
+    serializer_class = PresetFilterSerializer
+
+    def get_queryset(self):
+        token = get_token_obj(self.request.auth)
+        return PresetFilter.objects.filter(user=token.user)
+
+    def list(self, request, *args, **kwargs):
+        presets = self.get_queryset()
+        serializer = PresetFilterSerializer(presets, many=True)
+        return Response({
+            "code": getattr(settings, "SUCCESS_CODE", 1),
+            "message": "Successfully fetched preset filter data.",
+            "data": serializer.data
+        }, status=status.HTTP_200_OK)
+
+    def create(self, request, *args, **kwargs):
+        data = request.data
+        token = get_token_obj(self.request.auth)
+        serializer = PresetFilterSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=token.user)
+        return Response({
+            "code": getattr(settings, "SUCCESS_CODE", 1),
+            "message": "Successfully fetched preset filter data.",
+            "data": serializer.data
+        }, status=status.HTTP_200_OK)
+
+
+class PresetFilterDeleteView(generics.DestroyAPIView):
+    serializer_class = PresetFilterSerializer
+    lookup_field = 'id'
+
+    def get_queryset(self):
+        token = get_token_obj(self.request.auth)
+        return PresetFilter.objects.filter(user=token.user).filter(pk=self.kwargs['id'])
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response({
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
+            'message': "Successfully deleted preset filter."
+        }, status=status.HTTP_200_OK)
 
 
 class Login(LoginView):

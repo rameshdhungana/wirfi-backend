@@ -9,7 +9,8 @@ from wirfi_app.views import UserDetailView, dashboard_view, add_device_status_vi
     DeviceView, device_priority_view, DeviceDetailView, DeviceNetworkView, DeviceNetworkDetailView, device_images_view, \
     Login, logout, RegisterUserView, VerifyEmailRegisterView, \
     ResetPasswordView, ResetPasswordConfirmView, ChangePasswordView, get_logged_in_user, delete_billing_card, \
-    profile_images_view, validate_reset_password, mute_device_view, DeviceNotificationView, AllNotificationView
+    profile_images_view, validate_reset_password, mute_device_view, DeviceNotificationView, AllNotificationView, \
+    PresetFilterView, PresetFilterDeleteView
 
 router = routers.DefaultRouter()
 # router.register(r'profile', ProfileApiView)
@@ -40,7 +41,10 @@ urlpatterns = [
     path('device/<int:device_id>/notification/', DeviceNotificationView.as_view(), name='device_notification'),
     path('device/notifications/', AllNotificationView.as_view(), name='all_notification'),
 
-    path('login/', Login.as_view(), name='usnotier_login'),
+    path('preset-filter/', PresetFilterView.as_view()),
+    path('preset-filter/<int:id>/', PresetFilterDeleteView.as_view()),
+
+    path('login/', Login.as_view(), name='user_login'),
     path('logout/', logout, name='user_logout'),
 
     path('register/', RegisterUserView.as_view(), name='user_registration'),
