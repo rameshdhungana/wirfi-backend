@@ -28,7 +28,7 @@ from allauth.account.utils import complete_signup
 
 from wirfi_app.models import Billing, Business, Profile, \
     Device, Industry, DeviceLocationHours, DeviceNetwork, DeviceStatus, \
-    Subscription, AuthorizationToken, DEVICE_STATUS, DeviceSetting, DeviceNotification
+    Subscription, AuthorizationToken, DEVICE_STATUS, DeviceSetting, DeviceNotification, NOTIFICATION_TYPE, READ
 from wirfi_app.serializers import UserSerializer, \
     DeviceSerializer, DeviceLocationHoursSerializer, DeviceNetworkSerializer, \
     DeviceStatusSerializer, \
@@ -274,7 +274,7 @@ def device_priority_view(request, id):
     except (AttributeError, ObjectDoesNotExist) as err:
         return Response({
             "code": getattr(settings, 'ERROR_CODE', 0),
-            "message": str(err) },
+            "message": str(err)},
             status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -414,45 +414,72 @@ class DeviceNetworkDetailView(generics.RetrieveUpdateAPIView):
 class DeviceNotificationView(generics.ListCreateAPIView):
     serializer_class = DeviceNotificationSerializer
 
-    def get_queryset(self):
-        return DeviceNotification.objects.filter(device_id=self.kwargs['device_id']).order_by('-id')
+    def get_each_type_queryset(self, type):
+        return DeviceNotification.objects.filter(device_id=self.kwargs['device_id'], type=type).order_by('-id')
 
     def list(self, request, *args, **kwargs):
-        notifications = self.get_queryset()
-        serializer = DeviceNotificationSerializer(notifications, many=True)
+        notifications = []
+
+        for key, value in enumerate(NOTIFICATION_TYPE):
+            type_value, type_name = value[0], value[1]
+            print(type_value, type_name)
+            noti = self.get_each_type_queryset(type_value)
+            serializer = DeviceNotificationSerializer(noti, many=True)
+
+            notifications.append({"type": type_value, "type_name": type_name, "notifications": serializer.data})
+
+        print(notifications[0])
+
         data = {
             "code": getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Notifications fetched successfully",
-            "data": serializer.data
+            "data":
+                {"read_type": READ,
+                 "notifications": notifications}
         }
         return Response(data, status=status.HTTP_200_OK)
 
-    def create(self, request, *args, **kwargs):
-        print(request.data)
-        device = Device.objects.get(pk=self.kwargs['device_id'])
-        serializer = DeviceNotificationSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save(device=device)
-        data = {
-            "code": getattr(settings, 'SUCCESS_CODE', 1),
-            'message': "Device Notifications created successfully",
-            "data": serializer.data
-        }
 
-        return Response(data, status=status.HTTP_200_OK)
+def create(self, request, *args, **kwargs):
+    print(request.data)
+    device = Device.objects.get(pk=self.kwargs['device_id'])
+    serializer = DeviceNotificationSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    serializer.save(device=device)
+    data = {
+        "code": getattr(settings, 'SUCCESS_CODE', 1),
+        'message': "Device Notifications created successfully",
+        "data": serializer.data
+    }
+
+    return Response(data, status=status.HTTP_200_OK)
 
 
 class AllNotificationView(generics.ListAPIView):
     serializer_class = DeviceNotificationSerializer
-    queryset = DeviceNotification.objects.all().order_by('-id')
+
+    def get_each_type_queryset(self, type):
+        return DeviceNotification.objects.filter(type=type).order_by('-id')
 
     def list(self, request, *args, **kwargs):
-        notifications = self.get_queryset()
-        serializer = DeviceNotificationSerializer(notifications, many=True)
+        notifications = []
+
+        for key, value in enumerate(NOTIFICATION_TYPE):
+            type_value, type_name = value[0], value[1]
+            print(type_value, type_name)
+            noti = self.get_each_type_queryset(type_value)
+            serializer = DeviceNotificationSerializer(noti, many=True)
+
+            notifications.append({"type": type_value, "type_name": type_name, "notifications": serializer.data})
+
+        print(notifications[0])
+
         data = {
             "code": getattr(settings, 'SUCCESS_CODE', 1),
             'message': "All Notifications fetched successfully",
-            "data": serializer.data
+            "data":
+                {"read_type": READ,
+                 "notifications": notifications}
         }
         return Response(data, status=status.HTTP_200_OK)
 
@@ -677,7 +704,7 @@ def dashboard_view(request):
             'signal_graph': '2',
             'industry_type': industry_type,
             'donut_count': len(device_status),
-            'donut_data_format': [{'status': key, 'value':0} for key in donut.keys()]
+            'donut_data_format': [{'status': key, 'value': 0} for key in donut.keys()]
         }
     }, status=status.HTTP_200_OK)
 

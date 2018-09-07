@@ -21,11 +21,14 @@ DEVICE_STATUS = (
     (2, 'OFFLINE'),
     (1, 'ASLEEP'),
 )
+URGENT_UNREAD = 1
+UNREAD = 2
+READ = 3
 
 NOTIFICATION_TYPE = (
-    (1, 'Urgent'),
-    (2, 'Unread'),
-    (3, 'Read')
+    (URGENT_UNREAD, 'Urgent Unread'),
+    (UNREAD, 'Unread'),
+    (READ, 'Read')
 )
 
 
