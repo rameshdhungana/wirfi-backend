@@ -8,7 +8,7 @@ from rest_framework import serializers, exceptions
 
 from wirfi_app.models import Profile, Billing, Business, \
     Device, Industry, DeviceLocationHours, DeviceStatus, DeviceNetwork, \
-    AuthorizationToken, DeviceSetting, DeviceNotification
+    AuthorizationToken, DeviceSetting, DeviceNotification, PresetFilter
 
 try:
     from allauth.account import app_settings as allauth_settings
@@ -321,3 +321,9 @@ class UserRegistrationSerializer(serializers.Serializer):
         self.custom_signup(request, user)
         setup_user_email(request, user, [])
         return user
+
+
+class PresetFilterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PresetFilter
+        exclude = ('user', )

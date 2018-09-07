@@ -4,6 +4,8 @@ import binascii
 import os
 
 from django.db import models
+from django.contrib.postgres.fields import ArrayField
+from django.core.mail import send_mail
 from django.contrib.auth.models import PermissionsMixin
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.utils.translation import gettext_lazy as _
@@ -216,3 +218,11 @@ class AuthorizationToken(models.Model):
 
     def __str__(self):
         return self.key
+
+
+class PresetFilter(models.Model):
+    user = models.ForeignKey("User", on_delete=models.CASCADE)
+    name = models.CharField(max_length=50)
+    filter_type = models.PositiveIntegerField()
+    filter_keys = ArrayField(models.IntegerField())
+    sort_type = models.PositiveIntegerField()
