@@ -695,7 +695,7 @@ class PresetFilterView(generics.ListCreateAPIView):
         serializer = PresetFilterSerializer(presets, many=True)
         return Response({
             "code": getattr(settings, "SUCCESS_CODE", 1),
-            "message": "Successfully fetched data.",
+            "message": "Successfully fetched preset filter data.",
             "data": serializer.data
         }, status=status.HTTP_200_OK)
 
