@@ -9,6 +9,7 @@ from rest_framework import serializers, exceptions
 from wirfi_app.models import Profile, Billing, Business, \
     Device, Industry, DeviceLocationHours, DeviceStatus, DeviceNetwork, \
     AuthorizationToken, DeviceSetting, DeviceNotification, PresetFilter
+from wirfi_app.forms import ResetPasswordForm
 
 try:
     from allauth.account import app_settings as allauth_settings
@@ -323,6 +324,35 @@ class UserRegistrationSerializer(serializers.Serializer):
         return user
 
 
+class PasswordResetSerializer(serializers.Serializer):
+    """
+    Serializer for requesting a password reset e-mail.
+    """
+    email = serializers.EmailField()
+
+    password_reset_form_class = ResetPasswordForm
+
+    def validate_email(self, value):
+        # Create PasswordResetForm with the serializer
+        self.reset_form = self.password_reset_form_class(data=self.initial_data)
+        if not self.reset_form.is_valid():
+            raise serializers.ValidationError(self.reset_form.errors)
+
+        return value
+
+    def save(self):
+        request = self.context.get('request')
+        # Set some values to trigger the send_email method.
+        opts = {
+            'use_https': request.is_secure(),
+            'from_email': getattr(settings, 'DEFAULT_FROM_EMAIL'),
+            'request': request,
+            'email_template_name': 'reset_password.txt',
+        }
+
+        self.reset_form.save(**opts)
+
+        
 class PresetFilterSerializer(serializers.ModelSerializer):
     class Meta:
         model = PresetFilter

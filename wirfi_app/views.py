@@ -1,6 +1,6 @@
 import stripe
 import datetime
-import re
+import re, hashlib
 import copy
 
 from django.db.models import Q
@@ -17,6 +17,7 @@ from django.views.decorators.debug import sensitive_post_parameters
 from rest_framework.decorators import api_view
 from rest_framework import generics
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
 from rest_framework import status
 from rest_auth.registration.views import RegisterView, VerifyEmailView, VerifyEmailSerializer
 from rest_auth.views import LoginView, \
@@ -28,7 +29,8 @@ from allauth.account.utils import complete_signup
 
 from wirfi_app.models import Billing, Business, Profile, \
     Device, Industry, DeviceLocationHours, DeviceNetwork, DeviceStatus, \
-    Subscription, AuthorizationToken, DEVICE_STATUS, DeviceSetting, DeviceNotification, PresetFilter
+    Subscription, AuthorizationToken, DEVICE_STATUS, DeviceSetting, DeviceNotification, PresetFilter, \
+    UserActivationCode
 from wirfi_app.serializers import UserSerializer, \
     DeviceSerializer, DeviceLocationHoursSerializer, DeviceNetworkSerializer, \
     DeviceStatusSerializer, \
@@ -845,24 +847,50 @@ class VerifyEmailRegisterView(VerifyEmailView):
         return response
 
 
-class ResetPasswordView(PasswordResetView):
+class ResetPasswordView(generics.CreateAPIView):
+    """
+    Calls Django Auth PasswordResetForm save method.
+
+    Accepts the following POST parameters: email
+    Returns the success/fail message.
+    """
     serializer_class = PasswordResetSerializer
+    permission_classes = (AllowAny,)
 
     def post(self, request, *args, **kwargs):
-        response = super(ResetPasswordView, self).post(request, *args, **kwargs)
         try:
-            User.objects.get(email=request.data['email'])
+            user = User.objects.get(email=request.data['email'])
+            activation_obj = UserActivationCode.objects.filter(user=user)
 
-            response.data = {
+            if activation_obj:
+                activation_code = get_activation_code(user, activation_obj[0].count)
+                activation_obj.update(code=activation_code, count=activation_obj[0].count+1)
+
+            else:
+                activation_code = get_activation_code(user, 0)
+                activation_obj = UserActivationCode.objects.create(user=user, code=activation_code, once_used=False)
+
+            # Create a serializer with request.data
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+
+            serializer.save()
+            # Return the success message with OK HTTP status
+            return Response({
                 "code": getattr(settings, 'SUCCESS_CODE', 1),
                 "message": "Password reset e-mail has been sent. Please check your e-mail."
-            }
+            }, status=status.HTTP_200_OK)
+
         except ObjectDoesNotExist:
-            response.data = {
-                "code": 0,
-                "message": "User with this email does not exit"
-            }
-        return response
+            return Response({
+                "code": getattr(settings, 'ERROR_CODE', 0),
+                "message": "Password reset e-mail has been sent. Please check your e-mail."
+            }, status=status.HTTP_200_OK)
+
+
+def get_activation_code(user, count):
+    hash_string = "{uid}:{email}#{count}".format(uid=str(user.id), email=user.email, count=str(count + 1))
+    return int(hashlib.sha256(hash_string.encode('utf-8')).hexdigest(), 16) % 10**6
 
 
 class ResetPasswordConfirmView(PasswordResetConfirmView):
@@ -872,15 +900,50 @@ class ResetPasswordConfirmView(PasswordResetConfirmView):
         if not valid_password_regex(request.data['new_password1']):
             data = {
                 "code": 0,
-                "message": "Password must be 6 characters long with at least 1 capital, 1 small and 1 special character."
+                "message": "Password must be 8 characters long with at least 1 number or 1 special character."
             }
             return Response(data)
-        response = super(ResetPasswordConfirmView, self).post(request, *args, **kwargs)
+        response = super().post(request, *args, **kwargs)
         response.data = {
             "code": getattr(settings, 'SUCCESS_CODE', 1),
             "message": "Password has been successfully reset with new password."
         }
         return response
+
+
+@api_view(['POST'])
+def reset_password_confirm_mobile(request):
+    data = request.data
+    if not valid_password_regex(data['new_password1']):
+        return Response({
+            "code": getattr(settings, 'ERROR_CODE', 0),
+            "message": "Password must be 8 characters long with at least 1 number or 1 special character."
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    if not (data['new_password1'] == data['new_password2']):
+        return Response({
+            "code": getattr(settings, 'ERROR_CODE', 0),
+            "message": "Passwords didn't match."
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    activation_obj = UserActivationCode.objects.prefetch_related('user').filter(code=data['activation_code']).filter(user__email=data['email']).filter(once_used=False)
+
+    if not activation_obj:
+        return Response({
+            "code": getattr(settings, 'ERROR_CODE', 0),
+            "message": "Activation code is invalid."
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    user = activation_obj[0].user
+    user.set_password(data['new_password1'])
+    user.save()
+    activation_obj.update(once_used=True)
+    
+    return Response({
+        "code": getattr(settings, 'SUCCESS_CODE', 1),
+        "message": "Password reset successfully done."
+    }, status=status.HTTP_200_OK)
+
 
 
 class ChangePasswordView(PasswordChangeView):

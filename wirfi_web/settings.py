@@ -91,7 +91,7 @@ ROOT_URLCONF = 'wirfi_web.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'wirfi_app/templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -157,6 +157,7 @@ LOGOUT_ON_PASSWORD_CHANGE = True
 REST_AUTH_SERIALIZERS = {
     'USER_DETAILS_SERIALIZER': 'wirfi_app.serializers.UserDetailsSerializer',
     'LOGIN_SERIALIZER': 'wirfi_app.serializers.LoginSerializer',
+    'PASSWORD_RESET_SERIALIZER': 'wirfi_app.serializers.PasswordResetSerializer',
 }
 
 REST_SESSION_LOGIN = False

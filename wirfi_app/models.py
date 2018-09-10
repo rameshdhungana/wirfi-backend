@@ -221,11 +221,12 @@ class AuthorizationToken(models.Model):
 
 
 class UserActivationCode(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    code = models.IntegerField()
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="activation_code")
+    code = models.IntegerField(primary_key=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    count = models.PositiveIntegerField()
+    count = models.PositiveIntegerField(default=1)
+    once_used = models.BooleanField(default=False)
 
 
 class PresetFilter(models.Model):
