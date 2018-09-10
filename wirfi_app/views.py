@@ -930,6 +930,7 @@ class ResetPasswordConfirmView(PasswordResetConfirmView):
                 "message": "Password must be 8 characters long with at least 1 number or 1 special character."
             }
             return Response(data)
+
         response = super().post(request, *args, **kwargs)
         response.data = {
             "code": getattr(settings, 'SUCCESS_CODE', 1),
@@ -978,11 +979,11 @@ class ChangePasswordView(PasswordChangeView):
 
     def post(self, request, *args, **kwargs):
         if not valid_password_regex(request.data['new_password1']):
-            data = {
-                "code": 0,
-                "message": "Password must be 6 characters long with at least 1 capital, 1 small and 1 special character."
-            }
-            return Response(data)
+            return Response({
+                "code": getattr(settings, 'ERROR_CODE', 0),
+                "message": "Password must be 8 characters long with at least 1 number or 1 special character."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         response = super(ChangePasswordView, self).post(request, *args, **kwargs)
         response.data = {
             "code": getattr(settings, 'SUCCESS_CODE', 1),
