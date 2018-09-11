@@ -442,20 +442,18 @@ class DeviceNotificationView(generics.ListCreateAPIView):
         }
         return Response(data, status=status.HTTP_200_OK)
 
-
-def create(self, request, *args, **kwargs):
-    print(request.data)
-    device = Device.objects.get(pk=self.kwargs['device_id'])
-    serializer = DeviceNotificationSerializer(data=request.data)
-    serializer.is_valid(raise_exception=True)
-    serializer.save(device=device)
-    data = {
-        "code": getattr(settings, 'SUCCESS_CODE', 1),
-        'message': "Device Notifications created successfully",
-        "data": serializer.data
-    }
-
-    return Response(data, status=status.HTTP_200_OK)
+    def create(self, request, *args, **kwargs):
+        print(request.data)
+        device = Device.objects.get(pk=self.kwargs['device_id'])
+        serializer = DeviceNotificationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(device=device)
+        data = {
+            "code": getattr(settings, 'SUCCESS_CODE', 1),
+            'message': "Device Notifications created successfully",
+            "data": serializer.data
+        }
+        return Response(data, status=status.HTTP_200_OK)
 
 
 class AllNotificationView(generics.ListAPIView):
@@ -891,11 +889,11 @@ class ResetPasswordView(generics.CreateAPIView):
 
             if activation_obj:
                 activation_code = get_activation_code(user, activation_obj[0].count)
-                activation_obj.update(code=activation_code, count=activation_obj[0].count+1)
+                activation_obj.update(code=activation_code, count=activation_obj[0].count+1, once_used=False)
 
             else:
                 activation_code = get_activation_code(user, 0)
-                activation_obj = UserActivationCode.objects.create(user=user, code=activation_code, once_used=False)
+                activation_obj = UserActivationCode.objects.create(user=user, code=activation_code)
 
             # Create a serializer with request.data
             serializer = self.get_serializer(data=request.data)
@@ -925,13 +923,20 @@ class ResetPasswordConfirmView(PasswordResetConfirmView):
 
     def post(self, request, *args, **kwargs):
         if not valid_password_regex(request.data['new_password1']):
-            data = {
-                "code": 0,
+            return Response({
+                "code": getattr(settings, 'ERROR_CODE', 0),
                 "message": "Password must be 8 characters long with at least 1 number or 1 special character."
-            }
-            return Response(data)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if not (request.data['new_password1'] == request.data['new_password2']):
+            return Response({
+                "code": getattr(settings, 'ERROR_CODE', 0),
+                "message": "Passwords didn't match."
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         response = super().post(request, *args, **kwargs)
+        UserActivationCode.objects.filter(user__email=request.data['email']).update(once_used=True)
+        
         response.data = {
             "code": getattr(settings, 'SUCCESS_CODE', 1),
             "message": "Password has been successfully reset with new password."
