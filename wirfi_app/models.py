@@ -225,7 +225,7 @@ class AuthorizationToken(models.Model):
 
 class UserActivationCode(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="activation_code")
-    code = models.IntegerField(primary_key=True)
+    code = models.CharField(max_length=12, primary_key=True)
     created_at = models.DateTimeField(auto_now_add=True)
     count = models.PositiveIntegerField(default=1)
     once_used = models.BooleanField(default=False)
