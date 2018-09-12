@@ -30,7 +30,7 @@ from allauth.account.utils import complete_signup
 from wirfi_app.models import Billing, Business, Profile, \
     Device, Industry, DeviceLocationHours, DeviceNetwork, DeviceStatus, \
     Subscription, AuthorizationToken, DEVICE_STATUS, DeviceSetting, DeviceNotification, PresetFilter, \
-    UserActivationCode, READ
+    UserActivationCode, READ,NOTIFICATION_TYPE
 from wirfi_app.serializers import UserSerializer, \
     DeviceSerializer, DeviceLocationHoursSerializer, DeviceNetworkSerializer, \
     DeviceStatusSerializer, \
