@@ -958,7 +958,7 @@ def reset_password_confirm_mobile(request):
             "code": getattr(settings, 'ERROR_CODE', 0),
             "message": "Passwords didn't match."
         }, status=status.HTTP_400_BAD_REQUEST)
-
+    
     activation_obj = UserActivationCode.objects.prefetch_related('user').filter(code=data['activation_code']).filter(user__email=data['email']).filter(once_used=False)
 
     if not activation_obj:
@@ -976,7 +976,6 @@ def reset_password_confirm_mobile(request):
         "code": getattr(settings, 'SUCCESS_CODE', 1),
         "message": "Password reset successfully done."
     }, status=status.HTTP_200_OK)
-
 
 
 class ChangePasswordView(PasswordChangeView):
