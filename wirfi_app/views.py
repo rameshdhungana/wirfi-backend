@@ -415,30 +415,29 @@ class DeviceNetworkDetailView(generics.RetrieveUpdateAPIView):
         return Response(data, status=status.HTTP_200_OK)
 
 
-class DeviceNotificationView(generics.ListCreateAPIView):
+class DeviceNotificationView(generics.CreateAPIView):
     serializer_class = DeviceNotificationSerializer
 
     def get_each_type_queryset(self, type):
         return DeviceNotification.objects.filter(device_id=self.kwargs['device_id'], type=type).order_by('-id')
 
-    def list(self, request, *args, **kwargs):
-        notifications = []
-
-        for key, value in enumerate(NOTIFICATION_TYPE):
-            type_value, type_name = value[0], value[1]
-            noti = self.get_each_type_queryset(type_value)
-            serializer = DeviceNotificationSerializer(noti, many=True)
-
-            notifications.append({"type": type_value, "type_name": type_name, "notifications": serializer.data})
-
-        data = {
-            "code": getattr(settings, 'SUCCESS_CODE', 1),
-            'message': "Notifications fetched successfully",
-            "data":
-                {"read_type": READ,
-                 "notifications": notifications}
-        }
-        return Response(data, status=status.HTTP_200_OK)
+    # def list(self, request, *args, **kwargs):
+    #     notifications = []
+    #
+    #     for index, (type_value, type_name) in enumerate(NOTIFICATION_TYPE):
+    #         noti = self.get_each_type_queryset(type_value)
+    #         serializer = DeviceNotificationSerializer(noti, many=True)
+    #
+    #         notifications.append({"type": type_value, "type_name": type_name, "notifications": serializer.data})
+    #
+    #     data = {
+    #         "code": getattr(settings, 'SUCCESS_CODE', 1),
+    #         'message': "Notifications fetched successfully",
+    #         "data":
+    #             {"read_type": READ,
+    #              "notifications": notifications}
+    #     }
+    #     return Response(data, status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
         device = Device.objects.get(pk=self.kwargs['device_id'])
@@ -462,8 +461,7 @@ class AllNotificationView(generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         notifications = []
 
-        for key, value in enumerate(NOTIFICATION_TYPE):
-            type_value, type_name = value[0], value[1]
+        for index, (type_value, type_name) in enumerate(NOTIFICATION_TYPE):
             noti = self.get_each_type_queryset(type_value)
             serializer = DeviceNotificationSerializer(noti, many=True)
 
@@ -920,7 +918,7 @@ class ResetPasswordConfirmView(PasswordResetConfirmView):
 
         response = super().post(request, *args, **kwargs)
         UserActivationCode.objects.filter(user__email=request.data['email']).update(once_used=True)
-        
+
         response.data = {
             "code": getattr(settings, 'SUCCESS_CODE', 1),
             "message": "Password has been successfully reset with new password."
@@ -942,7 +940,7 @@ def reset_password_confirm_mobile(request):
             "code": getattr(settings, 'ERROR_CODE', 0),
             "message": "Passwords didn't match."
         }, status=status.HTTP_400_BAD_REQUEST)
-    
+
     activation_obj = UserActivationCode.objects.prefetch_related('user').filter(code=data['activation_code']).filter(user__email=data['email']).filter(once_used=False)
 
     if not activation_obj:
