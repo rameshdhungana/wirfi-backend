@@ -426,13 +426,10 @@ class DeviceNotificationView(generics.ListCreateAPIView):
 
         for key, value in enumerate(NOTIFICATION_TYPE):
             type_value, type_name = value[0], value[1]
-            print(type_value, type_name)
             noti = self.get_each_type_queryset(type_value)
             serializer = DeviceNotificationSerializer(noti, many=True)
 
             notifications.append({"type": type_value, "type_name": type_name, "notifications": serializer.data})
-
-        print(notifications[0])
 
         data = {
             "code": getattr(settings, 'SUCCESS_CODE', 1),
@@ -444,7 +441,6 @@ class DeviceNotificationView(generics.ListCreateAPIView):
         return Response(data, status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
-        print(request.data)
         device = Device.objects.get(pk=self.kwargs['device_id'])
         serializer = DeviceNotificationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -468,13 +464,10 @@ class AllNotificationView(generics.ListAPIView):
 
         for key, value in enumerate(NOTIFICATION_TYPE):
             type_value, type_name = value[0], value[1]
-            print(type_value, type_name)
             noti = self.get_each_type_queryset(type_value)
             serializer = DeviceNotificationSerializer(noti, many=True)
 
             notifications.append({"type": type_value, "type_name": type_name, "notifications": serializer.data})
-
-        print(notifications[0])
 
         data = {
             "code": getattr(settings, 'SUCCESS_CODE', 1),
@@ -503,16 +496,7 @@ class BillingView(generics.ListCreateAPIView):
             return None
 
     def list(self, request, *args, **kwargs):
-        billings = self.get_queryset()
         stripe_customer_info = self.retrieve_stripe_customer_info()
-        if stripe_customer_info:
-            message = "Details successfully fetched"
-            code = getattr(settings, 'SUCCESS_CODE', 1)
-        else:
-            message = "No any billing data"
-            code = 2
-
-        serializer = BillingSerializer(billings, many=True)
 
         if stripe_customer_info:
             data = {
@@ -528,8 +512,7 @@ class BillingView(generics.ListCreateAPIView):
                 'code': 2,
                 'message': "No any billing data"
             }
-        headers = self.get_success_headers(serializer.data)
-        return Response(data, status=status.HTTP_200_OK, headers=headers)
+        return Response(data, status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
         data = request.data
