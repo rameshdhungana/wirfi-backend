@@ -30,7 +30,7 @@ from allauth.account.utils import complete_signup
 from wirfi_app.models import Billing, Business, Profile, \
     Device, Industry, DeviceLocationHours, DeviceNetwork, DeviceStatus, \
     Subscription, AuthorizationToken, DEVICE_STATUS, DeviceSetting, DeviceNotification, PresetFilter, \
-    UserActivationCode, READ,NOTIFICATION_TYPE
+    UserActivationCode, READ, NOTIFICATION_TYPE
 from wirfi_app.serializers import UserSerializer, \
     DeviceSerializer, DeviceLocationHoursSerializer, DeviceNetworkSerializer, \
     DeviceStatusSerializer, \
@@ -190,15 +190,17 @@ class DeviceView(generics.ListCreateAPIView):
     def list(self, request, *args, **kwargs):
         devices = self.get_queryset()
         serializer = DeviceSerializer(devices, many=True)
-        headers = self.get_success_headers(serializer.data)
+        industry_types = Industry.objects.filter(Q(user=get_token_obj(self.request.auth).user) | Q(user__isnull=True))
+        industry_serializer = IndustryTypeSerializer(industry_types, many=True)
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Details successfully fetched.",
             'data': {
-                'device': serializer.data
+                'device': serializer.data,
+                'industry_type': industry_serializer.data
             }
         }
-        return Response(data, status=status.HTTP_200_OK, headers=headers)
+        return Response(data, status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
         token = get_token_obj(request.auth)
@@ -215,13 +217,12 @@ class DeviceView(generics.ListCreateAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save(user=token.user, industry_type=industry)
         DeviceSetting.objects.create(device_id=serializer.data['id'])
-        headers = self.get_success_headers(serializer.data)
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Successfully device created.",
             'data': serializer.data
         }
-        return Response(data, status=status.HTTP_201_CREATED, headers=headers)
+        return Response(data, status=status.HTTP_201_CREATED)
 
 
 @api_view(['POST'])
