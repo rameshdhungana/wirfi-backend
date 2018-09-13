@@ -40,8 +40,8 @@ urlpatterns = [
     path('device/<int:device_id>/network/<int:id>/', DeviceNetworkDetailView.as_view(), name="device-network-detail"),
     path('device/<int:device_id>/mute/', mute_device_view, name='mute_device'),
     path('device/<int:device_id>/notification/', DeviceNotificationView.as_view(), name='device_notification'),
-    path('device/notifications/', AllNotificationView.as_view(), name='all_notification'),
     path('notifications/update/<int:pk>/', UpdateNotificationView.as_view(), name='update_notification'),
+    path('notifications/', AllNotificationView.as_view(), name='all_notification'),
 
     path('preset-filter/', PresetFilterView.as_view()),
     path('preset-filter/<int:id>/', PresetFilterDeleteView.as_view()),
