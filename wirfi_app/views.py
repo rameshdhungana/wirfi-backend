@@ -452,7 +452,8 @@ class DeviceNotificationView(generics.CreateAPIView):
         return Response(data, status=status.HTTP_200_OK)
 
 
-class UpdateNotificationView(generics.RetrieveUpdateDestroyAPIView):
+class UpdateNotificationView(generics.UpdateDestroyAPIView):
+    serializer_class = DeviceNotificationSerializer
     queryset = DeviceNotification.objects.all()
 
     def update(self, request, *args, **kwargs):
@@ -463,7 +464,6 @@ class UpdateNotificationView(generics.RetrieveUpdateDestroyAPIView):
             "code": getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Notifications is updated to READ Type successfully",
         }
-
         return Response(data, status=status.HTTP_200_OK)
 
 
