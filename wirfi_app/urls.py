@@ -2,16 +2,18 @@ from django.urls import path, re_path
 
 from rest_framework import routers
 
-from wirfi_app.views import UserDetailView, dashboard_view, add_device_status_view, \
+from wirfi_app.views import UserDetailView, dashboard_view, \
     BusinessView, BusinessDetailView, \
     BillingView, BillingDetailView, \
     IndustryTypeListView, IndustryTypeDetailView, \
-    DeviceView, device_priority_view, DeviceDetailView, DeviceNetworkView, DeviceNetworkDetailView, device_images_view, \
+    DeviceView, DeviceDetailView, DeviceNetworkView, DeviceNetworkDetailView, device_images_view, \
+    add_device_status_view, device_priority_view, mute_device_view, DeviceSleepView, \
+    DeviceCameraView, DeviceCameraDetailView, \
     Login, logout, RegisterUserView, VerifyEmailRegisterView, \
     ResetPasswordView, ResetPasswordConfirmView, reset_password_confirm_mobile, ChangePasswordView, get_logged_in_user, \
-    delete_billing_card, profile_images_view, validate_reset_password, mute_device_view, \
-    DeviceNotificationView, AllNotificationView, \
-    PresetFilterView, PresetFilterDeleteView, UpdateNotificationView
+    delete_billing_card, profile_images_view, validate_reset_password, \
+    DeviceNotificationView, AllNotificationView, UpdateNotificationView, \
+    PresetFilterView, PresetFilterDeleteView
 
 router = routers.DefaultRouter()
 # router.register(r'profile', ProfileApiView)
@@ -35,10 +37,14 @@ urlpatterns = [
     path('device/<int:id>/status/', add_device_status_view, name="device_status"),
     path('device/<int:id>/', DeviceDetailView.as_view(), name="device-detail"),
     path('device/<int:id>/images/', device_images_view, name="device-images"),
-    path('device/<int:id>/priority/', device_priority_view, name="device-priority"),
     path('device/<int:device_id>/network/', DeviceNetworkView.as_view(), name="device-network"),
     path('device/<int:device_id>/network/<int:id>/', DeviceNetworkDetailView.as_view(), name="device-network-detail"),
-    path('device/<int:device_id>/mute/', mute_device_view, name='mute_device'),
+    path('device/<int:id>/mute/', mute_device_view, name='mute_device'),
+    path('device/<int:id>/priority/', device_priority_view, name="device-priority"),
+    path('device/<int:id>/sleep/', DeviceSleepView.as_view(), name="device-sleep"),
+    path('device/<int:id>/camera/', DeviceCameraView.as_view()),
+    path('device/<int:device_id>/camera/<int:pk>', DeviceCameraDetailView.as_view()),
+
     path('device/<int:device_id>/notification/', DeviceNotificationView.as_view(), name='device_notification'),
     path('notifications/', AllNotificationView.as_view(), name='all_notification'),
     path('notifications/<int:pk>/', UpdateNotificationView.as_view(), name='update_notification'),

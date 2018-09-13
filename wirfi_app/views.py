@@ -21,22 +21,22 @@ from rest_framework.permissions import AllowAny
 from rest_framework import status
 from rest_auth.registration.views import RegisterView, VerifyEmailView, VerifyEmailSerializer
 from rest_auth.views import LoginView, \
-    PasswordResetView, PasswordResetConfirmView, PasswordChangeView, \
+     PasswordResetConfirmView, PasswordChangeView, \
     PasswordResetSerializer, PasswordResetConfirmSerializer, PasswordChangeSerializer
 
 from allauth.account import app_settings as allauth_settings
 from allauth.account.utils import complete_signup
 
 from wirfi_app.models import Billing, Business, Profile, \
-    Device, Industry, DeviceLocationHours, DeviceNetwork, DeviceStatus, \
-    Subscription, AuthorizationToken, DEVICE_STATUS, DeviceSetting, DeviceNotification, PresetFilter, \
+    Device, Industry, DeviceNetwork, DeviceStatus, DeviceSetting, DeviceCameraServices, \
+    Subscription, AuthorizationToken, DEVICE_STATUS, DeviceNotification, PresetFilter, \
     UserActivationCode, READ, NOTIFICATION_TYPE
 from wirfi_app.serializers import UserSerializer, \
-    DeviceSerializer, DeviceLocationHoursSerializer, DeviceNetworkSerializer, \
-    DeviceStatusSerializer, \
+    DeviceSerializer, DeviceNetworkSerializer, DeviceCameraSerializer, \
+    DeviceStatusSerializer, IndustryTypeSerializer, \
     BusinessSerializer, BillingSerializer, \
     UserRegistrationSerializer, LoginSerializer, AuthorizationTokenSerializer, \
-    IndustryTypeSerializer, DeviceMuteSettingSerializer, DevicePrioritySettingSerializer, DeviceNotificationSerializer, \
+    DeviceMuteSettingSerializer, DevicePrioritySettingSerializer, DeviceSleepSerializer, DeviceNotificationSerializer, \
     PresetFilterSerializer
 
 sensitive_post_parameters_m = method_decorator(
@@ -226,27 +226,13 @@ class DeviceView(generics.ListCreateAPIView):
 
 
 @api_view(['POST'])
-def mute_device_view(request, device_id):
+def mute_device_view(request, id):
     try:
         device_obj = Device.objects.get(pk=device_id)
         device_setting, _ = DeviceSetting.objects.get_or_create(device=device_obj)
         mute_serializer = DeviceMuteSettingSerializer(device_setting, data=request.data)
         mute_serializer.is_valid(raise_exception=True)
         mute_serializer.save()
-        # payload = mute_serializer.data
-
-        # except:
-        #     device_setting_obj = DeviceSetting.objects.get(device=device_obj)
-        #     device_setting_obj.is_muted = request.data['is_muted']
-        #     device_setting_obj.mute_duration = request.data['mute_duration']
-        #     device_setting_obj.save()
-        #     payload = {
-        #         "mute_settings": {
-        #             'is_muted': device_setting_obj.is_muted,
-        #             'mute_start': device_setting_obj.mute_start,
-        #             'mute_duration': device_setting_obj.mute_duration
-        #         },
-        #     }
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Device Mute status is Changed.",
@@ -280,6 +266,81 @@ def device_priority_view(request, id):
             "code": getattr(settings, 'ERROR_CODE', 0),
             "message": str(err)},
             status=status.HTTP_400_BAD_REQUEST)
+
+
+class DeviceSleepView(generics.CreateAPIView):
+    serializer_class = DeviceSleepSerializer
+
+    def get_queryset(self):
+        device_obj = Device.objects.get(pk=self.kwargs['id'])
+        device_setting, _ = DeviceSetting.objects.get_or_create(device=device_obj)
+        return device_setting
+
+    def create(self, request, *args, **kwargs):
+        instance = self.get_queryset()
+        serializer = DeviceSleepSerializer(instance, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        data = {
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
+            'message': "Sucesfully sleep settings updated.",
+            'data': serializer.data
+        }
+        return Response(data, status=status.HTTP_200_OK)
+
+
+class DeviceCameraView(generics.ListCreateAPIView):
+    serializer_class = DeviceCameraSerializer
+
+    def get_queryset(self):
+        return DeviceCameraServices.objects.filter(device_id=self.kwargs['id'])
+
+    def list(self, request, *args, **kwargs):
+        serializer = DeviceCameraSerializer(self.get_queryset(), many=True)
+        data = {
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
+            'message': "Sucesfully fetched device's camera information.",
+            'data': serializer.data
+        }
+        return Response(data, status=status.HTTP_200_OK)
+
+    def create(self, request, *args, **kwargs):
+        device_obj = Device.objects.get(pk=self.kwargs['id'])
+        serializer = DeviceCameraSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(device=device_obj)
+        data = {
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
+            'message': "Sucesfully added device's camera information.",
+            'data': {'camera_service': serializer.data}
+        }
+        return Response(data, status=status.HTTP_201_CREATED)
+
+
+class DeviceCameraDetailView(generics.UpdateAPIView, generics.DestroyAPIView):
+    serializer_class = DeviceCameraSerializer
+
+    def get_queryset(self):
+        return DeviceCameraServices.objects.filter(device_id=self.kwargs['device_id'])
+
+    def update(self, request, *args, **kwargs):
+        serializer = DeviceCameraSerializer(self.get_object(), data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        data = {
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
+            'message': "Sucesfully updated device's camera information.",
+            'data': {'camera_service': serializer.data}
+        }
+        return Response(data, status=status.HTTP_200_OK)
+
+    def destroy(self, request, *args, **kwargs):
+        self.get_object().delete()
+        data = {
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
+            'message': "Sucesfully deleted device's camera information."
+        }
+        return Response(data, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])

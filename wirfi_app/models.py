@@ -182,6 +182,16 @@ class DeviceSetting(models.Model):
     mute_start = models.DateTimeField(auto_now=True)
     mute_duration = models.IntegerField(null=True, blank=True)
     priority = models.BooleanField(default=False)
+    has_sleep_feature = models.BooleanField(default=False)
+    is_asleep = models.BooleanField(default=True)
+    sleep_start = models.DateTimeField(auto_now=True)
+    sleep_duration = models.IntegerField(null=True, blank=True)
+
+
+class DeviceCameraServices(models.Model):
+    device = models.ForeignKey(Device, on_delete=models.CASCADE, related_name="camera_service")
+    is_on = models.BooleanField(default=False)
+    serial_no = models.CharField(max_length=50)
 
 
 class ServicePlan(DateTimeModel):

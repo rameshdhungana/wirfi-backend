@@ -8,7 +8,7 @@ from rest_framework import serializers, exceptions
 
 from wirfi_app.models import Profile, Billing, Business, \
     Device, Industry, DeviceLocationHours, DeviceStatus, DeviceNetwork, \
-    AuthorizationToken, DeviceSetting, DeviceNotification, PresetFilter
+    AuthorizationToken, DeviceSetting, DeviceNotification, PresetFilter, DeviceCameraServices
 from wirfi_app.forms import ResetPasswordForm
 
 try:
@@ -176,10 +176,31 @@ class DevicePrioritySettingSerializer(serializers.ModelSerializer):
         return data
 
 
+class DeviceSleepSerializer(serializers.ModelSerializer):
+    sleep_duration = serializers.IntegerField(required=False, allow_null=True)
+
+    class Meta:
+        model = DeviceSetting
+        fields = ('has_sleep_feature', 'is_asleep', 'sleep_start', 'sleep_duration',)
+        read_only_fields = ['has_sleep_feature', 'sleep_start']
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data = {
+            "sleep_settings": {
+                "has_sleep_feature": data['has_sleep_feature'],
+                "is_asleep": data['is_asleep'],
+                "sleep_start": data['sleep_start'],
+                "sleep_duration": data['sleep_duration']
+            }
+        }
+        return data
+
+
 class DeviceSettingSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeviceSetting
-        fields = ('is_muted', 'mute_start', 'mute_duration', 'priority')
+        exclude = ('device', 'id')
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -192,6 +213,12 @@ class DeviceSettingSerializer(serializers.ModelSerializer):
             },
             "priority_settings": {
                 "priority": data['priority']
+            },
+            "sleep_settings": {
+                "has_sleep_feature": data['has_sleep_feature'],
+                "is_asleep": data['is_asleep'],
+                "sleep_start": data['sleep_start'],
+                "sleep_duration": data['sleep_duration']
             }
         }
         return data
@@ -216,6 +243,12 @@ class DeviceStatusSerializer(serializers.ModelSerializer):
         read_only_fields = ('_date', '_time')
 
 
+class DeviceCameraSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DeviceCameraServices
+        exclude = ('device', 'id',)
+
+
 class IndustryTypeSerializer(serializers.ModelSerializer):
     is_user_created = serializers.SerializerMethodField()
 
@@ -233,12 +266,12 @@ class DeviceSerializer(serializers.ModelSerializer):
     location_hours = DeviceLocationHoursSerializer(many=True)
     device_settings = DeviceSettingSerializer(read_only=True)
     industry_type_id = serializers.CharField(allow_blank=True, write_only=True)
+    camera_service = DeviceCameraSerializer(read_only=True, many=True)
 
     class Meta:
         model = Device
         exclude = ('user',)
-        read_only_fields = (
-            'location_logo', 'machine_photo', 'device_settings')
+        read_only_fields = ('location_logo', 'machine_photo',)
 
     def create(self, validated_data):
         location_hours_data = validated_data.pop('location_hours', [])
