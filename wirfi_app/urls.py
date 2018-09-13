@@ -11,7 +11,7 @@ from wirfi_app.views import UserDetailView, dashboard_view, add_device_status_vi
     ResetPasswordView, ResetPasswordConfirmView, reset_password_confirm_mobile, ChangePasswordView, get_logged_in_user, \
     delete_billing_card, profile_images_view, validate_reset_password, mute_device_view, \
     DeviceNotificationView, AllNotificationView, \
-    PresetFilterView, PresetFilterDeleteView
+    PresetFilterView, PresetFilterDeleteView, UpdateNotificationView
 
 router = routers.DefaultRouter()
 # router.register(r'profile', ProfileApiView)
@@ -41,6 +41,7 @@ urlpatterns = [
     path('device/<int:device_id>/mute/', mute_device_view, name='mute_device'),
     path('device/<int:device_id>/notification/', DeviceNotificationView.as_view(), name='device_notification'),
     path('device/notifications/', AllNotificationView.as_view(), name='all_notification'),
+    path('notifications/update/<int:pk>/', UpdateNotificationView.as_view(), name='update_notification'),
 
     path('preset-filter/', PresetFilterView.as_view()),
     path('preset-filter/<int:id>/', PresetFilterDeleteView.as_view()),

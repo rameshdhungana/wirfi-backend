@@ -37,7 +37,7 @@ from wirfi_app.serializers import UserSerializer, \
     BusinessSerializer, BillingSerializer, \
     UserRegistrationSerializer, LoginSerializer, AuthorizationTokenSerializer, \
     IndustryTypeSerializer, DeviceMuteSettingSerializer, DevicePrioritySettingSerializer, DeviceNotificationSerializer, \
-    PresetFilterSerializer
+    PresetFilterSerializer, UpdateNotificationSerializer
 
 sensitive_post_parameters_m = method_decorator(
     sensitive_post_parameters(
@@ -454,6 +454,21 @@ class DeviceNotificationView(generics.ListCreateAPIView):
             'message': "Device Notifications created successfully",
             "data": serializer.data
         }
+        return Response(data, status=status.HTTP_200_OK)
+
+
+class UpdateNotificationView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = DeviceNotification.objects.all()
+
+    def update(self, request, *args, **kwargs):
+        notification = self.get_object()
+        notification.type = READ
+        notification.save()
+        data = {
+            "code": getattr(settings, 'SUCCESS_CODE', 1),
+            'message': "Notifications is updated to READ Type successfully",
+        }
+
         return Response(data, status=status.HTTP_200_OK)
 
 
@@ -890,7 +905,7 @@ class ResetPasswordView(generics.CreateAPIView):
 
             if activation_obj:
                 activation_code = get_activation_code(user, activation_obj[0].count)
-                activation_obj.update(code=activation_code, count=activation_obj[0].count+1, once_used=False)
+                activation_obj.update(code=activation_code, count=activation_obj[0].count + 1, once_used=False)
 
             else:
                 activation_code = get_activation_code(user, 0)
@@ -916,7 +931,7 @@ class ResetPasswordView(generics.CreateAPIView):
 
 def get_activation_code(user, count):
     hash_string = "{uid}:{email}#{count}".format(uid=str(user.id), email=user.email, count=str(count + 1))
-    return int(hashlib.sha256(hash_string.encode('utf-8')).hexdigest(), 16) % 10**6
+    return int(hashlib.sha256(hash_string.encode('utf-8')).hexdigest(), 16) % 10 ** 6
 
 
 class ResetPasswordConfirmView(PasswordResetConfirmView):
@@ -937,7 +952,7 @@ class ResetPasswordConfirmView(PasswordResetConfirmView):
 
         response = super().post(request, *args, **kwargs)
         UserActivationCode.objects.filter(user__email=request.data['email']).update(once_used=True)
-        
+
         response.data = {
             "code": getattr(settings, 'SUCCESS_CODE', 1),
             "message": "Password has been successfully reset with new password."
@@ -959,8 +974,9 @@ def reset_password_confirm_mobile(request):
             "code": getattr(settings, 'ERROR_CODE', 0),
             "message": "Passwords didn't match."
         }, status=status.HTTP_400_BAD_REQUEST)
-    
-    activation_obj = UserActivationCode.objects.prefetch_related('user').filter(code=data['activation_code']).filter(user__email=data['email']).filter(once_used=False)
+
+    activation_obj = UserActivationCode.objects.prefetch_related('user').filter(code=data['activation_code']).filter(
+        user__email=data['email']).filter(once_used=False)
 
     if not activation_obj:
         return Response({

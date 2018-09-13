@@ -280,6 +280,14 @@ class DeviceNotificationSerializer(serializers.ModelSerializer):
         exclude = ('description',)
 
 
+class UpdateNotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DeviceNotification
+        fields = ('type',)
+
+
+
+
 class UserRegistrationSerializer(serializers.Serializer):
     first_name = serializers.CharField(max_length=64)
     last_name = serializers.CharField(max_length=64)
@@ -352,8 +360,8 @@ class PasswordResetSerializer(serializers.Serializer):
 
         self.reset_form.save(**opts)
 
-        
+
 class PresetFilterSerializer(serializers.ModelSerializer):
     class Meta:
         model = PresetFilter
-        exclude = ('user', )
+        exclude = ('user',)
