@@ -37,7 +37,7 @@ from wirfi_app.serializers import UserSerializer, \
     BusinessSerializer, BillingSerializer, \
     UserRegistrationSerializer, LoginSerializer, AuthorizationTokenSerializer, \
     IndustryTypeSerializer, DeviceMuteSettingSerializer, DevicePrioritySettingSerializer, DeviceNotificationSerializer, \
-    PresetFilterSerializer, UpdateNotificationSerializer
+    PresetFilterSerializer
 
 sensitive_post_parameters_m = method_decorator(
     sensitive_post_parameters(

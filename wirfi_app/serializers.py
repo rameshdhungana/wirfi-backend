@@ -280,14 +280,6 @@ class DeviceNotificationSerializer(serializers.ModelSerializer):
         exclude = ('description',)
 
 
-class UpdateNotificationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = DeviceNotification
-        fields = ('type',)
-
-
-
-
 class UserRegistrationSerializer(serializers.Serializer):
     first_name = serializers.CharField(max_length=64)
     last_name = serializers.CharField(max_length=64)
