@@ -452,7 +452,7 @@ class DeviceNotificationView(generics.CreateAPIView):
         return Response(data, status=status.HTTP_200_OK)
 
 
-class UpdateNotificationView(generics.UpdateDestroyAPIView):
+class UpdateNotificationView(generics.UpdateAPIView, generics.DestroyAPIView):
     serializer_class = DeviceNotificationSerializer
     queryset = DeviceNotification.objects.all()
 
