@@ -162,10 +162,9 @@ class DeviceLocationHours(models.Model):
 
 
 class DeviceStatus(models.Model):
-    device = models.ForeignKey(Device, on_delete=models.CASCADE)
+    device = models.ForeignKey(Device, on_delete=models.CASCADE, related_name="status")
     status = models.IntegerField(choices=DEVICE_STATUS, default=6)
-    date = models.DateField(auto_now_add=True)
-    time = models.TimeField(auto_now_add=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
 
 
 class DeviceNotification(models.Model):

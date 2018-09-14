@@ -216,7 +216,6 @@ class DeviceView(generics.ListCreateAPIView):
         serializer = DeviceSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(user=token.user, industry_type=industry)
-        DeviceSetting.objects.create(device_id=serializer.data['id'])
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Successfully device created.",
