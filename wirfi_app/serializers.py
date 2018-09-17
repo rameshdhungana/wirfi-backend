@@ -209,7 +209,6 @@ class DeviceSettingSerializer(serializers.ModelSerializer):
                 "is_muted": data['is_muted'],
                 "mute_start": data['mute_start'],
                 "mute_duration": data["mute_duration"],
-
             },
             "priority_settings": {
                 "priority": data['priority']
@@ -239,8 +238,8 @@ class DeviceLocationHoursSerializer(serializers.ModelSerializer):
 class DeviceStatusSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeviceStatus
-        fields = '__all__'
-        read_only_fields = ('_date', '_time')
+        exclude = ('id', 'device',)
+        read_only_fields = ('timestamp',)
 
 
 class DeviceCameraSerializer(serializers.ModelSerializer):
@@ -262,7 +261,7 @@ class IndustryTypeSerializer(serializers.ModelSerializer):
 
 class DeviceSerializer(serializers.ModelSerializer):
     industry_type = IndustryTypeSerializer(read_only=True)
-    network = DeviceNetworkSerializer(read_only=True)
+    device_network = DeviceNetworkSerializer(read_only=True)
     location_hours = DeviceLocationHoursSerializer(many=True)
     device_settings = DeviceSettingSerializer(read_only=True)
     industry_type_id = serializers.CharField(allow_blank=True, write_only=True)
@@ -277,6 +276,7 @@ class DeviceSerializer(serializers.ModelSerializer):
         location_hours_data = validated_data.pop('location_hours', [])
         validated_data.pop('industry_type_id')
         device = Device.objects.create(**validated_data)
+        DeviceSetting.objects.create(device=device)
 
         for location_hour_data in location_hours_data:
             location_hour_data['device'] = device
