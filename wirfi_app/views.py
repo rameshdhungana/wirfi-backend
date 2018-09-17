@@ -188,16 +188,21 @@ class DeviceView(generics.ListCreateAPIView):
         return Device.objects.filter(user=token.user)
 
     def list(self, request, *args, **kwargs):
-        devices = self.get_queryset()
-        serializer = DeviceSerializer(devices, many=True)
         industry_types = Industry.objects.filter(Q(user=get_token_obj(self.request.auth).user) | Q(user__isnull=True))
         industry_serializer = IndustryTypeSerializer(industry_types, many=True)
+        devices = self.get_queryset()
+        serializer = DeviceSerializer(devices, many=True)
+        response_data = serializer.data
+        for data in response_data:
+            data['device_status'] = get_current_device_status(data['id'])
+
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Details successfully fetched.",
             'data': {
-                'device': serializer.data,
-                'industry_type': industry_serializer.data
+                'device': response_data,
+                'industry_type': industry_serializer.data,
+                'status_list': {x: y for x, y in DEVICE_STATUS}
             }
         }
         return Response(data, status=status.HTTP_200_OK)
@@ -222,6 +227,14 @@ class DeviceView(generics.ListCreateAPIView):
             'data': serializer.data
         }
         return Response(data, status=status.HTTP_201_CREATED)
+
+
+def get_current_device_status(device_id):
+    statuses = DeviceStatus.objects.filter(device_id=device_id).order_by('-id')
+    for i in range(len(statuses)):
+        if statuses[i].status != statuses[0].status:
+            return DeviceStatusSerializer(statuses[i-1]).data
+    return {}
 
 
 @api_view(['POST'])

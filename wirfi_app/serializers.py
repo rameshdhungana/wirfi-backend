@@ -209,7 +209,6 @@ class DeviceSettingSerializer(serializers.ModelSerializer):
                 "is_muted": data['is_muted'],
                 "mute_start": data['mute_start'],
                 "mute_duration": data["mute_duration"],
-
             },
             "priority_settings": {
                 "priority": data['priority']
@@ -239,8 +238,8 @@ class DeviceLocationHoursSerializer(serializers.ModelSerializer):
 class DeviceStatusSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeviceStatus
-        fields = '__all__'
-        read_only_fields = ('timestamp')
+        exclude = ('id', 'device',)
+        read_only_fields = ('timestamp',)
 
 
 class DeviceCameraSerializer(serializers.ModelSerializer):
