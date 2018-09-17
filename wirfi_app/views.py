@@ -202,7 +202,7 @@ class DeviceView(generics.ListCreateAPIView):
             'data': {
                 'device': response_data,
                 'industry_type': industry_serializer.data,
-                'status_list': {x: y for x, y in DEVICE_STATUS}
+                'status_dict': {x: y for x, y in DEVICE_STATUS}
             }
         }
         return Response(data, status=status.HTTP_200_OK)
