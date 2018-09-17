@@ -228,7 +228,7 @@ class DeviceView(generics.ListCreateAPIView):
 @api_view(['POST'])
 def mute_device_view(request, id):
     try:
-        device_obj = Device.objects.get(pk=device_id)
+        device_obj = Device.objects.get(pk=id)
         device_setting, _ = DeviceSetting.objects.get_or_create(device=device_obj)
         mute_serializer = DeviceMuteSettingSerializer(device_setting, data=request.data)
         mute_serializer.is_valid(raise_exception=True)
@@ -786,6 +786,7 @@ class PresetFilterView(generics.ListCreateAPIView):
 
     def create(self, request, *args, **kwargs):
         data = request.data
+        print(request.data)
         token = get_token_obj(self.request.auth)
         serializer = PresetFilterSerializer(data=data)
         serializer.is_valid(raise_exception=True)

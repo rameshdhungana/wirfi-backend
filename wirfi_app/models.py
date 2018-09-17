@@ -246,7 +246,7 @@ class PresetFilter(models.Model):
     user = models.ForeignKey("User", on_delete=models.CASCADE)
     name = models.CharField(max_length=50)
     filter_type = models.PositiveIntegerField()
-    filter_keys = ArrayField(models.IntegerField())
+    filter_keys = ArrayField(models.IntegerField(null=True, blank=True))
     sort_type = models.PositiveIntegerField()
 
     class Meta:
