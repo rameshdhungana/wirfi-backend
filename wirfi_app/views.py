@@ -21,7 +21,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework import status
 from rest_auth.registration.views import RegisterView, VerifyEmailView, VerifyEmailSerializer
 from rest_auth.views import LoginView, \
-     PasswordResetConfirmView, PasswordChangeView, \
+    PasswordResetConfirmView, PasswordChangeView, \
     PasswordResetSerializer, PasswordResetConfirmSerializer, PasswordChangeSerializer
 
 from allauth.account import app_settings as allauth_settings
@@ -233,7 +233,7 @@ def get_current_device_status(device_id):
     statuses = DeviceStatus.objects.filter(device_id=device_id).order_by('-id')
     for i in range(len(statuses)):
         if statuses[i].status != statuses[0].status:
-            return DeviceStatusSerializer(statuses[i-1]).data
+            return DeviceStatusSerializer(statuses[i - 1]).data
     return {}
 
 
@@ -802,15 +802,21 @@ class PresetFilterView(generics.ListCreateAPIView):
         token = get_token_obj(self.request.auth)
         serializer = PresetFilterSerializer(data=data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(user=token.user)
-        return Response({
-            "code": getattr(settings, "SUCCESS_CODE", 1),
-            "message": "Successfully fetched preset filter data.",
-            "data": serializer.data
-        }, status=status.HTTP_200_OK)
+        try:
+            serializer.save(user=token.user)
+            return Response({
+                "code": getattr(settings, "SUCCESS_CODE", 1),
+                "message": "Successfully fetched preset filter data.",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
+        except:
+            return Response({
+                "code": getattr(settings, "ERROR_CODE", 0),
+                "messsage": "This preset name already exists",
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 
-class PresetFilterDeleteView(generics.DestroyAPIView):
+class PresetFilterDeleteView(generics.RetrieveAPIView, generics.DestroyAPIView):
     serializer_class = PresetFilterSerializer
     lookup_field = 'id'
 
@@ -824,6 +830,15 @@ class PresetFilterDeleteView(generics.DestroyAPIView):
         return Response({
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Successfully deleted preset filter."
+        }, status=status.HTTP_200_OK)
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = PresetFilterSerializer(instance)
+        return Response({
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
+            'message': "Preset Detail is fetched successfully.",
+            "data": serializer.data
         }, status=status.HTTP_200_OK)
 
 
