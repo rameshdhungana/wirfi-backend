@@ -8,7 +8,8 @@ from rest_framework import serializers, exceptions
 
 from wirfi_app.models import Profile, Billing, Business, \
     Device, Industry, DeviceLocationHours, DeviceStatus, DeviceNetwork, \
-    AuthorizationToken, DeviceSetting, DeviceNotification, PresetFilter, DeviceCameraServices
+    AuthorizationToken, DeviceSetting, DeviceNotification, PresetFilter, \
+    DeviceCameraServices, UserActivationCode
 from wirfi_app.forms import ResetPasswordForm
 
 try:
@@ -311,6 +312,43 @@ class DeviceNotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeviceNotification
         exclude = ('description',)
+
+
+class ResetPasswordMobileSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+    activation_code = serializers.CharField(max_length=6, write_only=True)
+    new_password1 = serializers.CharField(max_length=64, write_only=True)
+    new_password2 = serializers.CharField(max_length=64, write_only=True)
+
+    def validate_email(self, email):
+        email = get_adapter().clean_email(email)
+        if allauth_settings.UNIQUE_EMAIL:
+            if not email_address_exists(email) or not email:
+                raise serializers.ValidationError(
+                    _("A user with this e-mail address is not found."))
+        return email
+
+    def validate(self, data):
+        if data['new_password1'] != data['new_password2']:
+            raise serializers.ValidationError(_("The two password fields didn't match."))
+        return data
+
+    def get_user_activation_model(self, data):
+        activation_obj = UserActivationCode.objects.filter(code=data['activation_code'], user__email=data['email'], once_used=False)
+        print(activation_obj)
+        if not activation_obj:
+            print("Activation code is invalid.")
+            raise serializers.ValidationError(_("Activation code is invalid."))
+        return activation_obj, activation_obj.first().user
+
+    def create(self, validated_data):
+        activation_obj, user = self.get_user_activation_model(validated_data)
+        user.set_password(validated_data['new_password1'])
+        user.save()
+        print(user)
+        activation_obj.update(once_used=True)
+        print(activation_obj)
+        return user
 
 
 class UserRegistrationSerializer(serializers.Serializer):

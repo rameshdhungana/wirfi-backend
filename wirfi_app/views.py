@@ -37,7 +37,7 @@ from wirfi_app.serializers import UserSerializer, \
     BusinessSerializer, BillingSerializer, \
     UserRegistrationSerializer, LoginSerializer, AuthorizationTokenSerializer, \
     DeviceMuteSettingSerializer, DevicePrioritySettingSerializer, DeviceSleepSerializer, DeviceNotificationSerializer, \
-    PresetFilterSerializer
+    PresetFilterSerializer, ResetPasswordMobileSerializer
 
 sensitive_post_parameters_m = method_decorator(
     sensitive_post_parameters(
@@ -1030,39 +1030,25 @@ class ResetPasswordConfirmView(PasswordResetConfirmView):
         return response
 
 
-@api_view(['POST'])
-def reset_password_confirm_mobile(request):
-    data = request.data
-    if not valid_password_regex(data['new_password1']):
+class ResetPasswordConfirmMobileView(generics.CreateAPIView):
+    serializer_class = ResetPasswordMobileSerializer
+
+    def create(self, request, *args, **kwargs):
+        data = request.data
+        if not valid_password_regex(data['new_password1']):
+            return Response({
+                "code": getattr(settings, 'ERROR_CODE', 0),
+                "message": "Password must be 8 characters long with at least 1 number or 1 special character."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = ResetPasswordMobileSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
         return Response({
-            "code": getattr(settings, 'ERROR_CODE', 0),
-            "message": "Password must be 8 characters long with at least 1 number or 1 special character."
-        }, status=status.HTTP_400_BAD_REQUEST)
-
-    if not (data['new_password1'] == data['new_password2']):
-        return Response({
-            "code": getattr(settings, 'ERROR_CODE', 0),
-            "message": "Passwords didn't match."
-        }, status=status.HTTP_400_BAD_REQUEST)
-
-    activation_obj = UserActivationCode.objects.prefetch_related('user').filter(code=data['activation_code']).filter(
-        user__email=data['email']).filter(once_used=False)
-
-    if not activation_obj:
-        return Response({
-            "code": getattr(settings, 'ERROR_CODE', 0),
-            "message": "Activation code is invalid."
-        }, status=status.HTTP_400_BAD_REQUEST)
-
-    user = activation_obj[0].user
-    user.set_password(data['new_password1'])
-    user.save()
-    activation_obj.update(once_used=True)
-
-    return Response({
-        "code": getattr(settings, 'SUCCESS_CODE', 1),
-        "message": "Password reset successfully done."
-    }, status=status.HTTP_200_OK)
+            "code": getattr(settings, 'SUCCESS_CODE', 1),
+            "message": "Password reset successfully done."
+        }, status=status.HTTP_200_OK)
 
 
 class ChangePasswordView(PasswordChangeView):

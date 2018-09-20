@@ -10,7 +10,7 @@ from wirfi_app.views import UserDetailView, dashboard_view, \
     add_device_status_view, device_priority_view, mute_device_view, DeviceSleepView, \
     DeviceCameraView, DeviceCameraDetailView, \
     Login, logout, RegisterUserView, VerifyEmailRegisterView, \
-    ResetPasswordView, ResetPasswordConfirmView, reset_password_confirm_mobile, ChangePasswordView, get_logged_in_user, \
+    ResetPasswordView, ResetPasswordConfirmView, ResetPasswordConfirmMobileView, ChangePasswordView, get_logged_in_user, \
     delete_billing_card, profile_images_view, validate_reset_password, \
     DeviceNotificationView, AllNotificationView, UpdateNotificationView, \
     PresetFilterView, PresetFilterDeleteView
@@ -65,7 +65,7 @@ urlpatterns = [
 
     path('reset-password/confirm/', ResetPasswordConfirmView.as_view(), name="confirm-reset"),
     path('reset/<uidb64>/<token>/', ResetPasswordConfirmView.as_view(), name='password_reset_confirm'),
-    path('reset-password-mobile/', reset_password_confirm_mobile, name="reset_password_confirm_mobile"),
+    path('reset-password-mobile/', ResetPasswordConfirmMobileView.as_view(), name="reset_password_confirm_mobile"),
 
     path('change-password/', ChangePasswordView.as_view(), name="change-password"),
     path('me/', get_logged_in_user, name="me"),
