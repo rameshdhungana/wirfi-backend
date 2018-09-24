@@ -984,8 +984,8 @@ class ResetPasswordView(generics.CreateAPIView):
             # Create a serializer with request.data
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-
             serializer.save()
+
             # Return the success message with OK HTTP status
             return Response({
                 "code": getattr(settings, 'SUCCESS_CODE', 1),
@@ -1098,9 +1098,7 @@ def delete_billing_card(request):
     data = {
         "code": getattr(settings, 'SUCCESS_CODE', 1),
         "message": "Card is Successfully removed",
-
     }
-
     return Response(data, status=status.HTTP_200_OK)
 
 
@@ -1120,14 +1118,14 @@ def validate_reset_password(request, uid, token):
             }
         else:
             data = {
-                "code": 0,
+                "code": getattr(settings, 'ERROR_CODE', 0),
                 "message": "Password Reset Link is Invalid",
             }
         return Response(data, status=status.HTTP_200_OK)
 
     except (TypeError, ValueError, OverflowError, User.DoesNotExist):
         data = {
-            "code": 0,
+            "code": getattr(settings, 'ERROR_CODE', 0),
             "message": "Password Reset Link is Invalid",
         }
         return Response(data, status=status.HTTP_400_BAD_REQUEST)

@@ -1,7 +1,5 @@
 from django.urls import path, re_path
 
-from rest_framework import routers
-
 from wirfi_app.views import UserDetailView, dashboard_view, \
     BusinessView, BusinessDetailView, \
     BillingView, BillingDetailView, \
@@ -14,9 +12,6 @@ from wirfi_app.views import UserDetailView, dashboard_view, \
     delete_billing_card, profile_images_view, validate_reset_password, \
     DeviceNotificationView, AllNotificationView, UpdateNotificationView, \
     PresetFilterView, PresetFilterDeleteView
-
-router = routers.DefaultRouter()
-# router.register(r'profile', ProfileApiView)
 
 urlpatterns = [
     path('dashboard/', dashboard_view, name='dashboard'),
@@ -72,5 +67,3 @@ urlpatterns = [
     path('delete-billing-card/', delete_billing_card, )
 
 ]
-
-urlpatterns += router.urls

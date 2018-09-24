@@ -11,7 +11,6 @@ def combine_multiple(exceptions):
     for key, val in exceptions.items():
         if key == 'non_field_errors':
             key = ''
-
         if message:
             message += ", '{0}': {1}".format(key, ''.join(val)) if key else ", {}".format(''.join(val))
         else:
