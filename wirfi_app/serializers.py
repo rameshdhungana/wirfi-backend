@@ -4,11 +4,11 @@ from django.contrib.auth import get_user_model, authenticate
 from django.conf import settings
 
 from rest_framework import serializers, exceptions
-# from rest_auth.registration.serializers import RegisterSerializer
 
 from wirfi_app.models import Profile, Billing, Business, \
     Device, Industry, DeviceLocationHours, DeviceStatus, DeviceNetwork, \
-    AuthorizationToken, DeviceSetting, DeviceNotification, PresetFilter, DeviceCameraServices
+    AuthorizationToken, DeviceSetting, DeviceNotification, PresetFilter, \
+    DeviceCameraServices, UserActivationCode
 from wirfi_app.forms import ResetPasswordForm
 
 try:
@@ -146,7 +146,7 @@ class UserDetailsSerializer(serializers.ModelSerializer):
 class DeviceMuteSettingSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeviceSetting
-        fields = ('is_muted', 'mute_start', 'mute_duration',)
+        fields = ('is_muted', 'mute_start', 'mute_duration')
         read_only_fields = ['mute_start']
 
     def to_representation(self, instance):
@@ -181,7 +181,7 @@ class DeviceSleepSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DeviceSetting
-        fields = ('has_sleep_feature', 'is_asleep', 'sleep_start', 'sleep_duration',)
+        fields = ('has_sleep_feature', 'is_asleep', 'sleep_start', 'sleep_duration')
         read_only_fields = ['has_sleep_feature', 'sleep_start']
 
     def to_representation(self, instance):
@@ -238,14 +238,14 @@ class DeviceLocationHoursSerializer(serializers.ModelSerializer):
 class DeviceStatusSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeviceStatus
-        exclude = ('id', 'device',)
+        exclude = ('id', 'device')
         read_only_fields = ('timestamp',)
 
 
 class DeviceCameraSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeviceCameraServices
-        exclude = ('device', 'id',)
+        exclude = ('device', 'id')
 
 
 class IndustryTypeSerializer(serializers.ModelSerializer):
@@ -253,7 +253,7 @@ class IndustryTypeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Industry
-        fields = ('id', 'name', 'is_user_created',)
+        fields = ('id', 'name', 'is_user_created')
 
     def get_is_user_created(self, obj):
         return True if obj.user else False
@@ -270,7 +270,7 @@ class DeviceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Device
         exclude = ('user',)
-        read_only_fields = ('location_logo', 'machine_photo',)
+        read_only_fields = ('location_logo', 'machine_photo')
 
     def create(self, validated_data):
         location_hours_data = validated_data.pop('location_hours', [])
@@ -302,7 +302,7 @@ class DeviceSerializerForNotification(serializers.ModelSerializer):
 
     class Meta:
         model = Device
-        fields = ('id', 'name', 'industry_type', 'machine_photo',)
+        fields = ('id', 'name', 'industry_type', 'machine_photo')
 
 
 class DeviceNotificationSerializer(serializers.ModelSerializer):
@@ -311,6 +311,41 @@ class DeviceNotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeviceNotification
         exclude = ('description',)
+
+
+class ResetPasswordMobileSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+    activation_code = serializers.CharField(max_length=6, write_only=True)
+    new_password1 = serializers.CharField(max_length=64, write_only=True)
+    new_password2 = serializers.CharField(max_length=64, write_only=True)
+
+    def validate_email(self, email):
+        email = get_adapter().clean_email(email)
+        if allauth_settings.UNIQUE_EMAIL:
+            if not email_address_exists(email) or not email:
+                raise serializers.ValidationError(
+                    _("A user with this e-mail address is not found."))
+        return email
+
+    def validate(self, data):
+        if data['new_password1'] != data['new_password2']:
+            raise serializers.ValidationError(_("The two password fields didn't match."))
+        return data
+
+    def get_user_activation_model(self, data):
+        activation_obj = UserActivationCode.objects.filter(code=data['activation_code'], user__email=data['email'], once_used=False)
+        print(activation_obj)
+        if not activation_obj:
+            print("Activation code is invalid.")
+            raise serializers.ValidationError(_("Activation code is invalid."))
+        return activation_obj, activation_obj.first().user
+
+    def create(self, validated_data):
+        activation_obj, user = self.get_user_activation_model(validated_data)
+        user.set_password(validated_data['new_password1'])
+        user.save()
+        activation_obj.update(once_used=True)
+        return user
 
 
 class UserRegistrationSerializer(serializers.Serializer):
