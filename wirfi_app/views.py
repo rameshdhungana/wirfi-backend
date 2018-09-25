@@ -539,6 +539,13 @@ class UpdateNotificationView(generics.UpdateAPIView, generics.DestroyAPIView):
         }
         return Response(data, status=status.HTTP_200_OK)
 
+    def destroy(self, request, *args, **kwargs):
+        self.get_object().delete()
+        return Response({
+            "code": getattr(settings, 'SUCCESS_CODE', 1),
+            "message": "Successfully deleted notification."
+        }, status=status.HTTP_200_OK)
+
 
 class AllNotificationView(generics.ListAPIView):
     serializer_class = DeviceNotificationSerializer
