@@ -134,6 +134,15 @@ class IndustryTypeListView(generics.ListCreateAPIView):
         token = get_token_obj(self.request.auth)
         serializer = IndustryTypeSerializer(data=data)
         serializer.is_valid(raise_exception=True)
+        for key, value in enumerate(
+                Industry.objects.filter(Q(user__isnull=True) | Q(user=token.user)).values_list('name', flat=True)):
+            if request.data['name'] == value:
+                return Response({
+                    'code': getattr(settings, 'ERROR_CODE', 0),
+                    'message': "Industry type with this name already exists.",
+
+                }, status=status.HTTP_400_BAD_REQUEST)
+
         serializer.save(user=token.user)
         return Response({
             'code': getattr(settings, 'SUCCESS_CODE', 1),
@@ -842,6 +851,7 @@ class PresetFilterDeleteView(generics.RetrieveAPIView, generics.DestroyAPIView):
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = PresetFilterSerializer(instance)
+
         return Response({
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Preset Detail is fetched successfully.",
