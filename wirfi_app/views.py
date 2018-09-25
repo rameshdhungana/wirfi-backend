@@ -134,7 +134,8 @@ class IndustryTypeListView(generics.ListCreateAPIView):
         token = get_token_obj(self.request.auth)
         serializer = IndustryTypeSerializer(data=data)
         serializer.is_valid(raise_exception=True)
-        for key, value in enumerate(Industry.objects.filter(user=request.user).values_list('name', flat=True)):
+        for key, value in enumerate(
+                Industry.objects.filter(Q(user__isnull=True) | Q(user=token.user)).values_list('name', flat=True)):
             if request.data['name'] == value:
                 return Response({
                     'code': getattr(settings, 'ERROR_CODE', 0),
