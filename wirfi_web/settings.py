@@ -54,6 +54,19 @@ INSTALLED_APPS = [
 
 SITE_ID = 1
 
+LOGIN_URL = 'user_login'
+
+LOGIN_EXEMPT_URLS = (
+    r'^register/',
+    r'^register/verify-email/',
+    r'^account-confirm-email/',
+    r'^reset-password/',
+    r'^validate-reset-password/<slug:uid>/<slug:token>/',
+    r'^reset-password/confirm/',
+    r'^reset-password-mobile/',
+    r'^reset/\w+/\w+/',
+)
+
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
@@ -63,6 +76,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'wirfi_web.middleware.AuthKeyRequiredMiddleware',
 ]
 
 CORS_ORIGIN_ALLOW_ALL = True
@@ -146,6 +160,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ERROR_CODE = 0
 SUCCESS_CODE = 1
 NO_DATA_CODE = 2
+NO_AUTH_KEY = 3
 
 OLD_PASSWORD_FIELD_ENABLED = True
 LOGOUT_ON_PASSWORD_CHANGE = True
