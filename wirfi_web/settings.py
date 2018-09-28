@@ -54,14 +54,14 @@ INSTALLED_APPS = [
 
 SITE_ID = 1
 
-LOGIN_URL = 'user_login'
+LOGIN_URL = 'login/'
 
 LOGIN_EXEMPT_URLS = (
     r'^register/',
     r'^register/verify-email/',
     r'^account-confirm-email/',
     r'^reset-password/',
-    r'^validate-reset-password/<slug:uid>/<slug:token>/',
+    r'^validate-reset-password/[-\w]+/[-\w]+/',
     r'^reset-password/confirm/',
     r'^reset-password-mobile/',
     r'^reset/\w+/\w+/',
