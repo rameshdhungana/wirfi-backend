@@ -102,10 +102,10 @@ class UserProfileSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Invalid address.")
         return address
 
-    def validate_phone_number(self, phone_number):
-        if not re.match(r"^[+-0-9]+$", phone_number):
-            raise serializers.ValidationError("Invalid phone number.")
-        return phone_number
+    # def validate_phone_number(self, phone_number):
+    #     if not re.match(r"^[+-0-9]+$", phone_number):
+    #         raise serializers.ValidationError("Invalid phone number.")
+    #     return phone_number
 
 
 class BusinessSerializer(serializers.ModelSerializer):
