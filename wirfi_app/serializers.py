@@ -31,7 +31,7 @@ def name_validator(value):
 
 
 def token_validator(value):
-    if not re.match(r"^$|^[a-zA-Z0-9]+$", value):
+    if not re.match(r"^$|^[a-zA-Z0-9-]+$", value):
         raise serializers.ValidationError("Invalid field.")
     return value
 
