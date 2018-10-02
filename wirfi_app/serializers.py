@@ -25,7 +25,7 @@ User = get_user_model()
 
 
 def name_validator(value):
-    if not re.match(r"^[A-Za-z]+$", value):
+    if not re.match(r"^[A-Za-z\s]+$", value):
         raise serializers.ValidationError("Invalid field.")
     return value
 
@@ -112,6 +112,16 @@ class BusinessSerializer(serializers.ModelSerializer):
     class Meta:
         model = Business
         exclude = ('user',)
+
+    def validate_address(self, address):
+        if not re.match(r"^[-,A-Za-z0-9\s]+$", address):
+            raise serializers.ValidationError("Invalid address.")
+        return address
+
+    def validate_phone_number(self, phone_number):
+        if not re.match(r"^[-+0-9]+$", phone_number):
+            raise serializers.ValidationError("Invalid phone number.")
+        return phone_number
 
 
 class BillingSerializer(serializers.ModelSerializer):
@@ -426,7 +436,6 @@ class PasswordResetSerializer(serializers.Serializer):
     Serializer for requesting a password reset e-mail.
     """
     email = serializers.EmailField()
-
     password_reset_form_class = ResetPasswordForm
 
     def validate_email(self, value):
