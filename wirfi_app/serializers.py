@@ -1,4 +1,6 @@
 import stripe
+import re
+
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth import get_user_model, authenticate
 from django.conf import settings
@@ -22,12 +24,24 @@ except ImportError:
 User = get_user_model()
 
 
+def name_validator(value):
+    if not re.match(r"^[A-Za-z\s]+$", value):
+        raise serializers.ValidationError("Invalid field.")
+    return value
+
+
+def token_validator(value):
+    if not re.match(r"^$|^[a-zA-Z0-9-]+$", value):
+        raise serializers.ValidationError("Invalid field.")
+    return value
+
+
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True, allow_blank=False)
     password = serializers.CharField(style={'input_type': 'password'})
-    device_id = serializers.CharField(allow_blank=True)
+    device_id = serializers.CharField(allow_blank=True, validators=[token_validator])
     device_type = serializers.IntegerField()
-    push_notification_token = serializers.CharField(allow_blank=True)
+    push_notification_token = serializers.CharField(allow_blank=True, validators=[token_validator])
 
     def _validate_email(self, email, password):
         user = None
@@ -83,11 +97,31 @@ class UserProfileSerializer(serializers.ModelSerializer):
         exclude = ('user',)
         read_only_fields = ('profile_picture',)
 
+    def validate_address(self, address):
+        if not re.match(r"^[-,A-Za-z0-9\s]+$", address):
+            raise serializers.ValidationError("Invalid address.")
+        return address
+
+    def validate_phone_number(self, phone_number):
+        if not re.match(r"^[-+0-9]+$", phone_number):
+            raise serializers.ValidationError("Invalid phone number.")
+        return phone_number
+
 
 class BusinessSerializer(serializers.ModelSerializer):
     class Meta:
         model = Business
         exclude = ('user',)
+
+    def validate_address(self, address):
+        if not re.match(r"^[-,A-Za-z0-9\s]+$", address):
+            raise serializers.ValidationError("Invalid address.")
+        return address
+
+    def validate_phone_number(self, phone_number):
+        if not re.match(r"^[-+0-9]+$", phone_number):
+            raise serializers.ValidationError("Invalid phone number.")
+        return phone_number
 
 
 class BillingSerializer(serializers.ModelSerializer):
@@ -103,7 +137,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'email', 'first_name', 'last_name', 'full_name', 'profile', 'business', 'billing',)
+        fields = ('id', 'email', 'first_name', 'last_name', 'full_name', 'profile', 'business', 'billing')
 
     def update(self, instance, validated_data):
         profile_data = validated_data.pop('profile')
@@ -319,6 +353,11 @@ class ResetPasswordMobileSerializer(serializers.Serializer):
     new_password1 = serializers.CharField(max_length=64, write_only=True)
     new_password2 = serializers.CharField(max_length=64, write_only=True)
 
+    def validate_activation_code(self, activation_code):
+        if not re.match(r"^[0-9]+$", activation_code):
+            raise serializers.ValidationError("Invalid activation code.")
+        return activation_code
+
     def validate_email(self, email):
         email = get_adapter().clean_email(email)
         if allauth_settings.UNIQUE_EMAIL:
@@ -349,8 +388,8 @@ class ResetPasswordMobileSerializer(serializers.Serializer):
 
 
 class UserRegistrationSerializer(serializers.Serializer):
-    first_name = serializers.CharField(max_length=64)
-    last_name = serializers.CharField(max_length=64)
+    first_name = serializers.CharField(max_length=64, validators=[name_validator])
+    last_name = serializers.CharField(max_length=64, validators=[name_validator])
     email = serializers.EmailField(required=True)
     password1 = serializers.CharField(write_only=True)
     password2 = serializers.CharField(write_only=True)
@@ -397,7 +436,6 @@ class PasswordResetSerializer(serializers.Serializer):
     Serializer for requesting a password reset e-mail.
     """
     email = serializers.EmailField()
-
     password_reset_form_class = ResetPasswordForm
 
     def validate_email(self, value):
