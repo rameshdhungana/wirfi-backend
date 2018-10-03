@@ -136,7 +136,7 @@ class IndustryTypeListView(generics.ListCreateAPIView):
         serializer.is_valid(raise_exception=True)
         for key, value in enumerate(
                 Industry.objects.filter(Q(user__isnull=True) | Q(user=token.user)).values_list('name', flat=True)):
-            if request.data['name'] == value:
+            if request.data['name'].upper() == value.upper():
                 return Response({
                     'code': getattr(settings, 'ERROR_CODE', 0),
                     'message': "Industry type with this name already exists.",
