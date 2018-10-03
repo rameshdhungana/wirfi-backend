@@ -902,7 +902,6 @@ class Login(LoginView):
         self.login()
         self.user.last_login = datetime.datetime.now()
         self.user.save()
-        print(self.user.profile)
         response = self.get_response()
         response.data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
