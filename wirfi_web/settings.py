@@ -65,6 +65,7 @@ LOGIN_EXEMPT_URLS = (
     r'^reset-password/confirm/',
     r'^reset-password-mobile/',
     r'^reset/\w+/\w+/',
+    r'^list-api/',
 )
 
 MIDDLEWARE = [
