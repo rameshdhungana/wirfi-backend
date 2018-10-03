@@ -902,6 +902,7 @@ class Login(LoginView):
         self.login()
         self.user.last_login = datetime.datetime.now()
         self.user.save()
+        print(self.user.profile)
         response = self.get_response()
         response.data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
@@ -910,7 +911,7 @@ class Login(LoginView):
                 'id': self.user.id,
                 'first_name': self.user.first_name,
                 'last_name': self.user.last_name,
-                'profile_picture': self.user.profile.profile_picture.url if hasattr(self.user, 'profile') else '',
+                'profile_picture': self.user.profile.profile_picture.url if self.user.profile.profile_picture else '',
                 'auth_token': response.data.get('key'),
                 'device_id': response.data.get('device_id'),
                 'device_type': response.data.get('device_type'),
