@@ -3,7 +3,7 @@ from django.urls import path, re_path
 from wirfi_app.views import UserDetailView, dashboard_view, \
     BusinessView, BusinessDetailView, \
     BillingView, BillingDetailView, \
-    IndustryTypeListView, IndustryTypeDetailView, \
+    IndustryTypeListView, IndustryTypeDetailView, LocationTypeListView, LocationTypeDetailView, \
     DeviceView, DeviceDetailView, DeviceNetworkView, DeviceNetworkDetailView, device_images_view, \
     add_device_status_view, device_priority_view, mute_device_view, DeviceSleepView, \
     DeviceCameraView, DeviceCameraDetailView, \
@@ -27,6 +27,9 @@ urlpatterns = [
 
     path('industry-type/', IndustryTypeListView.as_view(), name="industry-type"),
     path('industry-type/<int:id>/', IndustryTypeDetailView.as_view(), name="industry-type-detail"),
+
+    path('location-type/', LocationTypeListView.as_view(), name="location-type"),
+    path('location-type/<int:id>/', LocationTypeDetailView.as_view(), name="location-type-detail"),
 
     path('device/', DeviceView.as_view(), name="device-serial-number"),
     path('device/<int:id>/status/', add_device_status_view, name="device_status"),

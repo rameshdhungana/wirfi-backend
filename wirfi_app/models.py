@@ -102,6 +102,14 @@ class Industry(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
 
 
+class Franchise(models.Model):
+    name = models.CharField(max_length=50)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
+
+    class Meta:
+        unique_together = ('name', 'user')
+
+
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     profile_picture = models.ImageField(upload_to='users/profile_pictures', null=True, blank=True)
@@ -142,6 +150,7 @@ class Device(models.Model):
     latitude = models.FloatField(default=0)
     longitude = models.FloatField(default=0)
     industry_type = models.ForeignKey(Industry, on_delete=models.CASCADE, related_name="industry_type")
+    # location_type = models.ForeignKey(Franchise, on_delete=models.CASCADE, related_name="location_type")
     created_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):

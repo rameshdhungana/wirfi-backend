@@ -6,8 +6,9 @@ from django.contrib.auth import get_user_model, authenticate
 from django.conf import settings
 
 from rest_framework import serializers, exceptions
+from rest_framework.validators import UniqueTogetherValidator
 
-from wirfi_app.models import Profile, Billing, Business, \
+from wirfi_app.models import Profile, Billing, Business, Franchise, \
     Device, Industry, DeviceLocationHours, DeviceStatus, DeviceNetwork, \
     AuthorizationToken, DeviceSetting, DeviceNotification, PresetFilter, \
     DeviceCameraServices, UserActivationCode
@@ -291,6 +292,26 @@ class IndustryTypeSerializer(serializers.ModelSerializer):
 
     def get_is_user_created(self, obj):
         return True if obj.user else False
+
+
+class LocationTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Franchise
+        fields = ('id', 'name', 'user')
+        validators = [
+            UniqueTogetherValidator(
+                queryset = Franchise.objects.all(),
+                fields = ('name', 'user'),
+                message = "Franchise name already exists."
+            )
+        ]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        return {
+            'id': data['id'],
+            'name': data['name']
+        }
 
 
 class DeviceSerializer(serializers.ModelSerializer):

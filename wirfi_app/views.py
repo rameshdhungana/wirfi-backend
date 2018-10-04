@@ -27,13 +27,13 @@ from rest_auth.views import LoginView, \
 from allauth.account import app_settings as allauth_settings
 from allauth.account.utils import complete_signup
 
-from wirfi_app.models import Billing, Business, Profile, \
+from wirfi_app.models import Billing, Business, Profile, Franchise, \
     Device, Industry, DeviceNetwork, DeviceStatus, DeviceSetting, DeviceCameraServices, \
     Subscription, AuthorizationToken, DEVICE_STATUS, DeviceNotification, PresetFilter, \
     UserActivationCode, READ, NOTIFICATION_TYPE
 from wirfi_app.serializers import UserSerializer, \
     DeviceSerializer, DeviceNetworkSerializer, DeviceCameraSerializer, \
-    DeviceStatusSerializer, IndustryTypeSerializer, \
+    DeviceStatusSerializer, IndustryTypeSerializer, LocationTypeSerializer, \
     BusinessSerializer, BillingSerializer, \
     UserRegistrationSerializer, LoginSerializer, AuthorizationTokenSerializer, \
     DeviceMuteSettingSerializer, DevicePrioritySettingSerializer, DeviceSleepSerializer, DeviceNotificationSerializer, \
@@ -151,7 +151,7 @@ class IndustryTypeListView(generics.ListCreateAPIView):
         }, status=status.HTTP_201_CREATED)
 
 
-class IndustryTypeDetailView(generics.RetrieveUpdateDestroyAPIView):
+class IndustryTypeDetailView(generics.UpdateAPIView, generics.DestroyAPIView):
     lookup_field = 'id'
     serializer_class = IndustryTypeSerializer
 
@@ -159,19 +159,70 @@ class IndustryTypeDetailView(generics.RetrieveUpdateDestroyAPIView):
         token = get_token_obj(self.request.auth)
         return Industry.objects.filter(Q(user__isnull=True) | Q(user=token.user)).filter(pk=self.kwargs['id'])
 
-    def retrieve(self, request, *args, **kwargs):
-        industry_type = self.get_object()
-        serializer = IndustryTypeSerializer(industry_type)
-        return Response({
-            'code': getattr(settings, 'SUCCESS_CODE', 1),
-            'message': "Successfully fetched industry type.",
-            'data': serializer.data
-        }, status=status.HTTP_200_OK)
-
     def update(self, request, *args, **kwargs):
         industry_type = self.get_object()
         token = get_token_obj(self.request.auth)
         serializer = IndustryTypeSerializer(industry_type, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=token.user)
+        return Response({
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
+            'message': "Successfully updated industry type.",
+            'data': serializer.data
+        }, status=status.HTTP_200_OK)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response({
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
+            'message': "Successfully deleted industry type."
+        }, status=status.HTTP_200_OK)
+
+
+class LocationTypeListView(generics.ListCreateAPIView):
+    serializer_class = LocationTypeSerializer
+
+    def get_queryset(self):
+        token = get_token_obj(self.request.auth)
+        return Franchise.objects.filter(user=token.user)
+
+    def list(self, request, *args, **kwargs):
+        location_types = self.get_queryset()
+        serializer = LocationTypeSerializer(location_types, many=True)
+        return Response({
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
+            'message': "Successfully fetched location types.",
+            'data': serializer.data
+        }, status=status.HTTP_200_OK)
+
+    def create(self, request, *args, **kwargs):
+        data = request.data
+        token = get_token_obj(self.request.auth)
+        data['user'] = token.user.id
+        serializer = LocationTypeSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
+            'message': "Successfully added location type.",
+            'data': serializer.data
+        }, status=status.HTTP_201_CREATED)
+
+
+class LocationTypeDetailView(generics.UpdateAPIView, generics.DestroyAPIView):
+    lookup_field = 'id'
+    serializer_class = LocationTypeSerializer
+
+    def get_queryset(self):
+        token = get_token_obj(self.request.auth)
+        return Franchise.objects.filter(user=token.user)
+
+    def update(self, request, *args, **kwargs):
+        industry_type = self.get_object()
+        token = get_token_obj(self.request.auth)
+        data = {**request.data, 'user': token.user.id}
+        serializer = LocationTypeSerializer(industry_type, data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save(user=token.user)
         return Response({
