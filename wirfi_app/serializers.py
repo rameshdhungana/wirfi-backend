@@ -295,22 +295,28 @@ class IndustryTypeSerializer(serializers.ModelSerializer):
 
 
 class LocationTypeSerializer(serializers.ModelSerializer):
+    is_user_created = serializers.SerializerMethodField()
+
     class Meta:
         model = Franchise
-        fields = ('id', 'name', 'user')
+        fields = ('id', 'name', 'user', 'is_user_created')
         validators = [
             UniqueTogetherValidator(
-                queryset = Franchise.objects.all(),
-                fields = ('name', 'user'),
-                message = "Franchise name already exists."
+                queryset=Franchise.objects.all(),
+                fields=('name', 'user'),
+                message="Franchise name already exists."
             )
         ]
+
+    def get_is_user_created(self, obj):
+        return True if obj.user else False
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
         return {
             'id': data['id'],
-            'name': data['name']
+            'name': data['name'],
+            'is_user_created': data['is_user_created']
         }
 
 
@@ -394,7 +400,8 @@ class ResetPasswordMobileSerializer(serializers.Serializer):
         return data
 
     def get_user_activation_model(self, data):
-        activation_obj = UserActivationCode.objects.filter(code=data['activation_code'], user__email=data['email'], once_used=False)
+        activation_obj = UserActivationCode.objects.filter(code=data['activation_code'], user__email=data['email'],
+                                                           once_used=False)
         print(activation_obj)
         if not activation_obj:
             print("Activation code is invalid.")
