@@ -506,6 +506,15 @@ class DeviceDetailView(generics.RetrieveUpdateDestroyAPIView):
         }
         return Response(data, status=status.HTTP_200_OK)
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.delete()
+        data = {
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
+            'message': "Device successfully deleted."
+        }
+        return Response(data, status=status.HTTP_200_OK)
+
 
 class DeviceNetworkView(generics.ListCreateAPIView):
     serializer_class = DeviceNetworkSerializer
