@@ -300,9 +300,9 @@ class LocationTypeSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'user')
         validators = [
             UniqueTogetherValidator(
-                queryset = Franchise.objects.all(),
-                fields = ('name', 'user'),
-                message = "Franchise name already exists."
+                queryset=Franchise.objects.all(),
+                fields=('name', 'user'),
+                message="Franchise name already exists."
             )
         ]
 
@@ -393,7 +393,8 @@ class ResetPasswordMobileSerializer(serializers.Serializer):
         return data
 
     def get_user_activation_model(self, data):
-        activation_obj = UserActivationCode.objects.filter(code=data['activation_code'], user__email=data['email'], once_used=False)
+        activation_obj = UserActivationCode.objects.filter(code=data['activation_code'], user__email=data['email'],
+                                                           once_used=False)
         print(activation_obj)
         if not activation_obj:
             print("Activation code is invalid.")

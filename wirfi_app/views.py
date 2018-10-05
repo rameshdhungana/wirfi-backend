@@ -53,6 +53,20 @@ def valid_password_regex(password):
     return valid
 
 
+def franchise_type_name_already_exits(request, token):
+    for key, value in enumerate(
+            Franchise.objects.filter(Q(user__isnull=True) | Q(user=token.user)).values_list('name', flat=True)):
+        if request.data['name'].upper() == value.upper():
+            return True
+
+
+def industry_type_name_already_exits(request, token):
+    for key, value in enumerate(
+            Industry.objects.filter(Q(user__isnull=True) | Q(user=token.user)).values_list('name', flat=True)):
+        if request.data['name'].upper() == value.upper():
+            return True
+
+
 class UserDetailView(generics.RetrieveUpdateAPIView):
     lookup_field = 'id'
     serializer_class = UserSerializer
@@ -134,14 +148,13 @@ class IndustryTypeListView(generics.ListCreateAPIView):
         token = get_token_obj(self.request.auth)
         serializer = IndustryTypeSerializer(data=data)
         serializer.is_valid(raise_exception=True)
-        for key, value in enumerate(
-                Industry.objects.filter(Q(user__isnull=True) | Q(user=token.user)).values_list('name', flat=True)):
-            if request.data['name'].upper() == value.upper():
-                return Response({
-                    'code': getattr(settings, 'ERROR_CODE', 0),
-                    'message': "Industry type with this name already exists.",
+        # case sensitive validation of name
+        if industry_type_name_already_exits(request, token):
+            return Response({
+                'code': getattr(settings, 'ERROR_CODE', 0),
+                'message': "Industry type with this name already exists.",
 
-                }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         serializer.save(user=token.user)
         return Response({
@@ -164,6 +177,14 @@ class IndustryTypeDetailView(generics.UpdateAPIView, generics.DestroyAPIView):
         token = get_token_obj(self.request.auth)
         serializer = IndustryTypeSerializer(industry_type, data=request.data)
         serializer.is_valid(raise_exception=True)
+        # case sensitive validation of name
+        if industry_type_name_already_exits(request, token):
+            return Response({
+                'code': getattr(settings, 'ERROR_CODE', 0),
+                'message': "Industry type with this name already exists.",
+
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         serializer.save(user=token.user)
         return Response({
             'code': getattr(settings, 'SUCCESS_CODE', 1),
@@ -202,6 +223,13 @@ class LocationTypeListView(generics.ListCreateAPIView):
         data['user'] = token.user.id
         serializer = LocationTypeSerializer(data=data)
         serializer.is_valid(raise_exception=True)
+        # case sensitive validation of name
+        if franchise_type_name_already_exits(request, token):
+            return Response({
+                'code': getattr(settings, 'ERROR_CODE', 0),
+                'message': "Franchise type with this name already exists.",
+
+            }, status=status.HTTP_400_BAD_REQUEST)
         serializer.save()
         return Response({
             'code': getattr(settings, 'SUCCESS_CODE', 1),
@@ -219,15 +247,23 @@ class LocationTypeDetailView(generics.UpdateAPIView, generics.DestroyAPIView):
         return Franchise.objects.filter(user=token.user)
 
     def update(self, request, *args, **kwargs):
-        industry_type = self.get_object()
+        franchise_type = self.get_object()
         token = get_token_obj(self.request.auth)
         data = {**request.data, 'user': token.user.id}
-        serializer = LocationTypeSerializer(industry_type, data=data)
+        serializer = LocationTypeSerializer(franchise_type, data=data)
         serializer.is_valid(raise_exception=True)
+        # case sensitive validation of name
+        if franchise_type_name_already_exits(request, token):
+            return Response({
+                'code': getattr(settings, 'ERROR_CODE', 0),
+                'message': "Franchise type with this name already exists.",
+
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         serializer.save(user=token.user)
         return Response({
             'code': getattr(settings, 'SUCCESS_CODE', 1),
-            'message': "Successfully updated industry type.",
+            'message': "Successfully updated franchise type.",
             'data': serializer.data
         }, status=status.HTTP_200_OK)
 
@@ -961,7 +997,8 @@ class Login(LoginView):
                 'id': self.user.id,
                 'first_name': self.user.first_name,
                 'last_name': self.user.last_name,
-                'profile_picture': self.user.profile.profile_picture.url if (hasattr(self.user, 'profile') and self.user.profile.profile_picture) else '',
+                'profile_picture': self.user.profile.profile_picture.url if (
+                        hasattr(self.user, 'profile') and self.user.profile.profile_picture) else '',
                 'auth_token': response.data.get('key'),
                 'device_id': response.data.get('device_id'),
                 'device_type': response.data.get('device_type'),
