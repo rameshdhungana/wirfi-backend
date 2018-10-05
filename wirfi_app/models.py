@@ -150,7 +150,7 @@ class Device(models.Model):
     latitude = models.FloatField(default=0)
     longitude = models.FloatField(default=0)
     industry_type = models.ForeignKey(Industry, on_delete=models.CASCADE, related_name="industry_type")
-    # location_type = models.ForeignKey(Franchise, on_delete=models.CASCADE, related_name="location_type")
+    location_type = models.ForeignKey(Franchise, on_delete=models.CASCADE, related_name="location_type")
     created_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):

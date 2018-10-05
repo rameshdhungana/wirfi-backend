@@ -270,17 +270,25 @@ class DeviceView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         token = get_token_obj(request.auth)
         industry_id = request.data.get('industry_type_id', '')
+        franchise_id = request.data.get('location_type_id', '')
         if not industry_id:
             return Response({
                 'code': getattr(settings, 'ERROR_CODE', 0),
                 'message': "Industry Type can't be null/blank."
             }, status=status.HTTP_400_BAD_REQUEST)
 
+        if not franchise_id:
+            return Response({
+                'code': getattr(settings, 'ERROR_CODE', 0),
+                'message': "Location Type can't be null/blank."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         industry = Industry.objects.get(pk=industry_id)
+        franchise = Franchise.objects.get(pk=franchise_id)
 
         serializer = DeviceSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(user=token.user, industry_type=industry)
+        serializer.save(user=token.user, industry_type=industry, location_type=franchise)
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Successfully device created.",
@@ -467,6 +475,14 @@ class DeviceDetailView(generics.RetrieveUpdateDestroyAPIView):
         token = get_token_obj(self.request.auth)
         industry_id = request.data.get('industry_type_id', '')
         industry_name = request.data.get('industry_name', '')
+        franchise_id = request.data.get('location_type_id', '')
+
+        if not franchise_id:
+            return Response({
+                'code': getattr(settings, 'ERROR_CODE', 0),
+                'message': "Location Type can't be null/blank."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         if not industry_id and not industry_name:
             return Response({
                 'code': getattr(settings, 'ERROR_CODE', 0),
@@ -478,9 +494,11 @@ class DeviceDetailView(generics.RetrieveUpdateDestroyAPIView):
         else:
             industry = Industry.objects.get(pk=industry_id)
 
+        franchise = Franchise.objects.get(pk=franchise_id)
+
         serializer = DeviceSerializer(device, data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(user=token.user, industry_type=industry)
+        serializer.save(user=token.user, industry_type=industry, location_type=franchise)
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Device successfully updated.",

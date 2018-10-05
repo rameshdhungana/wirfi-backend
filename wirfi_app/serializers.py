@@ -316,6 +316,7 @@ class LocationTypeSerializer(serializers.ModelSerializer):
 
 class DeviceSerializer(serializers.ModelSerializer):
     industry_type = IndustryTypeSerializer(read_only=True)
+    location_type = LocationTypeSerializer(read_only=True)
     device_network = DeviceNetworkSerializer(read_only=True)
     location_hours = DeviceLocationHoursSerializer(many=True)
     device_settings = DeviceSettingSerializer(read_only=True)
