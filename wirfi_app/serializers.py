@@ -295,9 +295,11 @@ class IndustryTypeSerializer(serializers.ModelSerializer):
 
 
 class LocationTypeSerializer(serializers.ModelSerializer):
+    is_user_created = serializers.SerializerMethodField()
+
     class Meta:
         model = Franchise
-        fields = ('id', 'name', 'user')
+        fields = ('id', 'name', 'user', 'is_user_created')
         validators = [
             UniqueTogetherValidator(
                 queryset=Franchise.objects.all(),
@@ -305,6 +307,9 @@ class LocationTypeSerializer(serializers.ModelSerializer):
                 message="Franchise name already exists."
             )
         ]
+
+    def get_is_user_created(self, obj):
+        return True if obj.user else False
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
