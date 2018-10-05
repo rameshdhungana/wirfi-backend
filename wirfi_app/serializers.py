@@ -315,7 +315,8 @@ class LocationTypeSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
         return {
             'id': data['id'],
-            'name': data['name']
+            'name': data['name'],
+            'is_user_created': data['is_user_created']
         }
 
 
