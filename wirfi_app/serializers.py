@@ -166,6 +166,13 @@ class UserSerializer(serializers.ModelSerializer):
         except:
             return None
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['profile']['first_name'] = data.pop('first_name')
+        data['profile']['last_name'] = data.pop('last_name')
+        data['profile']['full_name'] = data.pop('full_name')
+        return data
+
 
 class UserDetailsSerializer(serializers.ModelSerializer):
     """
