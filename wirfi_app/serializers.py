@@ -168,6 +168,8 @@ class UserSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
+        if not data['profile']:
+            data['profile'] = {}
         data['profile']['first_name'] = data.pop('first_name')
         data['profile']['last_name'] = data.pop('last_name')
         data['profile']['full_name'] = data.pop('full_name')
