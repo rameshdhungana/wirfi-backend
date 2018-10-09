@@ -92,7 +92,7 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
         serializer.save(user=token.user)
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
-            'message': "",
+            'message': "User successfully updated",
             'data': serializer.data
         }
         return Response(data, status=status.HTTP_200_OK)
