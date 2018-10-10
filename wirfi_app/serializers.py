@@ -133,8 +133,8 @@ class BillingSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(read_only=True)
-    phone_number = serializers.CharField(max_length=15, write_only=True, required=False)
-    address = serializers.CharField(max_length=100, write_only=True, required=False)
+    phone_number = serializers.CharField(max_length=15, write_only=True, allow_blank=True, required=False)
+    address = serializers.CharField(max_length=100, write_only=True, required=False, allow_blank=True)
     profile = UserProfileSerializer(read_only=True)
     business = BusinessSerializer(read_only=True)
     billing = serializers.SerializerMethodField()
