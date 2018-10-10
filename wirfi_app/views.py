@@ -114,9 +114,9 @@ def profile_images_view(request, id):
         if profile:
             profile.update(profile_picture = profile_picture)
         else:
-            profile = Profile.objects.create(user_id=id, phone_number='', address='', profile_picture=profile_picture)
-            
-        user = UserSerializer(profile.user).data
+            profile = Profile.objects.create(user=user, phone_number='', address='', profile_picture=profile_picture)
+
+        user = UserSerializer(user).data
         return Response({
             "code": getattr(settings, 'SUCCESS_CODE', 1),
             "message": "Images Successfully uploaded.",
