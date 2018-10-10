@@ -102,17 +102,19 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
 def profile_images_view(request, id):
     profile_picture = request.FILES.get('profile_picture', '')
     user = get_token_obj(request.auth).user
-    if not profile_picture and not user.profile.profile_picture:
+    if not profile_picture:
         return Response({
             "code": getattr(settings, 'ERROR_CODE', 0),
             "message": "Please upload the image."},
             status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        profile = Profile.objects.get(user__id=id)
-        if profile_picture:
-            profile.profile_picture = profile_picture
-            profile.save()
+        profile = Profile.objects.filter(user__id=id)
+        if profile:
+            profile.update(profile_picture = profile_picture)
+        else:
+            profile = Profile.objects.create(user_id=id, phone_number='', address='', profile_picture=profile_picture)
+            
         user = UserSerializer(profile.user).data
         return Response({
             "code": getattr(settings, 'SUCCESS_CODE', 1),
