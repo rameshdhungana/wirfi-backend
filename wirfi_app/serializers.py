@@ -133,8 +133,8 @@ class BillingSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(read_only=True)
-    phone_number = serializers.CharField(max_length=15, write_only=True)
-    address = serializers.CharField(max_length=100, write_only=True)
+    phone_number = serializers.CharField(max_length=15, write_only=True, required=False)
+    address = serializers.CharField(max_length=100, write_only=True, required=False)
     profile = UserProfileSerializer(read_only=True)
     business = BusinessSerializer(read_only=True)
     billing = serializers.SerializerMethodField()
@@ -144,7 +144,7 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ('id', 'email', 'first_name', 'last_name', 'full_name', 'phone_number', 'address', 'profile', 'business', 'billing')
 
     def update(self, instance, validated_data):
-        profile_data = {"phone_number": validated_data.pop('phone_number'), "address": validated_data.pop('address')}
+        profile_data = {"phone_number": validated_data.pop('phone_number', ''), "address": validated_data.pop('address', '')}
         user = super().update(instance, validated_data)
         profile = Profile.objects.filter(user=user)
         if profile:
