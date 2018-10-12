@@ -111,8 +111,8 @@ def profile_images_view(request, id):
 
     profile = Profile.objects.filter(user__id=id)
     if profile:
-        profile.first().profile_picture = profile_picture
-        profile.first().save()
+        profile[0].profile_picture = profile_picture
+        profile[0].save()
     else:
         profile = Profile.objects.create(user=user, phone_number='', address='', profile_picture=profile_picture)
 
