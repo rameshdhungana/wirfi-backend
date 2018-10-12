@@ -109,25 +109,19 @@ def profile_images_view(request, id):
             "message": "Please upload the image."},
             status=status.HTTP_400_BAD_REQUEST)
 
-    try:
-        profile = Profile.objects.filter(user__id=id)
-        if profile:
-            profile.update(profile_picture = profile_picture)
-        else:
-            profile = Profile.objects.create(user=user, phone_number='', address='', profile_picture=profile_picture)
+    profile = Profile.objects.filter(user__id=id)
+    if profile:
+        profile.first().profile_picture = profile_picture
+        profile.first().save()
+    else:
+        profile = Profile.objects.create(user=user, phone_number='', address='', profile_picture=profile_picture)
 
-        user = UserSerializer(user).data
-        return Response({
-            "code": getattr(settings, 'SUCCESS_CODE', 1),
-            "message": "Images Successfully uploaded.",
-            "data": user},
-            status=status.HTTP_200_OK)
-
-    except (AttributeError, ObjectDoesNotExist) as err:
-        return Response({
-            "code": getattr(settings, 'ERROR_CODE', 0),
-            "message": str(err)},
-            status=status.HTTP_400_BAD_REQUEST)
+    user = UserSerializer(user).data
+    return Response({
+        "code": getattr(settings, 'SUCCESS_CODE', 1),
+        "message": "Images Successfully uploaded.",
+        "data": user},
+        status=status.HTTP_200_OK)
 
 
 class IndustryTypeListView(generics.ListCreateAPIView):
