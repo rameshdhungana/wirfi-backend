@@ -420,9 +420,7 @@ class ResetPasswordMobileSerializer(serializers.Serializer):
     def get_user_activation_model(self, data):
         activation_obj = UserActivationCode.objects.filter(code=data['activation_code'], user__email=data['email'],
                                                            once_used=False)
-        print(activation_obj)
         if not activation_obj:
-            print("Activation code is invalid.")
             raise serializers.ValidationError(_("Activation code is invalid."))
         return activation_obj, activation_obj.first().user
 

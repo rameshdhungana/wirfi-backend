@@ -281,8 +281,11 @@ class DeviceView(generics.ListCreateAPIView):
         return Device.objects.filter(user=token.user)
 
     def list(self, request, *args, **kwargs):
-        industry_types = Industry.objects.filter(Q(user=get_token_obj(self.request.auth).user) | Q(user__isnull=True))
+        token_obj = get_token_obj(self.request.auth)
+        industry_types = Industry.objects.filter(Q(user=token_obj.user) | Q(user__isnull=True))
         industry_serializer = IndustryTypeSerializer(industry_types, many=True)
+        location_types = Franchise.objects.filter(user=token_obj.user)
+        location_serailizer = LocationTypeSerializer(location_types, many=True)
         devices = self.get_queryset()
         serializer = DeviceSerializer(devices, many=True)
         response_data = serializer.data
@@ -295,6 +298,7 @@ class DeviceView(generics.ListCreateAPIView):
             'data': {
                 'device': response_data,
                 'industry_type': industry_serializer.data,
+                'location_type': location_serailizer.data,
                 'status_dict': {x: y for x, y in DEVICE_STATUS}
             }
         }
@@ -925,7 +929,6 @@ class PresetFilterView(generics.ListCreateAPIView):
 
     def create(self, request, *args, **kwargs):
         data = request.data
-        print(request.data)
         token = get_token_obj(self.request.auth)
         serializer = PresetFilterSerializer(data=data)
         serializer.is_valid(raise_exception=True)
