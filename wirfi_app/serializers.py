@@ -281,6 +281,12 @@ class DeviceNetworkSerializer(serializers.ModelSerializer):
         model = DeviceNetwork
         exclude = ('device',)
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['ssid'] = data.pop('ssid_name')
+        data.pop('password')
+        return data
+
 
 class DeviceLocationHoursSerializer(serializers.ModelSerializer):
     class Meta:
@@ -351,6 +357,22 @@ class DeviceSerializer(serializers.ModelSerializer):
         model = Device
         exclude = ('user',)
         read_only_fields = ('location_logo', 'machine_photo')
+
+    def to_representation(self, instance):
+        device_network = {
+            'primary_network': None,
+            'secondary_network': None
+        }
+        data = super().to_representation(instance)
+        if data['device_network']:
+            for network in data['device_network']:
+                network_dict = {'id': network['id'], 'ssid': network['ssid']}
+                if network['primary_network']:
+                    device_network['primary_network'] = network_dict
+                else:
+                    device_network['secondary_network'] = network_dict
+        data['device_network'] = device_network
+        return data
 
     def create(self, validated_data):
         location_hours_data = validated_data.pop('location_hours', [])
