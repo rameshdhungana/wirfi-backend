@@ -272,7 +272,7 @@ class LocationTypeDetailView(generics.UpdateAPIView, generics.DestroyAPIView):
         self.perform_destroy(instance)
         return Response({
             'code': getattr(settings, 'SUCCESS_CODE', 1),
-            'message': "Successfully deleted industry type."
+            'message': "Successfully deleted franchise type."
         }, status=status.HTTP_200_OK)
 
 
@@ -721,20 +721,23 @@ class BillingView(generics.ListCreateAPIView):
         try:
             billing_obj = Billing.objects.get(user=token.user)
             customer = stripe.Customer.retrieve(billing_obj.customer_id)
-            customer.sources.create(source=stripe_token)
+            new_card = customer.sources.create(source=stripe_token)
+
         except:
             customer = stripe.Customer.create(
                 source=stripe_token,
                 email=email
             )
+            new_card = customer['sources']['data']
             serializer.save(user=token.user, customer_id=customer.id)
 
         headers = self.get_success_headers(serializer.data)
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Billing Info successfully created.",
-            'data': serializer.data
+            'data': new_card
         }
+        print(data)
         return Response(data, status=status.HTTP_201_CREATED, headers=headers)
 
 
