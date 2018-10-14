@@ -569,10 +569,17 @@ class DeviceNetworkView(generics.ListCreateAPIView):
         return Response(data, status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
-        data = request.data
         device = Device.objects.get(pk=self.kwargs['device_id'])
-        data['primary_network'] = False if DeviceNetwork.objects.filter(device=device) else True
+        device_network = DeviceNetwork.objects.filter(device=device)
+        if len(device_network) >= 2:
+            data = {
+                'code': getattr(settings, 'ERROR_CODE', 0),
+                'message': "Multiple primary/secondary networks can't be set."
+            }
+            return Response(data, status=status.HTTP_200_OK)
 
+        data = request.data
+        data['primary_network'] = False if device_network else True
         serializer = DeviceNetworkSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(device=device)
