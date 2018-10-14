@@ -113,8 +113,8 @@ class Franchise(models.Model):
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     profile_picture = models.ImageField(upload_to='users/profile_pictures', null=True, blank=True)
-    phone_number = models.CharField(max_length=15)
-    address = models.CharField(max_length=100)
+    phone_number = models.CharField(max_length=15, blank=True)
+    address = models.CharField(max_length=100, blank=True)
 
     def __str__(self):
         return self.user.full_name
@@ -150,7 +150,7 @@ class Device(models.Model):
     latitude = models.FloatField(default=0)
     longitude = models.FloatField(default=0)
     industry_type = models.ForeignKey(Industry, on_delete=models.CASCADE, related_name="industry_type")
-    # location_type = models.ForeignKey(Franchise, on_delete=models.CASCADE, related_name="location_type")
+    location_type = models.ForeignKey(Franchise, on_delete=models.CASCADE, related_name="location_type")
     created_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
@@ -158,9 +158,10 @@ class Device(models.Model):
 
 
 class DeviceNetwork(models.Model):
-    device = models.OneToOneField(Device, on_delete=models.CASCADE, related_name="device_network")
+    device = models.ForeignKey(Device, on_delete=models.CASCADE, related_name="device_network")
     ssid_name = models.CharField(max_length=50)
     password = models.CharField(max_length=50)
+    primary_network = models.BooleanField(default=False)
 
 
 class DeviceLocationHours(models.Model):

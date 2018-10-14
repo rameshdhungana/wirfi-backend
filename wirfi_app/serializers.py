@@ -132,16 +132,19 @@ class BillingSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    profile = UserProfileSerializer()
+    email = serializers.EmailField(read_only=True)
+    phone_number = serializers.CharField(max_length=15, write_only=True, allow_blank=True, required=False)
+    address = serializers.CharField(max_length=100, write_only=True, required=False, allow_blank=True)
+    profile = UserProfileSerializer(read_only=True)
     business = BusinessSerializer(read_only=True)
     billing = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ('id', 'email', 'first_name', 'last_name', 'full_name', 'profile', 'business', 'billing')
+        fields = ('id', 'email', 'first_name', 'last_name', 'full_name', 'phone_number', 'address', 'profile', 'business', 'billing')
 
     def update(self, instance, validated_data):
-        profile_data = validated_data.pop('profile')
+        profile_data = {"phone_number": validated_data.pop('phone_number', ''), "address": validated_data.pop('address', '')}
         user = super().update(instance, validated_data)
         profile = Profile.objects.filter(user=user)
         if profile:
@@ -165,6 +168,21 @@ class UserSerializer(serializers.ModelSerializer):
 
         except:
             return None
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if not data['profile']:
+            data['profile'] = {
+                "address": '',
+                "phone_number": '',
+                "profile_picture": None
+            }
+        data['profile']['first_name'] = data.pop('first_name')
+        data['profile']['last_name'] = data.pop('last_name')
+        data['profile']['full_name'] = data.pop('full_name')
+        if data['profile']['profile_picture']:
+            data['profile']['profile_picture'] = '/media' + data['profile']['profile_picture'].split('/media')[1]
+        return data
 
 
 class UserDetailsSerializer(serializers.ModelSerializer):
@@ -322,7 +340,8 @@ class LocationTypeSerializer(serializers.ModelSerializer):
 
 class DeviceSerializer(serializers.ModelSerializer):
     industry_type = IndustryTypeSerializer(read_only=True)
-    device_network = DeviceNetworkSerializer(read_only=True)
+    location_type = LocationTypeSerializer(read_only=True)
+    device_network = DeviceNetworkSerializer(read_only=True, many=True)
     location_hours = DeviceLocationHoursSerializer(many=True)
     device_settings = DeviceSettingSerializer(read_only=True)
     industry_type_id = serializers.CharField(allow_blank=True, write_only=True)
@@ -401,9 +420,7 @@ class ResetPasswordMobileSerializer(serializers.Serializer):
     def get_user_activation_model(self, data):
         activation_obj = UserActivationCode.objects.filter(code=data['activation_code'], user__email=data['email'],
                                                            once_used=False)
-        print(activation_obj)
         if not activation_obj:
-            print("Activation code is invalid.")
             raise serializers.ValidationError(_("Activation code is invalid."))
         return activation_obj, activation_obj.first().user
 

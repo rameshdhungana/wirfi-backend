@@ -87,12 +87,13 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
     def update(self, request, *args, **kwargs):
         user = self.get_object()
         token = get_token_obj(self.request.auth)
+        data = request.data
         serializer = UserSerializer(user, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(user=token.user)
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
-            'message': "",
+            'message': "User successfully updated",
             'data': serializer.data
         }
         return Response(data, status=status.HTTP_200_OK)
@@ -102,29 +103,25 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
 def profile_images_view(request, id):
     profile_picture = request.FILES.get('profile_picture', '')
     user = get_token_obj(request.auth).user
-    if not profile_picture and not user.profile.profile_picture:
+    if not profile_picture:
         return Response({
             "code": getattr(settings, 'ERROR_CODE', 0),
             "message": "Please upload the image."},
             status=status.HTTP_400_BAD_REQUEST)
 
-    try:
-        profile = Profile.objects.get(user__id=id)
-        if profile_picture:
-            profile.profile_picture = profile_picture
-            profile.save()
-        user = UserSerializer(profile.user).data
-        return Response({
-            "code": getattr(settings, 'SUCCESS_CODE', 1),
-            "message": "Images Successfully uploaded.",
-            "data": user},
-            status=status.HTTP_200_OK)
+    profile = Profile.objects.filter(user__id=id)
+    if profile:
+        profile[0].profile_picture = profile_picture
+        profile[0].save()
+    else:
+        profile = Profile.objects.create(user=user, phone_number='', address='', profile_picture=profile_picture)
 
-    except (AttributeError, ObjectDoesNotExist) as err:
-        return Response({
-            "code": getattr(settings, 'ERROR_CODE', 0),
-            "message": str(err)},
-            status=status.HTTP_400_BAD_REQUEST)
+    user = UserSerializer(user).data
+    return Response({
+        "code": getattr(settings, 'SUCCESS_CODE', 1),
+        "message": "Images Successfully uploaded.",
+        "data": user},
+        status=status.HTTP_200_OK)
 
 
 class IndustryTypeListView(generics.ListCreateAPIView):
@@ -284,8 +281,11 @@ class DeviceView(generics.ListCreateAPIView):
         return Device.objects.filter(user=token.user)
 
     def list(self, request, *args, **kwargs):
-        industry_types = Industry.objects.filter(Q(user=get_token_obj(self.request.auth).user) | Q(user__isnull=True))
+        token_obj = get_token_obj(self.request.auth)
+        industry_types = Industry.objects.filter(Q(user=token_obj.user) | Q(user__isnull=True))
         industry_serializer = IndustryTypeSerializer(industry_types, many=True)
+        location_types = Franchise.objects.filter(user=token_obj.user)
+        location_serailizer = LocationTypeSerializer(location_types, many=True)
         devices = self.get_queryset()
         serializer = DeviceSerializer(devices, many=True)
         response_data = serializer.data
@@ -298,6 +298,7 @@ class DeviceView(generics.ListCreateAPIView):
             'data': {
                 'device': response_data,
                 'industry_type': industry_serializer.data,
+                'location_type': location_serailizer.data,
                 'status_dict': {x: y for x, y in DEVICE_STATUS}
             }
         }
@@ -306,17 +307,25 @@ class DeviceView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         token = get_token_obj(request.auth)
         industry_id = request.data.get('industry_type_id', '')
+        franchise_id = request.data.get('location_type_id', '')
         if not industry_id:
             return Response({
                 'code': getattr(settings, 'ERROR_CODE', 0),
                 'message': "Industry Type can't be null/blank."
             }, status=status.HTTP_400_BAD_REQUEST)
 
+        if not franchise_id:
+            return Response({
+                'code': getattr(settings, 'ERROR_CODE', 0),
+                'message': "Location Type can't be null/blank."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         industry = Industry.objects.get(pk=industry_id)
+        franchise = Franchise.objects.get(pk=franchise_id)
 
         serializer = DeviceSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(user=token.user, industry_type=industry)
+        serializer.save(user=token.user, industry_type=industry, location_type=franchise)
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Successfully device created.",
@@ -503,6 +512,14 @@ class DeviceDetailView(generics.RetrieveUpdateDestroyAPIView):
         token = get_token_obj(self.request.auth)
         industry_id = request.data.get('industry_type_id', '')
         industry_name = request.data.get('industry_name', '')
+        franchise_id = request.data.get('location_type_id', '')
+
+        if not franchise_id:
+            return Response({
+                'code': getattr(settings, 'ERROR_CODE', 0),
+                'message': "Location Type can't be null/blank."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         if not industry_id and not industry_name:
             return Response({
                 'code': getattr(settings, 'ERROR_CODE', 0),
@@ -514,13 +531,24 @@ class DeviceDetailView(generics.RetrieveUpdateDestroyAPIView):
         else:
             industry = Industry.objects.get(pk=industry_id)
 
+        franchise = Franchise.objects.get(pk=franchise_id)
+
         serializer = DeviceSerializer(device, data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(user=token.user, industry_type=industry)
+        serializer.save(user=token.user, industry_type=industry, location_type=franchise)
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Device successfully updated.",
             'data': serializer.data
+        }
+        return Response(data, status=status.HTTP_200_OK)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.delete()
+        data = {
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
+            'message': "Device successfully deleted."
         }
         return Response(data, status=status.HTTP_200_OK)
 
@@ -536,12 +564,15 @@ class DeviceNetworkView(generics.ListCreateAPIView):
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Detail successfully fetched.",
-            'data': DeviceNetworkSerializer(network[0]).data if network else {}
+            'data': DeviceNetworkSerializer(network, many=True).data
         }
         return Response(data, status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
+        data = request.data
         device = Device.objects.get(pk=self.kwargs['device_id'])
+        data['primary_network'] = False if DeviceNetwork.objects.filter(device=device) else True
+
         serializer = DeviceNetworkSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(device=device)
@@ -553,7 +584,7 @@ class DeviceNetworkView(generics.ListCreateAPIView):
         return Response(data, status=status.HTTP_200_OK)
 
 
-class DeviceNetworkDetailView(generics.RetrieveUpdateAPIView):
+class DeviceNetworkDetailView(generics.RetrieveUpdateDestroyAPIView):
     lookup_field = 'id'
     serializer_class = DeviceNetworkSerializer
 
@@ -904,7 +935,6 @@ class PresetFilterView(generics.ListCreateAPIView):
 
     def create(self, request, *args, **kwargs):
         data = request.data
-        print(request.data)
         token = get_token_obj(self.request.auth)
         serializer = PresetFilterSerializer(data=data)
         serializer.is_valid(raise_exception=True)
