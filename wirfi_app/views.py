@@ -564,12 +564,15 @@ class DeviceNetworkView(generics.ListCreateAPIView):
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Detail successfully fetched.",
-            'data': DeviceNetworkSerializer(network[0]).data if network else {}
+            'data': DeviceNetworkSerializer(network, many=True).data
         }
         return Response(data, status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
+        data = request.data
         device = Device.objects.get(pk=self.kwargs['device_id'])
+        data['primary_network'] = False if DeviceNetwork.objects.filter(device=device) else True
+
         serializer = DeviceNetworkSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(device=device)
@@ -581,7 +584,7 @@ class DeviceNetworkView(generics.ListCreateAPIView):
         return Response(data, status=status.HTTP_200_OK)
 
 
-class DeviceNetworkDetailView(generics.RetrieveUpdateAPIView):
+class DeviceNetworkDetailView(generics.RetrieveUpdateDestroyAPIView):
     lookup_field = 'id'
     serializer_class = DeviceNetworkSerializer
 

@@ -158,9 +158,10 @@ class Device(models.Model):
 
 
 class DeviceNetwork(models.Model):
-    device = models.OneToOneField(Device, on_delete=models.CASCADE, related_name="device_network")
+    device = models.ForeignKey(Device, on_delete=models.CASCADE, related_name="device_network")
     ssid_name = models.CharField(max_length=50)
     password = models.CharField(max_length=50)
+    primary_network = models.BooleanField(default=False)
 
 
 class DeviceLocationHours(models.Model):
