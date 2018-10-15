@@ -621,6 +621,20 @@ class DeviceNetworkDetailView(generics.RetrieveUpdateDestroyAPIView):
         }
         return Response(data, status=status.HTTP_200_OK)
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.primary_network:
+            return Response({
+                'code': getattr(settings, 'ERROR_CODE', 0),
+                'message': "Primary network can't be deleted."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        instance.delete()
+        return Response({
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
+            'message': "Secondary network successfully deleted."
+        }, status=status.HTTP_200_OK)
+
 
 class DeviceNotificationView(generics.CreateAPIView):
     serializer_class = DeviceNotificationSerializer
