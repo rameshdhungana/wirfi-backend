@@ -351,6 +351,7 @@ class DeviceSerializer(serializers.ModelSerializer):
     location_hours = DeviceLocationHoursSerializer(many=True)
     device_settings = DeviceSettingSerializer(read_only=True)
     industry_type_id = serializers.CharField(allow_blank=True, write_only=True)
+    location_type_id = serializers.CharField(allow_blank=True, write_only=True)
     camera_service = DeviceCameraSerializer(read_only=True, many=True)
 
     class Meta:
@@ -377,6 +378,7 @@ class DeviceSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         location_hours_data = validated_data.pop('location_hours', [])
         validated_data.pop('industry_type_id')
+        validated_data.pop('location_type_id')
         device = Device.objects.create(**validated_data)
         DeviceSetting.objects.create(device=device)
 
