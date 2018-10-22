@@ -99,7 +99,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         read_only_fields = ('profile_picture',)
 
     def validate_address(self, address):
-        if not re.match(r"^[-,A-Za-z0-9\s]+$", address):
+        if not re.match(r"^[-,A-Za-z0-9\s.]+$", address):
             raise serializers.ValidationError("Invalid address.")
         return address
 
@@ -115,7 +115,7 @@ class BusinessSerializer(serializers.ModelSerializer):
         exclude = ('user',)
 
     def validate_address(self, address):
-        if not re.match(r"^[-,A-Za-z0-9\s]+$", address):
+        if not re.match(r"^[-,A-Za-z0-9\s.]+$", address):
             raise serializers.ValidationError("Invalid address.")
         return address
 
@@ -350,9 +350,10 @@ class DeviceSerializer(serializers.ModelSerializer):
     device_network = DeviceNetworkSerializer(read_only=True, many=True)
     location_hours = DeviceLocationHoursSerializer(many=True)
     device_settings = DeviceSettingSerializer(read_only=True)
+    camera_service = DeviceCameraSerializer(read_only=True, many=True)
+
     industry_type_id = serializers.CharField(allow_blank=True, write_only=True)
     location_type_id = serializers.CharField(allow_blank=True, write_only=True)
-    camera_service = DeviceCameraSerializer(read_only=True, many=True)
 
     class Meta:
         model = Device

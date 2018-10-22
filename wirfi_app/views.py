@@ -787,7 +787,7 @@ class BillingView(generics.ListCreateAPIView):
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Billing Info successfully created.",
-            'data': new_card
+            'data': customer
         }
         print(data)
         return Response(data, status=status.HTTP_201_CREATED, headers=headers)
