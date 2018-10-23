@@ -277,14 +277,17 @@ class DeviceSettingSerializer(serializers.ModelSerializer):
 
 
 class DeviceNetworkSerializer(serializers.ModelSerializer):
+    primary_network = serializers.BooleanField()
+
     class Meta:
         model = DeviceNetwork
         exclude = ('device',)
+        write_only_fields = ('password',)
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
         data['ssid'] = data.pop('ssid_name')
-        data.pop('password')
+        # data.pop('password')
         return data
 
 

@@ -574,13 +574,27 @@ class DeviceNetworkView(generics.ListCreateAPIView):
         if len(device_network) >= 2:
             data = {
                 'code': getattr(settings, 'ERROR_CODE', 0),
-                'message': "Multiple primary/secondary networks can't be set."
+                'message': "Multiple secondary networks can't be set."
             }
-            return Response(data, status=status.HTTP_200_OK)
+            return Response(data, status=status.HTTP_400_BAD_REQUEST)
 
         data = request.data
-        data['primary_network'] = False if device_network else True
+        if (len(DeviceNetwork.objects.filter(device=device, primary_network=True))==0 and not data['primary_network']):
+            data = {
+                'code': getattr(settings, 'ERROR_CODE', 0),
+                'message': "Secondary network can't be set first."
+            }
+            return Response(data, status=status.HTTP_400_BAD_REQUEST)
+        
+        if (len(DeviceNetwork.objects.filter(device=device, primary_network=True))==1 and data['primary_network']):
+            data = {
+                'code': getattr(settings, 'ERROR_CODE', 0),
+                'message': "Multiple primary network can't be set."
+            }
+            return Response(data, status=status.HTTP_400_BAD_REQUEST)
+
         serializer = DeviceNetworkSerializer(data=request.data)
+        print(serializer)
         serializer.is_valid(raise_exception=True)
         serializer.save(device=device)
         data = {
@@ -780,12 +794,12 @@ class BillingView(generics.ListCreateAPIView):
                 )
                 serializer.save(user=token.user, customer_id=customer.id)
 
-            except: 
+            except:
                 return Response({
                     'code': getattr(settings, 'ERROR_CODE', 0),
                     'message': "Stripe Token has already been used. Please try again with new token."
                 }, status=status.HTTP_400_BAD_REQUEST)
-                
+
         headers = self.get_success_headers(serializer.data)
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
