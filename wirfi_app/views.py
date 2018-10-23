@@ -757,39 +757,41 @@ class BillingView(generics.ListCreateAPIView):
 
     def create(self, request, *args, **kwargs):
         data = request.data
-        # Set your secret key: remember to change this to your live secret key in production
-        # See your keys here: https://dashboard.stripe.com/account/apikeys
         stripe.api_key = settings.STRIPE_API_KEY
-
-        # Token is created using Checkout or Elements!
-        # Get the payment token ID submitted by the form:
         stripe_token = data['id'].strip()
+
         email = data['email']
 
         token = get_token_obj(request.auth)
+        billing_obj = Billing.objects.filter(user=token.user)
         serializer = BillingSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        try:
-            billing_obj = Billing.objects.get(user=token.user)
-            customer = stripe.Customer.retrieve(billing_obj.customer_id)
-            new_card = customer.sources.create(source=stripe_token)
+        if billing_obj:
+            stripe.Customer.retrieve(billing_obj.first().customer_id).sources.create(source=stripe_token)
+            # customer.sources.create(source=stripe_token)
+            customer = stripe.Customer.retrieve(billing_obj.first().customer_id)
 
-        except:
-            customer = stripe.Customer.create(
-                source=stripe_token,
-                email=email
-            )
-            new_card = customer['sources']['data']
-            serializer.save(user=token.user, customer_id=customer.id)
+        else:
+            try:
+                customer = stripe.Customer.create(
+                    source=stripe_token,
+                    email=email
+                )
+                serializer.save(user=token.user, customer_id=customer.id)
 
+            except: 
+                return Response({
+                    'code': getattr(settings, 'ERROR_CODE', 0),
+                    'message': "Stripe Token has already been used. Please try again with new token."
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
         headers = self.get_success_headers(serializer.data)
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Billing Info successfully created.",
             'data': customer
         }
-        print(data)
         return Response(data, status=status.HTTP_201_CREATED, headers=headers)
 
 
