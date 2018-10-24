@@ -36,7 +36,8 @@ from wirfi_app.serializers import UserSerializer, \
     DeviceStatusSerializer, IndustryTypeSerializer, LocationTypeSerializer, \
     BusinessSerializer, BillingSerializer, \
     UserRegistrationSerializer, LoginSerializer, AuthorizationTokenSerializer, \
-    DeviceMuteSettingSerializer, DevicePrioritySettingSerializer, DeviceSleepSerializer, DeviceNotificationSerializer, \
+    DeviceMuteSettingSerializer, DeviceSleepSerializer, \
+    DevicePrioritySettingSerializer, DeviceNotificationSerializer, \
     PresetFilterSerializer, ResetPasswordMobileSerializer
 
 sensitive_post_parameters_m = method_decorator(
@@ -53,18 +54,20 @@ def valid_password_regex(password):
     return valid
 
 
-def franchise_type_name_already_exits(request, token):
+def franchise_type_name_already_exits(name, token):
     for key, value in enumerate(
             Franchise.objects.filter(Q(user__isnull=True) | Q(user=token.user)).values_list('name', flat=True)):
-        if request.data['name'].upper() == value.upper():
+        if name.upper() == value.upper():
             return True
+        return False
 
 
-def industry_type_name_already_exits(request, token):
+def industry_type_name_already_exits(name, token):
     for key, value in enumerate(
             Industry.objects.filter(Q(user__isnull=True) | Q(user=token.user)).values_list('name', flat=True)):
-        if request.data['name'].upper() == value.upper():
+        if name.upper() == value.upper():
             return True
+        return False
 
 
 class UserDetailView(generics.RetrieveUpdateAPIView):
@@ -143,15 +146,17 @@ class IndustryTypeListView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         data = request.data
         token = get_token_obj(self.request.auth)
-        serializer = IndustryTypeSerializer(data=data)
-        serializer.is_valid(raise_exception=True)
+
         # case sensitive validation of name
-        if industry_type_name_already_exits(request, token):
+        if industry_type_name_already_exits(request.data['name'], token):
             return Response({
-                'code': getattr(settings, 'ERROR_CODE', 0),
-                'message': "Industry type with this name already exists.",
+            'code': getattr(settings, 'ERROR_CODE', 0),
+            'message': "Industry type with this name already exists.",
 
             }, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = IndustryTypeSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
 
         serializer.save(user=token.user)
         return Response({
@@ -172,15 +177,17 @@ class IndustryTypeDetailView(generics.UpdateAPIView, generics.DestroyAPIView):
     def update(self, request, *args, **kwargs):
         industry_type = self.get_object()
         token = get_token_obj(self.request.auth)
-        serializer = IndustryTypeSerializer(industry_type, data=request.data)
-        serializer.is_valid(raise_exception=True)
+
         # case sensitive validation of name
-        if industry_type_name_already_exits(request, token):
+        if industry_type_name_already_exits(request.data['name'], token):
             return Response({
-                'code': getattr(settings, 'ERROR_CODE', 0),
-                'message': "Industry type with this name already exists.",
+            'code': getattr(settings, 'ERROR_CODE', 0),
+            'message': "Industry type with this name already exists.",
 
             }, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = IndustryTypeSerializer(industry_type, data=request.data)
+        serializer.is_valid(raise_exception=True)
 
         serializer.save(user=token.user)
         return Response({
@@ -217,16 +224,18 @@ class LocationTypeListView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         data = request.data
         token = get_token_obj(self.request.auth)
+
+        # case sensitive validation of name
+        if franchise_type_name_already_exits(request.data['name'], token):
+            return Response({
+            'code': getattr(settings, 'ERROR_CODE', 0),
+            'message': "Franchise type with this name already exists.",
+
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         data['user'] = token.user.id
         serializer = LocationTypeSerializer(data=data)
         serializer.is_valid(raise_exception=True)
-        # case sensitive validation of name
-        if franchise_type_name_already_exits(request, token):
-            return Response({
-                'code': getattr(settings, 'ERROR_CODE', 0),
-                'message': "Franchise type with this name already exists.",
-
-            }, status=status.HTTP_400_BAD_REQUEST)
         serializer.save()
         return Response({
             'code': getattr(settings, 'SUCCESS_CODE', 1),
@@ -246,16 +255,18 @@ class LocationTypeDetailView(generics.UpdateAPIView, generics.DestroyAPIView):
     def update(self, request, *args, **kwargs):
         franchise_type = self.get_object()
         token = get_token_obj(self.request.auth)
+
+        # case sensitive validation of name
+        if franchise_type_name_already_exits(request.data['name'], token):
+            return Response({
+            'code': getattr(settings, 'ERROR_CODE', 0),
+            'message': "Franchise type with this name already exists.",
+
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         data = {**request.data, 'user': token.user.id}
         serializer = LocationTypeSerializer(franchise_type, data=data)
         serializer.is_valid(raise_exception=True)
-        # case sensitive validation of name
-        if franchise_type_name_already_exits(request, token):
-            return Response({
-                'code': getattr(settings, 'ERROR_CODE', 0),
-                'message': "Franchise type with this name already exists.",
-
-            }, status=status.HTTP_400_BAD_REQUEST)
 
         serializer.save(user=token.user)
         return Response({
@@ -585,7 +596,7 @@ class DeviceNetworkView(generics.ListCreateAPIView):
                 'message': "Secondary network can't be set first."
             }
             return Response(data, status=status.HTTP_400_BAD_REQUEST)
-        
+
         if (len(DeviceNetwork.objects.filter(device=device, primary_network=True))==1 and data['primary_network']):
             data = {
                 'code': getattr(settings, 'ERROR_CODE', 0),
@@ -594,7 +605,6 @@ class DeviceNetworkView(generics.ListCreateAPIView):
             return Response(data, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = DeviceNetworkSerializer(data=request.data)
-        print(serializer)
         serializer.is_valid(raise_exception=True)
         serializer.save(device=device)
         data = {
@@ -783,7 +793,6 @@ class BillingView(generics.ListCreateAPIView):
 
         if billing_obj:
             stripe.Customer.retrieve(billing_obj.first().customer_id).sources.create(source=stripe_token)
-            # customer.sources.create(source=stripe_token)
             customer = stripe.Customer.retrieve(billing_obj.first().customer_id)
 
         else:
