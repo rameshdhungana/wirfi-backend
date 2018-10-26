@@ -2,7 +2,9 @@ import stripe
 import datetime
 import re, hashlib
 import copy
-
+import json
+import time
+from datetime import timedelta
 from django.db.models import Q
 from django.contrib.auth import get_user_model, logout as django_logout
 from django.conf import settings
@@ -12,9 +14,8 @@ from django.utils.encoding import force_text
 from django.utils.http import urlsafe_base64_decode as uid_decoder
 from django.contrib.auth.tokens import default_token_generator
 from django.core.cache import cache
-
+from django.core.cache.backends.base import DEFAULT_TIMEOUT
 from django.views.decorators.debug import sensitive_post_parameters
-
 from rest_framework.decorators import api_view
 from rest_framework import generics
 from rest_framework.response import Response
@@ -48,6 +49,53 @@ sensitive_post_parameters_m = method_decorator(
 )
 
 User = get_user_model()
+CACHE_TTL = getattr(settings, ' CACHE_TTL', DEFAULT_TIMEOUT)
+
+
+def add_or_get_cached_muted_device_list():
+    if 'muted_device_list' in cache:
+        cached_data = cache.get('muted_device_list')
+
+    else:
+        device_list = DeviceSetting.objects.all()
+        data = []
+        for device in device_list.iterator():
+            data.append({
+                'id': device.id,
+                'is_muted': device.is_muted,
+                'mute_start': device.mute_start.strftime('%Y-%m-%d %H:%M:%S.%f'),
+                'mute_duration': device.mute_duration
+            })
+        data1 = json.dumps(data)
+        cache.set('muted_device_list', data1, timeout=CACHE_TTL)
+        cached_data = cache.get('muted_device_list')
+    return json.loads(cached_data)
+
+
+def update_cached_muted_device_list(setting_id, data):
+    t = time.time()
+    device_list = add_or_get_cached_muted_device_list()
+    device_already = [device for key, device in enumerate(device_list) if device['id'] == setting_id]
+    if device_already:
+        device_already[0]['id'] = setting_id
+        device_already[0]['mute_start'] = (
+            datetime.datetime.strptime(data['mute_settings']['mute_start'], "%Y-%m-%dT%H:%M:%S.%fZ")).strftime(
+            '%Y-%m-%d %H:%M:%S.%f')
+
+        device_already[0]['is_muted'] = data['mute_settings']['is_muted']
+        device_already[0]['mute_duration'] = data['mute_settings']['mute_duration']
+    else:
+        device_list.append({
+            'id': setting_id,
+            'is_muted': data['mute_settings']['is_muted'],
+            'mute_start': data['mute_settings']['mute_start'],
+            'mute_duration': data['mute_settings']['mute_duration']
+        })
+
+    cache.delete('muted_device_list')
+    cache.set('muted_device_list', json.dumps(device_list), timeout=CACHE_TTL)
+    print('this is updated list', cache.get('muted_device_list'))
+    print(time.time() - t)
 
 
 def valid_password_regex(password):
@@ -362,6 +410,8 @@ def mute_device_view(request, id):
         mute_serializer = DeviceMuteSettingSerializer(device_setting, data=request.data)
         mute_serializer.is_valid(raise_exception=True)
         mute_serializer.save()
+
+        update_cached_muted_device_list(device_setting.id, mute_serializer.data)
 
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
