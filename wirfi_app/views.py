@@ -11,6 +11,7 @@ from django.utils.decorators import method_decorator
 from django.utils.encoding import force_text
 from django.utils.http import urlsafe_base64_decode as uid_decoder
 from django.contrib.auth.tokens import default_token_generator
+from django.core.cache import cache
 
 from django.views.decorators.debug import sensitive_post_parameters
 
@@ -187,8 +188,8 @@ class IndustryTypeListView(generics.ListCreateAPIView):
         # case sensitive validation of name
         if industry_type_name_already_exits(request.data['name'], token):
             return Response({
-            'code': getattr(settings, 'ERROR_CODE', 0),
-            'message': "Industry type with this name already exists.",
+                'code': getattr(settings, 'ERROR_CODE', 0),
+                'message': "Industry type with this name already exists.",
 
             }, status=status.HTTP_400_BAD_REQUEST)
 
@@ -218,8 +219,8 @@ class IndustryTypeDetailView(generics.UpdateAPIView, generics.DestroyAPIView):
         # case sensitive validation of name
         if industry_type_name_already_exits(request.data['name'], token):
             return Response({
-            'code': getattr(settings, 'ERROR_CODE', 0),
-            'message': "Industry type with this name already exists.",
+                'code': getattr(settings, 'ERROR_CODE', 0),
+                'message': "Industry type with this name already exists.",
 
             }, status=status.HTTP_400_BAD_REQUEST)
 
@@ -265,8 +266,8 @@ class LocationTypeListView(generics.ListCreateAPIView):
         # case sensitive validation of name
         if franchise_type_name_already_exits(request.data['name'], token):
             return Response({
-            'code': getattr(settings, 'ERROR_CODE', 0),
-            'message': "Franchise type with this name already exists.",
+                'code': getattr(settings, 'ERROR_CODE', 0),
+                'message': "Franchise type with this name already exists.",
 
             }, status=status.HTTP_400_BAD_REQUEST)
 
@@ -296,8 +297,8 @@ class LocationTypeDetailView(generics.UpdateAPIView, generics.DestroyAPIView):
         # case sensitive validation of name
         if franchise_type_name_already_exits(request.data['name'], token):
             return Response({
-            'code': getattr(settings, 'ERROR_CODE', 0),
-            'message': "Franchise type with this name already exists.",
+                'code': getattr(settings, 'ERROR_CODE', 0),
+                'message': "Franchise type with this name already exists.",
 
             }, status=status.HTTP_400_BAD_REQUEST)
 
@@ -398,11 +399,13 @@ def mute_device_view(request, id):
         mute_serializer = DeviceMuteSettingSerializer(device_setting, data=request.data)
         mute_serializer.is_valid(raise_exception=True)
         mute_serializer.save()
+
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Device Mute status is Changed.",
             'data': mute_serializer.data
         }
+        print(data, 'this is after mute')
         return Response(data, status=status.HTTP_200_OK)
 
     except (AttributeError, ObjectDoesNotExist) as err:
@@ -627,14 +630,15 @@ class DeviceNetworkView(generics.ListCreateAPIView):
             return Response(data, status=status.HTTP_400_BAD_REQUEST)
 
         data = request.data
-        if (len(DeviceNetwork.objects.filter(device=device, primary_network=True))==0 and not data['primary_network']):
+        if (len(DeviceNetwork.objects.filter(device=device, primary_network=True)) == 0 and not data[
+            'primary_network']):
             data = {
                 'code': getattr(settings, 'ERROR_CODE', 0),
                 'message': "Secondary network can't be set first."
             }
             return Response(data, status=status.HTTP_400_BAD_REQUEST)
 
-        if (len(DeviceNetwork.objects.filter(device=device, primary_network=True))==1 and data['primary_network']):
+        if (len(DeviceNetwork.objects.filter(device=device, primary_network=True)) == 1 and data['primary_network']):
             data = {
                 'code': getattr(settings, 'ERROR_CODE', 0),
                 'message': "Multiple primary network can't be set."
