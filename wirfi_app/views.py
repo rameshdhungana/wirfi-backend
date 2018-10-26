@@ -38,7 +38,7 @@ from wirfi_app.serializers import UserSerializer, \
     UserRegistrationSerializer, LoginSerializer, AuthorizationTokenSerializer, \
     DeviceMuteSettingSerializer, DeviceSleepSerializer, \
     DevicePrioritySettingSerializer, DeviceNotificationSerializer, \
-    PresetFilterSerializer, ResetPasswordMobileSerializer
+    PresetFilterSerializer, ResetPasswordMobileSerializer, CheckVersionSerializer
 
 sensitive_post_parameters_m = method_decorator(
     sensitive_post_parameters(
@@ -69,6 +69,43 @@ def industry_type_name_already_exits(name, token):
             return True
         return False
 
+
+class CheckVersion(generics.CreateAPIView):
+    serializer_class = CheckVersionSerializer
+
+    def create(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        device_type = serializer.validated_data['device_type']
+        version = serializer.validated_data['app_version']
+        print(device_type, version)
+        if not self.check_version(device_type, version):
+            data = {
+                "message": "Your app is outdated. Please update it."
+            }
+            if getattr(settings, 'OPTIONAL_UPDATE'):
+               data["code"] = getattr(settings, 'APP_UPDATE_MANDATORY')
+            else: 
+                data["code"] = getattr(settings, 'APP_UPDATE_OPTIONAL')
+            
+            return Response(data, status=status.HTTP_406_NOT_ACCEPTABLE)
+    
+        return Response({
+            "code": getattr(settings, 'SUCCESS_CODE'),
+            "message": "Your app is up to date."
+        }, status=status.HTTP_200_OK)
+
+    def check_version(self, device_type, version):
+        if device_type == '1':
+            if version == getattr(settings, 'IOS_VERSION'):
+                return True
+
+        elif device_type == '2':
+            if version == getattr(settings, 'ANDROID_VERSION'):
+                return True
+
+        return False
 
 class UserDetailView(generics.RetrieveUpdateAPIView):
     lookup_field = 'id'

@@ -37,6 +37,11 @@ def token_validator(value):
     return value
 
 
+class CheckVersionSerializer(serializers.Serializer):
+    device_type = serializers.CharField(required=True, max_length=1)
+    app_version = serializers.CharField(required=True, max_length=15)
+    
+
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True, allow_blank=False)
     password = serializers.CharField(style={'input_type': 'password'})

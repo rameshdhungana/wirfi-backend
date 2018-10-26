@@ -11,9 +11,11 @@ from wirfi_app.views import UserDetailView, dashboard_view, \
     ResetPasswordView, ResetPasswordConfirmView, ResetPasswordConfirmMobileView, ChangePasswordView, get_logged_in_user, \
     delete_billing_card, profile_images_view, validate_reset_password, \
     DeviceNotificationView, AllNotificationView, UpdateNotificationView, \
-    PresetFilterView, PresetFilterDeleteView
+    PresetFilterView, PresetFilterDeleteView, CheckVersion
 
 urlpatterns = [
+    path('check-version/', CheckVersion.as_view()),
+    
     path('dashboard/', dashboard_view, name='dashboard'),
 
     path('billing/', BillingView.as_view()),
