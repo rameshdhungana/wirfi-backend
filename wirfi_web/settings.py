@@ -156,13 +156,24 @@ AUTH_PASSWORD_VALIDATORS = [
 
 ]
 
+
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 # Codes for success and failure
 ERROR_CODE = 0
 SUCCESS_CODE = 1
 NO_DATA_CODE = 2
 NO_AUTH_KEY = 3
+APP_UPDATE_MANDATORY = 4
+APP_UPDATE_OPTIONAL = 5
 
+
+# App versions
+ANDROID_VERSION = config('ANDROID_VERSION')
+IOS_VERSION = config('IOS_VERSION')
+OPTIONAL_UPDATE = config('OPTIONAL_UPDATE')
+
+
+# Rest Auth settings
 OLD_PASSWORD_FIELD_ENABLED = True
 LOGOUT_ON_PASSWORD_CHANGE = True
 
@@ -174,6 +185,8 @@ REST_AUTH_SERIALIZERS = {
 
 REST_SESSION_LOGIN = False
 
+
+# Email Settings
 EMAIL_HOST = config('EMAIL_HOST')
 EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
@@ -183,12 +196,15 @@ FRONTEND_HOST = config('FRONTEND_HOST')
 
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL')
 
+
+# All Auth Settings
 ACCOUNT_ADAPTER = 'wirfi_app.all_auth_adapter.MyAccountAdapter'
 
 AUTHENTICATION_BACKENDS = (
     # `allauth` specific authentication methods, such as login by e-mail
     'allauth.account.auth_backends.AuthenticationBackend',
 )
+
 
 # Account Settings
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
@@ -197,6 +213,7 @@ ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.0/topics/i18n/
