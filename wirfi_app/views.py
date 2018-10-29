@@ -143,7 +143,7 @@ class CheckVersion(generics.CreateAPIView):
                 
             data['app_link'] = getattr(settings, 'IOS_LINK') if device_type == '1' else getattr(settings, 'ANDROID_LINK')
             return Response(data, status=status.HTTP_406_NOT_ACCEPTABLE)
-    
+
         return Response({
             "code": getattr(settings, 'SUCCESS_CODE'),
             "message": "Your app is up to date."
@@ -159,6 +159,7 @@ class CheckVersion(generics.CreateAPIView):
                 return True
 
         return False
+
 
 class UserDetailView(generics.RetrieveUpdateAPIView):
     lookup_field = 'id'
@@ -508,6 +509,7 @@ class DeviceSleepView(generics.CreateAPIView):
             'message': "Sucesfully sleep settings updated.",
             'data': serializer.data
         }
+
         return Response(data, status=status.HTTP_200_OK)
 
 
