@@ -171,7 +171,9 @@ APP_UPDATE_OPTIONAL = 5
 # App versions
 ANDROID_VERSION = config('ANDROID_VERSION')
 IOS_VERSION = config('IOS_VERSION')
-OPTIONAL_UPDATE = config('OPTIONAL_UPDATE')
+OPTIONAL_UPDATE = config('OPTIONAL_UPDATE', cast=bool)
+ANDROID_LINK = config('ANDROID_LINK')
+IOS_LINK = config('IOS_LINK')
 
 
 # Rest Auth settings

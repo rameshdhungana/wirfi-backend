@@ -128,16 +128,20 @@ class CheckVersion(generics.CreateAPIView):
 
         device_type = serializer.validated_data['device_type']
         version = serializer.validated_data['app_version']
-        print(device_type, version)
         if not self.check_version(device_type, version):
-            data = {
-                "message": "Your app is outdated. Please update it."
-            }
+            print(getattr(settings, 'APP_UPDATE_MANDATORY'), getattr(settings, 'OPTIONAL_UPDATE'))
             if getattr(settings, 'OPTIONAL_UPDATE'):
-               data["code"] = getattr(settings, 'APP_UPDATE_MANDATORY')
+                data = {
+                    'code': getattr(settings, 'APP_UPDATE_OPTIONAL'),
+                    'message': "A newer version of app is available in store. Please update your app for better experience"
+                }
             else: 
-                data["code"] = getattr(settings, 'APP_UPDATE_OPTIONAL')
-            
+                data = {
+                    'code': getattr(settings, 'APP_UPDATE_MANDATORY'),
+                    'message': "A newer version of app is available in store. Please update your app."
+                }
+                
+            data['app_link'] = getattr(settings, 'IOS_LINK') if device_type == '1' else getattr(settings, 'ANDROID_LINK')
             return Response(data, status=status.HTTP_406_NOT_ACCEPTABLE)
     
         return Response({
