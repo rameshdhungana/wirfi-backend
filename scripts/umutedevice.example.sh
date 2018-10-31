@@ -3,4 +3,4 @@
 echo 'hello world'
 source ~/wirfi-venv/bin/activate
 cd ~/IwProjects/Projects/wirfi-web
-python manage.py change-mute-status
+python manage.py change-device-setting-status

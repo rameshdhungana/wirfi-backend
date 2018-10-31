@@ -52,9 +52,9 @@ User = get_user_model()
 CACHE_TTL = getattr(settings, ' CACHE_TTL', DEFAULT_TIMEOUT)
 
 
-def add_or_get_cached_muted_device_list():
-    if 'muted_device_list' in cache:
-        cached_data = cache.get('muted_device_list')
+def add_or_get_cached_device_list():
+    if 'cached_device_list' in cache:
+        cached_data = cache.get('cached_device_list')
 
     else:
         device_list = DeviceSetting.objects.all()
@@ -64,37 +64,34 @@ def add_or_get_cached_muted_device_list():
                 'id': device.id,
                 'is_muted': device.is_muted,
                 'mute_start': device.mute_start.strftime('%Y-%m-%d %H:%M:%S.%f'),
-                'mute_duration': device.mute_duration
+                'mute_duration': device.mute_duration,
+                'is_asleep': device.is_asleep,
+                'sleep_duration': device.sleep_duration,
+                'sleep_start': device.sleep_start.strftime('%Y-%m-%d %H:%M:%S.%f')
+
             })
+            print(111111111, device.sleep_start,
+                  device.mute_start.strftime('%Y-%m-%d %H:%M:%S.%f'))
         data1 = json.dumps(data)
-        cache.set('muted_device_list', data1, timeout=CACHE_TTL)
-        cached_data = cache.get('muted_device_list')
+        cache.set('cached_device_list', data1, timeout=CACHE_TTL)
+        cached_data = cache.get('cached_device_list')
     return json.loads(cached_data)
 
 
-def update_cached_muted_device_list(setting_id, data):
+def update_cached_device_list(data):
     t = time.time()
-    device_list = add_or_get_cached_muted_device_list()
-    device_already = [device for key, device in enumerate(device_list) if device['id'] == setting_id]
+    device_list = add_or_get_cached_device_list()
+    device_already = [device for key, device in enumerate(device_list) if device['id'] == data['id']]
     if device_already:
-        device_already[0]['id'] = setting_id
-        device_already[0]['mute_start'] = (
-            datetime.datetime.strptime(data['mute_settings']['mute_start'], "%Y-%m-%dT%H:%M:%S.%fZ")).strftime(
-            '%Y-%m-%d %H:%M:%S.%f')
-
-        device_already[0]['is_muted'] = data['mute_settings']['is_muted']
-        device_already[0]['mute_duration'] = data['mute_settings']['mute_duration']
+        device_already[0].update(data)
     else:
         device_list.append({
-            'id': setting_id,
-            'is_muted': data['mute_settings']['is_muted'],
-            'mute_start': data['mute_settings']['mute_start'],
-            'mute_duration': data['mute_settings']['mute_duration']
+            data
         })
 
-    cache.delete('muted_device_list')
-    cache.set('muted_device_list', json.dumps(device_list), timeout=CACHE_TTL)
-    print('this is updated list', cache.get('muted_device_list'))
+    cache.delete('cached_device_list')
+    cache.set('cached_device_list', json.dumps(device_list), timeout=CACHE_TTL)
+    print('this is updated list', cache.get('cached_device_list'))
     print(time.time() - t)
 
 
@@ -134,13 +131,14 @@ class CheckVersion(generics.CreateAPIView):
                     'code': getattr(settings, 'APP_UPDATE_OPTIONAL'),
                     'message': "A newer version of app is available in store. Please update your app for better experience"
                 }
-            else: 
+            else:
                 data = {
                     'code': getattr(settings, 'APP_UPDATE_MANDATORY'),
                     'message': "A newer version of app is available in store. Please update your app."
                 }
-                
-            data['app_link'] = getattr(settings, 'IOS_LINK') if device_type == '1' else getattr(settings, 'ANDROID_LINK')
+
+            data['app_link'] = getattr(settings, 'IOS_LINK') if device_type == '1' else getattr(settings,
+                                                                                                'ANDROID_LINK')
             return Response(data, status=status.HTTP_406_NOT_ACCEPTABLE)
 
         return Response({
@@ -402,6 +400,7 @@ class DeviceView(generics.ListCreateAPIView):
                 'status_dict': {x: y for x, y in DEVICE_STATUS}
             }
         }
+
         return Response(data, status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
@@ -451,14 +450,20 @@ def mute_device_view(request, id):
         mute_serializer.is_valid(raise_exception=True)
         mute_serializer.save()
 
-        update_cached_muted_device_list(device_setting.id, mute_serializer.data)
+        data_to_cache = {'id': device_setting.id,
+                         'mute_start': (datetime.datetime.strptime(mute_serializer.data['mute_settings']['mute_start'],
+                                                                   "%Y-%m-%dT%H:%M:%S.%fZ")).strftime(
+                             '%Y-%m-%d %H:%M:%S.%f'),
+                         'is_muted': mute_serializer.data['mute_settings']['is_muted'],
+                         'mute_duration': mute_serializer.data['mute_settings']['mute_duration']}
+        update_cached_device_list(data_to_cache)
 
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Device Mute status is Changed.",
             'data': mute_serializer.data
         }
-        print(data, 'this is after mute')
+
         return Response(data, status=status.HTTP_200_OK)
 
     except (AttributeError, ObjectDoesNotExist) as err:
@@ -502,6 +507,14 @@ class DeviceSleepView(generics.CreateAPIView):
         serializer = DeviceSleepSerializer(instance, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+        data_to_cache = {'id': instance.id,
+                         'sleep_start': (datetime.datetime.strptime(serializer.data['sleep_settings']['sleep_start'],
+                                                                    "%Y-%m-%dT%H:%M:%S.%fZ")).strftime(
+                             '%Y-%m-%d %H:%M:%S.%f'),
+                         'is_asleep': serializer.data['sleep_settings']['is_asleep'],
+                         'sleep_duration': serializer.data['sleep_settings']['sleep_duration']}
+
+        update_cached_device_list(data_to_cache)
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Sucesfully sleep settings updated.",
