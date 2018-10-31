@@ -96,3 +96,5 @@ media/
 staticfiles/
 help_files/
 .vscode/
+
+scripts/unmutedevice.sh
