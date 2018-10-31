@@ -186,7 +186,7 @@ class UserSerializer(serializers.ModelSerializer):
         data['profile']['last_name'] = data.pop('last_name')
         data['profile']['full_name'] = data.pop('full_name')
         if data['profile']['profile_picture']:
-            data['profile']['profile_picture'] = '/media' + data['profile']['profile_picture'].split('/media')[1]
+            data['profile']['profile_picture'] = 'media' + data['profile']['profile_picture'].split('/media')[1]
         return data
 
 

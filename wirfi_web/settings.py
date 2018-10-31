@@ -67,6 +67,7 @@ LOGIN_EXEMPT_URLS = (
     r'^reset/\w+/\w+/',
     r'^list-api/',
     r'^check-version/',
+    r'^media/users/[.-/_\w]+',
 )
 
 MIDDLEWARE = [
