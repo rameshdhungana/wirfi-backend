@@ -129,7 +129,6 @@ class CheckVersion(generics.CreateAPIView):
         device_type = serializer.validated_data['device_type']
         version = serializer.validated_data['app_version']
         if not self.check_version(device_type, version):
-            print(getattr(settings, 'APP_UPDATE_MANDATORY'), getattr(settings, 'OPTIONAL_UPDATE'))
             if getattr(settings, 'OPTIONAL_UPDATE'):
                 data = {
                     'code': getattr(settings, 'APP_UPDATE_OPTIONAL'),
@@ -181,7 +180,6 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
     def update(self, request, *args, **kwargs):
         user = self.get_object()
         token = get_token_obj(self.request.auth)
-        data = request.data
         serializer = UserSerializer(user, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(user=token.user)
