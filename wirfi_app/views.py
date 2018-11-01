@@ -40,7 +40,7 @@ from wirfi_app.serializers import UserSerializer, \
     UserRegistrationSerializer, LoginSerializer, AuthorizationTokenSerializer, \
     DeviceMuteSettingSerializer, DeviceSleepSerializer, \
     DevicePrioritySettingSerializer, DeviceNotificationSerializer, \
-    PresetFilterSerializer, ResetPasswordMobileSerializer, CheckVersionSerializer
+    PresetFilterSerializer, ResetPasswordMobileSerializer, CheckVersionSerializer, DeviceNetworkUpdateSerializer
 
 sensitive_post_parameters_m = method_decorator(
     sensitive_post_parameters(
@@ -725,7 +725,7 @@ class DeviceNetworkView(generics.ListCreateAPIView):
 
 class DeviceNetworkDetailView(generics.RetrieveUpdateDestroyAPIView):
     lookup_field = 'id'
-    serializer_class = DeviceNetworkSerializer
+    serializer_class = DeviceNetworkUpdateSerializer
 
     def get_queryset(self):
         return DeviceNetwork.objects.filter(pk=self.kwargs['id'])
@@ -743,8 +743,16 @@ class DeviceNetworkDetailView(generics.RetrieveUpdateDestroyAPIView):
     def update(self, request, *args, **kwargs):
         network = self.get_object()
         device = Device.objects.get(pk=self.kwargs['device_id'])
-        serializer = DeviceNetworkSerializer(network, data=request.data)
+        print(request.data, 'this is data')
+        serializer = DeviceNetworkUpdateSerializer(network, data=request.data)
         serializer.is_valid(raise_exception=True)
+        if network.password != request.data['old_password']:
+            data = {
+                'code': getattr(settings, 'ERROR_CODE', 0),
+                'message': "Old password is not correct."
+            }
+            return Response(data, status=status.HTTP_400_BAD_REQUEST)
+
         serializer.save(device=device)
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
