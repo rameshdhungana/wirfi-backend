@@ -40,7 +40,7 @@ def token_validator(value):
 class CheckVersionSerializer(serializers.Serializer):
     device_type = serializers.CharField(required=True, max_length=1)
     app_version = serializers.CharField(required=True, max_length=15)
-    
+
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True, allow_blank=False)
@@ -146,10 +146,13 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'email', 'first_name', 'last_name', 'full_name', 'phone_number', 'address', 'profile', 'business', 'billing')
+        fields = (
+            'id', 'email', 'first_name', 'last_name', 'full_name', 'phone_number', 'address', 'profile', 'business',
+            'billing')
 
     def update(self, instance, validated_data):
-        profile_data = {"phone_number": validated_data.pop('phone_number', ''), "address": validated_data.pop('address', '')}
+        profile_data = {"phone_number": validated_data.pop('phone_number', ''),
+                        "address": validated_data.pop('address', '')}
         user = super().update(instance, validated_data)
         profile = Profile.objects.filter(user=user)
         if profile:
@@ -294,6 +297,10 @@ class DeviceNetworkSerializer(serializers.ModelSerializer):
         data['ssid'] = data.pop('ssid_name')
         # data.pop('password')
         return data
+
+
+class DeviceNetworkUpdateSerializer(DeviceNetworkSerializer):
+    old_password = serializers.CharField(write_only=True)
 
 
 class DeviceLocationHoursSerializer(serializers.ModelSerializer):
