@@ -22,7 +22,7 @@ class LocationTypeListView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         token = get_token_obj(self.request.auth)
-        return Franchise.objects.filter(user=token.user)
+        return Franchise.objects.filter(user=token.user).order_by('id')
 
     def list(self, request, *args, **kwargs):
         location_types = self.get_queryset()

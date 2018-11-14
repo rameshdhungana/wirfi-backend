@@ -22,7 +22,7 @@ class IndustryTypeListView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         token = get_token_obj(self.request.auth)
-        return Industry.objects.filter(Q(user__isnull=True) | Q(user=token.user))
+        return Industry.objects.filter(Q(user__isnull=True) | Q(user=token.user)).order_by('id')
 
     def list(self, request, *args, **kwargs):
         industry_types = self.get_queryset()
