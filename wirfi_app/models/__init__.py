@@ -8,3 +8,4 @@ from wirfi_app.models.industry_franchise_type import Industry, Franchise
 from wirfi_app.models.preset_filter import PresetFilter
 from wirfi_app.models.user_detail import Profile, Billing, Business
 from wirfi_app.models.user import User
+from wirfi_app.models.device_queued_tasks import QueueTaskForWiRFiDevice

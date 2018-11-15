@@ -17,3 +17,4 @@ from wirfi_app.views.password_reset import ResetPasswordView, ResetPasswordConfi
 from wirfi_app.views.preset_filter import PresetFilterDeleteView, PresetFilterView
 from wirfi_app.views.register_user import RegisterUserView, VerifyEmailRegisterView
 from wirfi_app.views.user import UserDetailView, profile_images_view
+from wirfi_app.views.ping_server import  ping_server_from_wirfi_device
