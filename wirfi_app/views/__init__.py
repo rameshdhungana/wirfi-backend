@@ -18,3 +18,4 @@ from wirfi_app.views.preset_filter import PresetFilterDeleteView, PresetFilterVi
 from wirfi_app.views.register_user import RegisterUserView, VerifyEmailRegisterView
 from wirfi_app.views.user import UserDetailView, profile_images_view
 from wirfi_app.views.ping_server import  ping_server_from_wirfi_device
+from wirfi_app.views.caching import add_or_get_cached_device_list
