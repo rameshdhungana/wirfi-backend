@@ -13,8 +13,9 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         print(self.DEVICE_CONNECTION_HOST_NAME)
         ssh = subprocess.run(['sshpass', '-p', self.DEVICE_CONNECTION_PASSWORD, 'ssh',
-                              'root@{}'.format(self.DEVICE_CONNECTION_HOST_NAME), 'python',
-                              'custom/add-ping-server-ip-address.py', '{0}'.format(self.BACKEND_PING_URL_FOR_DEVICE)],
+                              'root@{}'.format(self.DEVICE_CONNECTION_HOST_NAME), 'cd', 'custom', '&&', 'python',
+                              'add-ping-server-ip-address.py',
+                              '{0}'.format(self.BACKEND_PING_URL_FOR_DEVICE)],
                              shell=False,
                              )
 
