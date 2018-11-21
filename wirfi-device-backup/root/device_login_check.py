@@ -5,14 +5,21 @@ import subprocess
 import logging
 import ConfigParser
 
+logger = logging.getLogger('applySettingsScript')
+hdlr = logging.FileHandler('/tmp/applySettings.log')
+formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+hdlr.setFormatter(formatter)
+logger.addHandler(hdlr)
+logger.setLevel(logging.INFO)
 
 # Create instance of FieldStorage
 form = cgi.FieldStorage()
 
 # Get data from fields
 username = form.getvalue('username')
-
+logger.info(username)
 password = form.getvalue('password')
+logger.info(password)
 
 config = ConfigParser.RawConfigParser()
 config.read('/root/python/cgi-bin/device_login_credentials.cfg')
