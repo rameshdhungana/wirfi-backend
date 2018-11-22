@@ -1,19 +1,12 @@
 #!/bin/bash/env python
-import urllib2,urllib,subprocess,json
-url = 'http://192.168.1.161:8000/ping-server/'
-try:
-	file = open('ping-server-ip-address.txt','r')
-	lines = file.readlines()
-	print(lines[0])
-	url = (lines[0].split('='))[1]
-	print url
-	
-except:
-	file = open('ping-server-ip-address.txt','w')
-	file.write('PING_SERVER_IP_ADDRESSS={0}'.format(url))
-file.close()
+import urllib2,urllib,subprocess,json,os,ConfigParser
+filepath = os.path.dirname(os.path.realpath(__file__)) + '/aws_server_info.cfg'
+config = ConfigParser.RawConfigParser()
+config.read(filepath)
+url = config.get('AwsServerInfo', 'aws_server_ping_address')
+print(url,'this is url')
+print(filepath)
 
-	
 values = {'os':'openwrt', 'name':'wirifi','device_serial_number':111111}
 print(values)
 data = urllib.urlencode(values)
