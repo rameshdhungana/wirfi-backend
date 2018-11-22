@@ -4,18 +4,20 @@ import cgi, cgitb
 import subprocess
 import logging
 import ConfigParser
-
+import os
 
 # Create instance of FieldStorage
 form = cgi.FieldStorage()
 
 # Get data from fields
 username = form.getvalue('username')
-
 password = form.getvalue('password')
 
+
+filepath = os.path.dirname(os.path.realpath(__file__))+'/device_login_credentials.cfg'
+print(filepath)
 config = ConfigParser.RawConfigParser()
-config.read('/root/python/cgi-bin/device_login_credentials.cfg')
+config.read(filepath)
 uname = config.get('deviceLoginCredentials', 'username')
 pword = config.get('deviceLoginCredentials', 'password')
 print uname,pword

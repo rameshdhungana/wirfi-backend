@@ -3,13 +3,16 @@
 # Import modules for CGI handleing
 import cgi, cgitb
 import subprocess
+import urllib, urllib2
+import os
+import ConfigParser
+import json
 
 # Create instance of FieldStorage
 form = cgi.FieldStorage()
 
 # Get data from fields
 ssid = form.getvalue('ssid')
-
 password = form.getvalue('password')
 
 if ssid and password:
@@ -17,7 +20,29 @@ if ssid and password:
 	subprocess.call(['sudo','uci','set', 'wireless.@wifi-iface[0].key={0}'.format(password)], shell=False)
 	subprocess.call(['sudo','uci','commit'], shell=False)
 	subprocess.call(['sudo','wifi'], shell=False)
+	
+	# Get url from ~/python/aws-server/aws_info.cfg
+	filepath = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + '/aws-server/aws_server_info.cfg'
+	print(filepath)
+	config = ConfigParser.RawConfigParser()
+	config.read(filepath)
+	url = config.get('AwsServerInfo', 'aws_server_ping_address')
+	print(url, 'this is url')
 
+	#provide the ssid name, password and device serial number and ping server to store it to database
+	values = {'primary_ssid_name':ssid,'primary_password':password,'device_serial_number':1111111111}
+	print(values)
+	data = urllib.urlencode(values)
+	print(data)
+	print('before encode:', type(values),' after encode:',type(data))
+	res = urllib2.Request(url,data)
+	r = urllib2.urlopen(res)
+	response = r.read()
+	d_data = json.dumps(response)
+	p_data = json.loads(d_data)
+	print(p_data,type(p_data))
+
+	
 	print "Content-type:text/html\r\n\r\n"
 	print "<html>"
 	print "<head>"
