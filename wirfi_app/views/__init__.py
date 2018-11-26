@@ -13,9 +13,11 @@ from wirfi_app.views.industry_type import IndustryTypeDetailView, IndustryTypeLi
 from wirfi_app.views.location_type import LocationTypeDetailView, LocationTypeListView
 from wirfi_app.views.login_logout import Login, get_logged_in_user, logout
 from wirfi_app.views.password_change import ChangePasswordView
-from wirfi_app.views.password_reset import ResetPasswordView, ResetPasswordConfirmView, ResetPasswordConfirmMobileView, validate_reset_password
+from wirfi_app.views.password_reset import ResetPasswordView, ResetPasswordConfirmView, ResetPasswordConfirmMobileView, \
+    validate_reset_password
 from wirfi_app.views.preset_filter import PresetFilterDeleteView, PresetFilterView
 from wirfi_app.views.register_user import RegisterUserView, VerifyEmailRegisterView
 from wirfi_app.views.user import UserDetailView, profile_images_view
-from wirfi_app.views.ping_server import  ping_server_from_wirfi_device
+from wirfi_app.views.ping_server import ping_server_from_wirfi_device
 from wirfi_app.views.caching import add_or_get_cached_device_list
+from wirfi_app.views.signal_receivers import queue_device_create_task, queue_device_network_task
