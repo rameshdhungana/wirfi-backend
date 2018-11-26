@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.db.models import signals
 
 from rest_framework import generics, status
 from rest_framework.response import Response
@@ -51,6 +52,7 @@ class DeviceNetworkView(generics.ListCreateAPIView):
         serializer = DeviceNetworkSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(device=self.device)
+
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Device successfully updated.",
@@ -90,6 +92,7 @@ class DeviceNetworkDetailView(generics.RetrieveUpdateDestroyAPIView):
             return Response(data, status=status.HTTP_400_BAD_REQUEST)
 
         serializer.save(device=device)
+
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Device successfully updated.",
