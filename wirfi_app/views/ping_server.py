@@ -5,32 +5,76 @@ from django.dispatch import receiver
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
+from django.conf import settings
 
-from wirfi_app.models import DeviceNetwork, QueueTaskForWiRFiDevice
+from wirfi_app.models import DeviceNetwork, QueueTaskForWiRFiDevice, Device
 
 DEVICE_NETWORK = 'DeviceNetwork'
-QUEUE_TASK_MODEL = (DEVICE_NETWORK, 'DeviceNetwork')
+DEVICE = 'Device'
+PRIMARY_NETWORK_CHANGED = 'primary_network_changed'
+SECONDARY_NETWORK_CHANGED = 'secondary_network_changed'
+DEVICE_CREATED = 'device_created'
 
 
-@receiver(post_save, sender=DeviceNetwork)
-def queue_task_for_wirfi_device(sender, instance, **kwargs):
-    print('sender:', sender, 'instance:', instance, instance.__class__.__name__)
-    queue_obj = QueueTaskForWiRFiDevice.objects.create(data={'model': instance.__class__.__name__,
-                                                             'ssid_name': instance.ssid_name,
-                                                             'password': instance.password,
-                                                             'device_serial_number': instance.device.serial_number,
-                                                             'device_id': instance.device.id
+def device_created(task, **data_to_store):
+    print(data_to_store, 'this is data to store', task.data['device_serial_number'])
+    try:
+        device_obj = Device.objects.get(serial_number=task.data['device_serial_number'])
+        print(device_obj)
+        # we try to get the devicenetwork instance with device id from obtained from queue task object
+        # if we obtain we update it (this rarely happens , is case of exception)
+        # else we create device network object with the credentials obtained from device
+        try:
+            device_network_obj = DeviceNetwork.objects.get(device=device_obj, primary_network=True)
+            device_network_obj.ssid_name = data_to_store['primary_ssid_name']
+            device_network_obj.password = data_to_store['primary_password']
+            device_network_obj.primary_network = True
+            device_network_obj.save()
+        except:
+            DeviceNetwork.objects.create(
+                device=device_obj, ssid_name=data_to_store['primary_ssid_name'],
+                password=data_to_store['primary_password'],
+                primary_network=True)
 
-                                                             })
+        response_data = {'code': getattr(settings, 'SUCCESS_CODE', 1),
+                         'action': task.action,
+                         'device_serial_number': task.data['device_serial_number'],
 
-    if instance.primary_network:
-        queue_obj.data['action'] = 'Primary Network Changed'
+                         }
+        task.queued_status = False
+        task.save()
+    except:
+        print('except data')
+        response_data = {'code': getattr(settings, 'ERROR_CODE', 0),
+                         'action': task.action,
+                         'device_serial_number': task.data['device_serial_number'],
 
-    else:
-        queue_obj.data['action'] = 'Secondary Network Changed'
+                         }
 
-    queue_obj.save()
-    print(queue_obj.__dict__)
+    return response_data
+
+
+def device_network_setting_changed(task, **kwargs):
+    print('this is network task', kwargs)
+
+    response_data = {
+        'code': getattr(settings, 'SUCCESS_CODE', 1),
+        'action': task.action,
+        'device_serial_number': task.data['device_serial_number'],
+        'data': {'ssid_name': task.data['ssid_name'],
+                 'password': task.data['password']
+                 }
+    }
+    task.queued_status = False
+    task.save()
+    return response_data
+
+
+tasks_map = {
+    DEVICE_CREATED: device_created,
+    PRIMARY_NETWORK_CHANGED: device_network_setting_changed,
+    SECONDARY_NETWORK_CHANGED: device_network_setting_changed
+}
 
 
 @api_view(['POST'])
@@ -39,25 +83,37 @@ def ping_server_from_wirfi_device(request):
     # request.body gets the post data passed from the device while pinging this view
     #  request.body is byte stream hence decode it to utf-8 format and parse it to dict form
     parsed_data = urllib.parse.parse_qs(request.body.decode('utf-8'))
-    # this parsing gives value in list format with dict, hence we use [0]
-    device_serial_number = parsed_data['device_serial_number'][0]
-    print(device_serial_number)
-    print(type(device_serial_number))
     print(parsed_data)
+    # this parsing gives value in list format with dict, hence we use [0]
+    response_data = []
 
-    queue_tasks = QueueTaskForWiRFiDevice.objects.filter(queued_status=True,
-                                                         data__device_serial_number=device_serial_number)
-    response_data = {}
-    for key, task in enumerate(queue_tasks):
-        print(key, task)
-        if task.data['model'] == DEVICE_NETWORK:
-            response_data = {'model': task.data['model'],
-                             'data': {'ssid_name': task.data['ssid_name'],
-                                      'password': task.data['password']
-                                      }
-                             }
-        task.queued_status = False
-        task.save()
-        print(response_data)
+    try:
 
-    return Response(response_data, status=status.HTTP_200_OK)
+        device_serial_number = parsed_data['device_serial_number'][0]
+
+        # this dictionary's key value pair  will depend upon which function to call depending upon if conditions
+        data_to_store = {}
+        if 'primary_ssid_name' in parsed_data and 'primary_password':
+            data_to_store['primary_ssid_name'] = parsed_data['primary_ssid_name'][0]
+            data_to_store['primary_password'] = parsed_data['primary_password'][0]
+
+        queued_tasks = QueueTaskForWiRFiDevice.objects.filter(queued_status=True,
+                                                              device__serial_number=device_serial_number)
+
+        for key, task in enumerate(queued_tasks):
+            print(task)
+            if task.queued_status:
+                response = tasks_map[task.action](task, **data_to_store)
+                response_data.append(response)
+
+            print(response_data, 'this is response from queue function')
+
+        return Response(response_data, status=status.HTTP_200_OK)
+    except:
+        response = {
+            'message': 'something went wrong',
+            'code': getattr(settings, 'ERROR_CODE', 0),
+
+        }
+        response_data.append(response)
+        return Response(response_data)
