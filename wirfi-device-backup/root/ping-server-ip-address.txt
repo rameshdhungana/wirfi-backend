@@ -1,1 +1,0 @@
-PING_SERVER_IP_ADDRESSS=http://192.168.1.161:8000/ping-server/
