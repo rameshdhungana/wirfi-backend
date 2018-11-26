@@ -1,5 +1,4 @@
-from django.db import models 
-
+from django.db import models
 from wirfi_app.models.device import Device
 
 DEVICE_STATUS = (
