@@ -28,6 +28,8 @@ class DeviceSerializer(serializers.ModelSerializer):
             'secondary_network': None
         }
         data = super().to_representation(instance)
+        data['machine_photo'] = data['machine_photo'][1:]
+        data['location_logo'] = data['location_logo'][1:]
         if data['device_network']:
             for network in data['device_network']:
                 network_dict = {'id': network['id'], 'ssid': network['ssid']}
