@@ -1,4 +1,5 @@
 from wirfi_app.views.add_device_status import add_device_status_view
+from wirfi_app.views.admin_activity_log import AdminActivityLogListView
 from wirfi_app.views.billing import BillingDetailView, BillingView, delete_billing_card
 from wirfi_app.views.business import BusinessView, BusinessDetailView
 from wirfi_app.views.caching import update_cached_device_list
