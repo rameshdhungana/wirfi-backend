@@ -1,3 +1,4 @@
+from wirfi_app.serializers.admin_activity_log import AdminActivityLogSerializer
 from wirfi_app.serializers.authorization_token import AuthorizationTokenSerializer
 from wirfi_app.serializers.check_version import CheckVersionSerializer
 from wirfi_app.serializers.device_information import DeviceLocationHoursSerializer, DeviceNetworkSerializer, DeviceNetworkUpdateSerializer, DeviceStatusSerializer
