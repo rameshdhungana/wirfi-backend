@@ -23,12 +23,12 @@ class AuthKeyRequiredMiddleware:
                     "code": getattr(settings, 'NO_AUTH_KEY', 3),
                     "message": "Session Expired. Please Login."
                 }, status=406)
-            else:
-                if not AuthorizationToken.objects.filter(key=token).exists():
-                    return JsonResponse({
-                        "code": getattr(settings, 'NO_AUTH_KEY', 3),
-                        "message": "Session Expired. Please Login."
-                    }, status=400)
+                
+            if not AuthorizationToken.objects.filter(key=token).exists():
+                return JsonResponse({
+                    "code": getattr(settings, 'NO_AUTH_KEY', 3),
+                    "message": "Session Expired. Please Login."
+                }, status=401)
         response = self.get_response(request)
         return response
 
