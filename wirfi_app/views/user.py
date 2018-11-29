@@ -5,8 +5,9 @@ from rest_framework import generics, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
+from wirfi_app.activity_log_paginator import ActivityLogPagination
 from wirfi_app.models import Profile
-from wirfi_app.serializers import UserSerializer
+from wirfi_app.serializers import UserSerializer, AdminUserSerializer
 from wirfi_app.views.login_logout import get_token_obj
 
 User = get_user_model()
@@ -66,3 +67,9 @@ def profile_images_view(request, id):
         "message": "Images Successfully uploaded.",
         "data": user},
         status=status.HTTP_200_OK)
+
+
+class UserListCreateView(generics.ListCreateAPIView):
+    serializer_class = AdminUserSerializer
+    queryset = User.objects.all()
+    pagination_class = ActivityLogPagination
