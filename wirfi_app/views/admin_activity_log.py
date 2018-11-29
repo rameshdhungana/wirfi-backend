@@ -1,5 +1,6 @@
-from rest_framework import generics, status
-from rest_framework.response import Response
+from django.conf import settings
+
+from rest_framework import generics
 
 from wirfi_app.activity_log_paginator import ActivityLogPagination
 from wirfi_app.models import AdminActivityLog
@@ -12,6 +13,10 @@ class AdminActivityLogListView(generics.ListAPIView):
     queryset = AdminActivityLog.objects.all().order_by('-id')
 
     def list(self, request, *args, **kwargs):
-        return Response(
-
-        )
+        response = super().list(request, *args, **kwargs)
+        response.data = {
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
+            'message': 'Successfully fetched activity log.',
+            'data': response.data
+        }
+        return response
