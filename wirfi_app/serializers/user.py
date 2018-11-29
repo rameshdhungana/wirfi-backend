@@ -23,7 +23,8 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = (
             'id', 'email', 'first_name', 'last_name', 'full_name', 'phone_number', 'address', 'profile', 'business',
-            'billing')
+            'billing', 'is_superuser', 'is_staff')
+        read_only_fields = ('is_superuser', 'is_staff')
 
     def update(self, instance, validated_data):
         profile_data = {"phone_number": validated_data.pop('phone_number', ''),
@@ -66,6 +67,13 @@ class UserSerializer(serializers.ModelSerializer):
         if data['profile']['profile_picture']:
             data['profile']['profile_picture'] = 'media' + data['profile']['profile_picture'].split('/media')[1]
         return data
+
+
+class AdminUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('pk', 'first_name', 'last_name', 'email', 'password', 'is_superuser', 'is_staff')
+        write_only_fields = ('password',)
 
 
 class UserDetailsSerializer(serializers.ModelSerializer):

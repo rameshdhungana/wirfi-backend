@@ -11,4 +11,4 @@ from wirfi_app.serializers.password_reset import PasswordResetSerializer, ResetP
 from wirfi_app.serializers.preset_filter import PresetFilterSerializer
 from wirfi_app.serializers.user_detail import UserProfileSerializer, BusinessSerializer, BillingSerializer
 from wirfi_app.serializers.user_registration import UserRegistrationSerializer
-from wirfi_app.serializers.user import UserSerializer, UserDetailsSerializer
+from wirfi_app.serializers.user import UserSerializer, UserDetailsSerializer, AdminUserSerializer
