@@ -74,7 +74,9 @@ class Login(LoginView):
                 'device_id': response.data.get('device_id'),
                 'device_type': response.data.get('device_type'),
                 'push_notification_token': response.data.get('push_notification_token'),
-                'is_first_login': first_login
+                'is_first_login': first_login,
+                'is_superuser': self.user.is_superuser,
+                'is_staff': self.user.is_staff
             }
         }
         return response
