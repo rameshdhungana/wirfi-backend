@@ -1,4 +1,5 @@
 from django.contrib.auth.base_user import BaseUserManager
+from allauth.account.models import EmailAddress
 
 
 class UserManager(BaseUserManager):
@@ -30,4 +31,7 @@ class UserManager(BaseUserManager):
         if extra_fields.get('is_superuser') is not True:
             raise ValueError('Superuser must have is_superuser=True.')
 
-        return self._create_user(email, password, **extra_fields)
+        user = self._create_user(email, password, **extra_fields)
+
+        EmailAddress.objects.create(email=email, user=user, verified=True, primary=True)
+        return user
