@@ -1,3 +1,4 @@
+from wirfi_app.serializers.admin_activity_log import AdminActivityLogSerializer
 from wirfi_app.serializers.authorization_token import AuthorizationTokenSerializer
 from wirfi_app.serializers.check_version import CheckVersionSerializer
 from wirfi_app.serializers.device_information import DeviceLocationHoursSerializer, DeviceNetworkSerializer, DeviceNetworkUpdateSerializer, DeviceStatusSerializer
@@ -10,4 +11,4 @@ from wirfi_app.serializers.password_reset import PasswordResetSerializer, ResetP
 from wirfi_app.serializers.preset_filter import PresetFilterSerializer
 from wirfi_app.serializers.user_detail import UserProfileSerializer, BusinessSerializer, BillingSerializer
 from wirfi_app.serializers.user_registration import UserRegistrationSerializer
-from wirfi_app.serializers.user import UserSerializer, UserDetailsSerializer
+from wirfi_app.serializers.user import UserSerializer, UserDetailsSerializer, AdminUserSerializer

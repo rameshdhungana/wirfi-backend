@@ -1,20 +1,12 @@
 import re
 
 from django.conf import settings
-from django.utils.decorators import method_decorator
-# from django.views.decorators.debug import sensitive_post_parameters
 
 from rest_auth.views import PasswordChangeView
 from rest_auth.serializers import PasswordChangeSerializer
 
 from rest_framework import status
 from rest_framework.response import Response
-
-# sensitive_post_parameters_m = method_decorator(
-#     sensitive_post_parameters(
-#         'password', 'old_password', 'new_password1', 'new_password2'
-#     )
-# )
 
 
 def valid_password_regex(password):

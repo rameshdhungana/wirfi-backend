@@ -1,6 +1,7 @@
 import re
 
 from django.utils.translation import ugettext_lazy as _
+from django.conf import settings
 
 from allauth.account import app_settings as allauth_settings
 from allauth.account.adapter import get_adapter
@@ -32,7 +33,11 @@ class UserRegistrationSerializer(serializers.Serializer):
         return email
 
     def validate_password1(self, password):
-        return get_adapter().clean_password(password)
+        if re.match(settings.PASSWORD_VALIDATION_REGEX_PATTERN, password):
+            return get_adapter().clean_password(password)
+
+        raise serializers.ValidationError(
+            _("Password must be 8 characters long with at least 1 number or 1 special character."))
 
     def validate(self, data):
         if data['password1'] != data['password2']:

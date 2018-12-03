@@ -68,7 +68,8 @@ LOGIN_EXEMPT_URLS = (
     r'^list-api/',
     r'^check-version/',
     r'^media/users/[.-/_\w]+',
-    r'ping-server/'
+    r'ping-server/',
+    r'^media/[.-/_\w]+'
 )
 
 MIDDLEWARE = [
