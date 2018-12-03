@@ -1,7 +1,9 @@
 import re
 
-from django.utils.translation import ugettext_lazy as _
+from django.contrib.auth import get_user_model
 from django.conf import settings
+from django.utils.translation import ugettext_lazy as _
+
 
 from allauth.account import app_settings as allauth_settings
 from allauth.account.adapter import get_adapter
@@ -10,19 +12,21 @@ from allauth.utils import email_address_exists
 
 from rest_framework import serializers
 
-
-def name_validator(value):
-    if not re.match(r"^[A-Za-z\s]+$", value):
-        raise serializers.ValidationError("Invalid field.")
-    return value
+User = get_user_model()
 
 
-class UserRegistrationSerializer(serializers.Serializer):
-    first_name = serializers.CharField(max_length=64, validators=[name_validator])
-    last_name = serializers.CharField(max_length=64, validators=[name_validator])
-    email = serializers.EmailField(required=True)
-    password1 = serializers.CharField(write_only=True)
-    password2 = serializers.CharField(write_only=True)
+class AdminUserSerializer(serializers.ModelSerializer):
+    password1 = serializers.CharField(max_length=128, write_only=True)
+    password2 = serializers.CharField(max_length=128, write_only=True)
+
+    class Meta:
+        model = User
+        fields = ('pk', 'first_name', 'last_name', 'email', 'password1', 'password2', 'is_superuser', 'is_staff')
+        read_only_fields = ('is_superuser',)
+        extra_kwargs = {
+            'first_name': {'required': False},
+            'last_name': {'required': False}
+        }
 
     def validate_email(self, email):
         email = get_adapter().clean_email(email)
@@ -44,22 +48,9 @@ class UserRegistrationSerializer(serializers.Serializer):
             raise serializers.ValidationError(_("The two password fields didn't match."))
         return data
 
-    def custom_signup(self, request, user):
-        pass
-
-    def get_cleaned_data(self):
-        return {
-            'password1': self.validated_data.get('password1', ''),
-            'email': self.validated_data.get('email', ''),
-            'first_name': self.validated_data.get('first_name', ''),
-            'last_name': self.validated_data.get('last_name', '')
-        }
-
     def save(self, request):
-        adapter = get_adapter()
-        user = adapter.new_user(request)
-        self.cleaned_data = self.get_cleaned_data()
-        adapter.save_user(request, user, self)
-        self.custom_signup(request, user)
+        self.validated_data['password'] = self.validated_data.pop('password1')
+        self.validated_data.pop('password2')
+        user = User.objects.create_user(**self.validated_data)
         setup_user_email(request, user, [])
         return user
