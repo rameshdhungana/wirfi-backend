@@ -1,5 +1,6 @@
 from wirfi_app.views.add_device_status import add_device_status_view
 from wirfi_app.views.admin_activity_log import AdminActivityLogListView
+from wirfi_app.views.admin_createlist_users import AdminListCreateUserView
 from wirfi_app.views.billing import BillingDetailView, BillingView, delete_billing_card
 from wirfi_app.views.business import BusinessView, BusinessDetailView
 from wirfi_app.views.caching import update_cached_device_list
@@ -18,7 +19,7 @@ from wirfi_app.views.password_reset import ResetPasswordView, ResetPasswordConfi
     validate_reset_password
 from wirfi_app.views.preset_filter import PresetFilterDeleteView, PresetFilterView
 from wirfi_app.views.register_user import RegisterUserView, VerifyEmailRegisterView
-from wirfi_app.views.user import UserDetailView, profile_images_view, UserListCreateView
+from wirfi_app.views.user import UserDetailView, profile_images_view
 from wirfi_app.views.ping_server import ping_server_from_wirfi_device
 from wirfi_app.views.caching import add_or_get_cached_device_list
 from wirfi_app.views.signal_receivers import queue_device_create_task, queue_device_network_task

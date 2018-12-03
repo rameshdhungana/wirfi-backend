@@ -6,7 +6,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from wirfi_app.models import Billing, Profile 
-from wirfi_app.serializers.user_detail import UserProfileSerializer, BusinessSerializer, BillingSerializer
+from wirfi_app.serializers.user_detail import UserProfileSerializer, BusinessSerializer
 
 User = get_user_model()
 
@@ -67,13 +67,6 @@ class UserSerializer(serializers.ModelSerializer):
         if data['profile']['profile_picture']:
             data['profile']['profile_picture'] = 'media' + data['profile']['profile_picture'].split('/media')[1]
         return data
-
-
-class AdminUserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ('pk', 'first_name', 'last_name', 'email', 'password', 'is_superuser', 'is_staff')
-        write_only_fields = ('password',)
 
 
 class UserDetailsSerializer(serializers.ModelSerializer):
