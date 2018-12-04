@@ -23,7 +23,7 @@ class AdminListCreateUserView(generics.ListCreateAPIView):
     def list(self, request, *args, **kwargs):
         if not request.user.is_superuser:
             return Response({
-                'code': getattr(settings, 'SUCCESS_CODE', 1),
+                'code': getattr(settings, 'ERROR_CODE', 0),
                 'message': 'You do not have permission.',
             }, status=status.HTTP_403_FORBIDDEN)
 
@@ -45,7 +45,7 @@ class AdminListCreateUserView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         if not request.user.is_superuser:
             return Response({
-                'code': getattr(settings, 'SUCCESS_CODE', 1),
+                'code': getattr(settings, 'ERROR_CODE', 0),
                 'message': 'You do not have permission.',
             }, status=status.HTTP_403_FORBIDDEN)
 
