@@ -5,14 +5,14 @@ from rest_framework import generics, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from wirfi_app.models import Profile
+from wirfi_app.models import Profile, AdminActivityLog
 from wirfi_app.serializers import UserSerializer
 from wirfi_app.views.login_logout import get_token_obj
 
 User = get_user_model()
 
 
-class UserDetailView(generics.RetrieveUpdateAPIView):
+class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
     lookup_field = 'id'
     serializer_class = UserSerializer
 
@@ -41,6 +41,23 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
             'data': serializer.data
         }
         return Response(data, status=status.HTTP_200_OK)
+
+    def destroy(self, request, *args, **kwargs):
+        if not (request.user.is_superuser or request.user.is_staff):
+            return Response({
+                'code': getattr(settings, 'ERROR_CODE', 0),
+                'message': "You don't have permission."
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        user = self.get_object()
+        print(user.first_name, user.last_name)
+        activity = "User `{first_name} {last_name}` deleted".format(first_name=user.first_name, last_name=user.last_name)
+        AdminActivityLog.objects.create(admin=request.user, activity=activity)
+        user.delete()
+        return Response({
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
+            'message': "User successfully deleted."
+        }, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
