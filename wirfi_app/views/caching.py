@@ -43,9 +43,7 @@ def update_cached_device_list(data):
     if device_already:
         device_already[0].update(data)
     else:
-        device_list.append({
-            data
-        })
+        device_list.append(data)
 
     cache.delete('cached_device_list')
     cache.set('cached_device_list', json.dumps(device_list), timeout=CACHE_TTL)
