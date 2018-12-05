@@ -51,7 +51,7 @@ class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
 
         user = self.get_object()
         print(user.first_name, user.last_name)
-        activity = "User `{first_name} {last_name}` deleted".format(first_name=user.first_name, last_name=user.last_name)
+        activity = "User `{email}` deleted".format(email = user.email)
         AdminActivityLog.objects.create(admin=request.user, activity=activity)
         user.delete()
         return Response({
