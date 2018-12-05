@@ -1,13 +1,15 @@
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
+from django.db.models import signals
 
 from rest_framework import generics, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from wirfi_app.models import Device, DeviceStatus, Industry, Franchise, DEVICE_STATUS
-from wirfi_app.serializers import DeviceSerializer, DeviceStatusSerializer, IndustryTypeSerializer, LocationTypeSerializer
+from wirfi_app.serializers import DeviceSerializer, DeviceStatusSerializer, IndustryTypeSerializer, \
+    LocationTypeSerializer
 from wirfi_app.views.login_logout import get_token_obj
 
 

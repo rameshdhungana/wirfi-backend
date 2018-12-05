@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
 
     'wirfi_app',
+    'django_filters'
 ]
 
 SITE_ID = 1

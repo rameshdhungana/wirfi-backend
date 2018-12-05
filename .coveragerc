@@ -1,0 +1,12 @@
+ [run]
+ branch = True
+ omit = *wirfi-venv/*
+        */__init__.py
+        */test*.py
+        */migrations/*
+        */wirfi_app/urls/*
+        */admin.py
+        */apps.py
+        */wirfi_app/urls.py
+
+l
