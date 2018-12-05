@@ -11,5 +11,5 @@ class AdminActivityLogSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         response = super().to_representation(instance)
-        response['admin'] = instance.admin.first_name + " " + instance.admin.last_name
+        response['admin'] = instance.admin.email
         return response
