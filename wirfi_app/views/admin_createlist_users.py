@@ -4,10 +4,9 @@ from django.contrib.auth import get_user_model
 from allauth.account import app_settings as allauth_settings
 from allauth.account.utils import complete_signup
 
-from rest_framework import generics, status
+from rest_framework import filters, generics, status
 from rest_framework.response import Response
 
-from wirfi_app.activity_log_paginator import ActivityLogPagination
 from wirfi_app.serializers import AdminUserSerializer
 
 User = get_user_model()
@@ -15,7 +14,9 @@ User = get_user_model()
 
 class AdminListCreateUserView(generics.ListCreateAPIView):
     serializer_class = AdminUserSerializer
-    pagination_class = ActivityLogPagination
+    # pagination_class = ActivityLogPagination
+    search_fields = ('first_name', 'last_name', 'email')
+    filter_backends = (filters.SearchFilter,)
 
     def get_queryset(self):
         return User.objects.exclude(pk=self.request.user.id)
