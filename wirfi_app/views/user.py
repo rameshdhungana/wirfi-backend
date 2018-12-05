@@ -75,7 +75,7 @@ def profile_images_view(request, id):
         profile[0].profile_picture = profile_picture
         profile[0].save()
     else:
-        profile = Profile.objects.create(user=user, phone_number='', address='', profile_picture=profile_picture)
+        Profile.objects.create(user=user, phone_number='', address='', profile_picture=profile_picture)
 
     user = UserSerializer(user).data
     return Response({
