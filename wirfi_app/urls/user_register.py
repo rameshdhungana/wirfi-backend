@@ -1,5 +1,5 @@
 from django.urls import path, re_path
-from wirfi_app.views import RegisterUserView, VerifyEmailRegisterView, VerifyEmailRegisterView
+from wirfi_app.views import RegisterUserView, VerifyEmailRegisterView
 
 
 urlpatterns = [
