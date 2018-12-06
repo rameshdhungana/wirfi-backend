@@ -12,7 +12,7 @@ class AdminActivityLogListView(generics.ListAPIView):
     serializer_class = AdminActivityLogSerializer
     # pagination_class = ActivityLogPagination
     queryset = AdminActivityLog.objects.all().order_by('-id')
-    search_fields = ('admin__first_name', 'admin__last_name', 'timestamp', 'activity')
+    search_fields = ('admin_email', 'timestamp', 'activity')
     filter_backends = (filters.SearchFilter,)
 
     def list(self, request, *args, **kwargs):
