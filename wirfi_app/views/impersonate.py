@@ -39,7 +39,22 @@ def impersonate_user(request, user_id):
 
 
 @api_view(['GET'])
-def stop_impersonate(request):
-    pass
+def stop_impersonation(request):
+    key = request.META.get('HTTP_PERSONATOR', '')
+    if not key:
+        return Response({
+            'code': getattr(settings, 'ERROR_CODE', 0),
+            'message': 'You do not have permission.'
+        }, status=status.HTTP_403_FORBIDDEN)
+
+    AuthorizationToken.objects.filter(key=request.auth).delete()
+
+    return Response({
+        'code': getattr(settings, 'SUCCESS_CODE', 1),
+        'message': 'Stopped impersonation.',
+        'data': {
+            'key': key
+        }
+    }, status=status.HTTP_200_OK)
 
 
