@@ -14,7 +14,6 @@ User = get_user_model()
 
 class AdminListCreateUserView(generics.ListCreateAPIView):
     serializer_class = AdminUserSerializer
-    # pagination_class = ActivityLogPagination
     search_fields = ('first_name', 'last_name', 'email')
     filter_backends = (filters.SearchFilter,)
 

@@ -3,16 +3,14 @@ from django.conf import settings
 from rest_framework import generics, status, filters
 from rest_framework.response import Response
 
-from wirfi_app.activity_log_paginator import ActivityLogPagination
 from wirfi_app.models import AdminActivityLog
 from wirfi_app.serializers import AdminActivityLogSerializer
 
 
 class AdminActivityLogListView(generics.ListAPIView):
     serializer_class = AdminActivityLogSerializer
-    # pagination_class = ActivityLogPagination
     queryset = AdminActivityLog.objects.all().order_by('-id')
-    search_fields = ('admin__first_name', 'admin__last_name', 'timestamp', 'activity')
+    search_fields = ('admin__email', 'timestamp', 'activity')
     filter_backends = (filters.SearchFilter,)
 
     def list(self, request, *args, **kwargs):
