@@ -5,13 +5,13 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 
 from wirfi_app.models import Industry
-from wirfi_app.views.login_logout import get_token_obj
+from wirfi_app.views.create_admin_activity_log import create_activity_log
 from wirfi_app.serializers import IndustryTypeSerializer
 
 
-def industry_type_name_already_exits(name, token):
+def industry_type_name_already_exits(name, user):
     for key, value in enumerate(
-            Industry.objects.filter(Q(user__isnull=True) | Q(user=token.user)).values_list('name', flat=True)):
+            Industry.objects.filter(Q(user__isnull=True) | Q(user=user)).values_list('name', flat=True)):
         if name.upper() == value.upper():
             return True
         return False
@@ -21,8 +21,7 @@ class IndustryTypeListView(generics.ListCreateAPIView):
     serializer_class = IndustryTypeSerializer
 
     def get_queryset(self):
-        token = get_token_obj(self.request.auth)
-        return Industry.objects.filter(Q(user__isnull=True) | Q(user=token.user)).order_by('id')
+        return Industry.objects.filter(Q(user__isnull=True) | Q(user=self.request.auth.user)).order_by('id')
 
     def list(self, request, *args, **kwargs):
         industry_types = self.get_queryset()
@@ -35,10 +34,10 @@ class IndustryTypeListView(generics.ListCreateAPIView):
 
     def create(self, request, *args, **kwargs):
         data = request.data
-        token = get_token_obj(self.request.auth)
+        user = request.auth.user
 
         # case sensitive validation of name
-        if industry_type_name_already_exits(request.data['name'], token):
+        if industry_type_name_already_exits(request.data['name'], user):
             return Response({
                 'code': getattr(settings, 'ERROR_CODE', 0),
                 'message': "Industry type with this name already exists.",
@@ -47,8 +46,14 @@ class IndustryTypeListView(generics.ListCreateAPIView):
 
         serializer = IndustryTypeSerializer(data=data)
         serializer.is_valid(raise_exception=True)
+        serializer.save(user=user)
 
-        serializer.save(user=token.user)
+        create_activity_log(
+            request,
+            "Industry Type '{name}' added to user '{email}'.".format(name=serializer.data['name'],
+                                                                     email=user.email)
+        )
+
         return Response({
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Successfully added industry type.",
@@ -61,15 +66,14 @@ class IndustryTypeDetailView(generics.UpdateAPIView, generics.DestroyAPIView):
     serializer_class = IndustryTypeSerializer
 
     def get_queryset(self):
-        token = get_token_obj(self.request.auth)
-        return Industry.objects.filter(Q(user__isnull=True) | Q(user=token.user)).filter(pk=self.kwargs['id'])
+        return Industry.objects.filter(Q(user__isnull=True) | Q(user=self.request.auth.user)).filter(pk=self.kwargs['id'])
 
     def update(self, request, *args, **kwargs):
         industry_type = self.get_object()
-        token = get_token_obj(self.request.auth)
+        user = request.auth.user
 
         # case sensitive validation of name
-        if industry_type_name_already_exits(request.data['name'], token):
+        if industry_type_name_already_exits(request.data['name'], user):
             return Response({
                 'code': getattr(settings, 'ERROR_CODE', 0),
                 'message': "Industry type with this name already exists.",
@@ -79,7 +83,14 @@ class IndustryTypeDetailView(generics.UpdateAPIView, generics.DestroyAPIView):
         serializer = IndustryTypeSerializer(industry_type, data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        serializer.save(user=token.user)
+        serializer.save(user=user)
+
+        create_activity_log(
+            request,
+            "Industry Type '{name}' of user '{email}' updated.".format(name=serializer.data['name'],
+                                                                       email=user.email)
+        )
+
         return Response({
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Successfully updated industry type.",
@@ -88,6 +99,12 @@ class IndustryTypeDetailView(generics.UpdateAPIView, generics.DestroyAPIView):
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
+        user = request.auth.user
+        create_activity_log(
+            request,
+            "Industry Type '{name}' of user '{email}' deleted.".format(name=instance.name,
+                                                                       email=user.email)
+        )
         self.perform_destroy(instance)
         return Response({
             'code': getattr(settings, 'SUCCESS_CODE', 1),
