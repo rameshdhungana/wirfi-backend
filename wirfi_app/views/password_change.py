@@ -8,6 +8,8 @@ from rest_auth.serializers import PasswordChangeSerializer
 from rest_framework import status
 from rest_framework.response import Response
 
+from wirfi_app.views.create_admin_activity_log import create_activity_log
+
 
 def valid_password_regex(password):
     valid = re.match(settings.PASSWORD_VALIDATION_REGEX_PATTERN, password)
@@ -25,6 +27,10 @@ class ChangePasswordView(PasswordChangeView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         response = super().post(request, *args, **kwargs)
+        create_activity_log(
+            request,
+            "Password of user '{email}' changed.".format(email=request.auth.user.email)
+        )
         response.data = {
             "code": getattr(settings, 'SUCCESS_CODE', 1),
             "message": "New password has been saved."
