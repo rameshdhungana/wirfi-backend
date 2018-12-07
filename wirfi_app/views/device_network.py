@@ -1,5 +1,4 @@
 from django.conf import settings
-from django.db.models import signals
 
 from rest_framework import generics, status
 from rest_framework.response import Response
@@ -34,15 +33,14 @@ class DeviceNetworkView(generics.ListCreateAPIView):
             return Response(data, status=status.HTTP_400_BAD_REQUEST)
 
         data = request.data
-        if (len(device_network.filter(primary_network=True)) == 0 and not data[
-            'primary_network']):
+        if len(device_network.filter(primary_network=True)) == 0 and not data['primary_network']:
             data = {
                 'code': getattr(settings, 'ERROR_CODE', 0),
                 'message': "Secondary network can't be set first."
             }
             return Response(data, status=status.HTTP_400_BAD_REQUEST)
 
-        if (len(device_network.filter(primary_network=True)) == 1 and data['primary_network']):
+        if len(device_network.filter(primary_network=True)) == 1 and data['primary_network']:
             data = {
                 'code': getattr(settings, 'ERROR_CODE', 0),
                 'message': "Multiple primary network can't be set."
