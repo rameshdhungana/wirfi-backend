@@ -5,15 +5,14 @@ from rest_framework.response import Response
 
 from wirfi_app.models import Business
 from wirfi_app.serializers import BusinessSerializer
-from wirfi_app.views.login_logout import get_token_obj
+from wirfi_app.views.create_admin_activity_log import create_activity_log
 
 
 class BusinessView(generics.ListCreateAPIView):
     serializer_class = BusinessSerializer
 
     def get_queryset(self):
-        token = get_token_obj(self.request.auth)
-        return Business.objects.filter(user=token.user)
+        return Business.objects.filter(user=self.request.auth.user)
 
     def list(self, request, *args, **kwargs):
         businesses = self.get_queryset()
@@ -36,10 +35,11 @@ class BusinessView(generics.ListCreateAPIView):
         return Response(data, status=status.HTTP_200_OK, headers=headers)
 
     def create(self, request, *args, **kwargs):
-        token = get_token_obj(request.auth)
+        user = request.auth.user
         serializer = BusinessSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(user=token.user)
+        serializer.save(user=user)
+        create_activity_log(request, "Business information of user '{}' added.".format(user.email))
         headers = self.get_success_headers(serializer.data)
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
@@ -49,20 +49,20 @@ class BusinessView(generics.ListCreateAPIView):
         return Response(data, status=status.HTTP_201_CREATED, headers=headers)
 
 
-class BusinessDetailView(generics.UpdateAPIView, generics.DestroyAPIView):
+class BusinessDetailView(generics.UpdateAPIView):
     lookup_field = 'id'
     serializer_class = BusinessSerializer
 
     def get_queryset(self):
-        token = get_token_obj(self.request.auth)
-        return Business.objects.filter(user=token.user).filter(pk=self.kwargs.get('id', ''))
+        return Business.objects.filter(user=self.request.auth.user).filter(pk=self.kwargs.get('id', ''))
 
     def update(self, request, *args, **kwargs):
-        token = get_token_obj(request.auth)
+        user = request.auth.user
         business = self.get_object()
         serializer = BusinessSerializer(business, data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(user=token.user)
+        serializer.save(user=user)
+        create_activity_log(request, "Business information of user '{}' updated.".format(user.email))
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Business Info successfully updated.",
