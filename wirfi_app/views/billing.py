@@ -7,20 +7,19 @@ from rest_framework.response import Response
 
 from wirfi_app.models import Billing
 from wirfi_app.serializers import BillingSerializer
-from wirfi_app.views.login_logout import get_token_obj
+from wirfi_app.views.create_admin_activity_log import create_activity_log
 
 
 class BillingView(generics.ListCreateAPIView):
     serializer_class = BillingSerializer
 
     def get_queryset(self):
-        token = get_token_obj(self.request.auth)
-        return Billing.objects.filter(user=token.user)
+        return Billing.objects.filter(user=self.request.auth.user)
 
     def retrieve_stripe_customer_info(self):
         stripe.api_key = settings.STRIPE_API_KEY
-        token = get_token_obj(self.request.auth)
-        billing = Billing.objects.filter(user=token.user).first()
+        user = self.request.auth.user
+        billing = Billing.objects.filter(user=user).first()
         if billing:
             return stripe.Customer.retrieve(billing.customer_id)
         else:
@@ -52,8 +51,8 @@ class BillingView(generics.ListCreateAPIView):
 
         email = data['email']
 
-        token = get_token_obj(request.auth)
-        billing_obj = Billing.objects.filter(user=token.user)
+        user = request.auth.user
+        billing_obj = Billing.objects.filter(user=user)
         serializer = BillingSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -67,7 +66,8 @@ class BillingView(generics.ListCreateAPIView):
                     source=stripe_token,
                     email=email
                 )
-                serializer.save(user=token.user, customer_id=customer.id)
+                serializer.save(user=user, customer_id=customer.id)
+
 
             except:
                 return Response({
@@ -75,22 +75,21 @@ class BillingView(generics.ListCreateAPIView):
                     'message': "Stripe Token has already been used. Please try again with new token."
                 }, status=status.HTTP_400_BAD_REQUEST)
 
-        headers = self.get_success_headers(serializer.data)
+        create_activity_log(request, "A card added to user '{email}'.".format(email=user.email))
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Billing Info successfully created.",
             'data': customer
         }
-        return Response(data, status=status.HTTP_201_CREATED, headers=headers)
+        return Response(data, status=status.HTTP_201_CREATED)
 
 
-class BillingDetailView(generics.RetrieveUpdateAPIView):
+class BillingDetailView(generics.RetrieveAPIView):
     lookup_field = 'id'
     serializer_class = BillingSerializer
 
     def get_queryset(self):
-        token = get_token_obj(self.request.auth)
-        return Billing.objects.filter(user=token.user).filter(pk=self.kwargs.get('id', ''))
+        return Billing.objects.filter(user=self.request.auth.user).filter(pk=self.kwargs.get('id', ''))
 
     def retrieve(self, request, *args, **kwargs):
         billing = self.get_object()
@@ -105,28 +104,29 @@ class BillingDetailView(generics.RetrieveUpdateAPIView):
         }
         return Response(data, status=status.HTTP_200_OK)
 
-    def update(self, request, *args, **kwargs):
-        token = get_token_obj(request.auth)
-        billing = self.get_object()
-        serializer = BillingSerializer(billing, data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save(user=token.user)
-        data = {
-            'code': getattr(settings, 'SUCCESS_CODE', 1),
-            'message': "Billing Info successfully updated.",
-            'data': serializer.data
-        }
-        return Response(data, status=status.HTTP_200_OK)
+    # def update(self, request, *args, **kwargs):
+    #     user = request.auth.user
+    #     billing = self.get_object()
+    #     serializer = BillingSerializer(billing, data=request.data)
+    #     serializer.is_valid(raise_exception=True)
+    #     serializer.save(user=user)
+    #     data = {
+    #         'code': getattr(settings, 'SUCCESS_CODE', 1),
+    #         'message': "Billing Info successfully updated.",
+    #         'data': serializer.data
+    #     }
+    #     return Response(data, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
 def delete_billing_card(request):
     stripe.api_key = settings.STRIPE_API_KEY
     card_id = request.data['id']
-    token = get_token_obj(request.auth)
-    billing_obj = Billing.objects.get(user=token.user)
+    user = request.auth.user
+    billing_obj = Billing.objects.get(user=user)
     customer = stripe.Customer.retrieve(billing_obj.customer_id)
     customer.sources.retrieve(card_id).delete()
+    create_activity_log(request, "A card of user '{email}' deleted.".format(email=user.email))
 
     data = {
         "code": getattr(settings, 'SUCCESS_CODE', 1),
