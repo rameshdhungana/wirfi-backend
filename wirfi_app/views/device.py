@@ -1,7 +1,6 @@
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
-from django.db.models import signals
 
 from rest_framework import generics, status
 from rest_framework.decorators import api_view
@@ -10,22 +9,21 @@ from rest_framework.response import Response
 from wirfi_app.models import Device, DeviceStatus, Industry, Franchise, DEVICE_STATUS
 from wirfi_app.serializers import DeviceSerializer, DeviceStatusSerializer, IndustryTypeSerializer, \
     LocationTypeSerializer
-from wirfi_app.views.login_logout import get_token_obj
+from wirfi_app.views.create_admin_activity_log import create_activity_log
 
 
 class DeviceView(generics.ListCreateAPIView):
     serializer_class = DeviceSerializer
 
     def get_queryset(self):
-        token = get_token_obj(self.request.auth)
-        return Device.objects.filter(user=token.user)
+        return Device.objects.filter(user=self.request.auth.user)
 
     def list(self, request, *args, **kwargs):
-        token_obj = get_token_obj(self.request.auth)
-        industry_types = Industry.objects.filter(Q(user=token_obj.user) | Q(user__isnull=True))
+        user = request.auth.user
+        industry_types = Industry.objects.filter(Q(user=user) | Q(user__isnull=True))
         industry_serializer = IndustryTypeSerializer(industry_types, many=True)
-        location_types = Franchise.objects.filter(user=token_obj.user)
-        location_serailizer = LocationTypeSerializer(location_types, many=True)
+        location_types = Franchise.objects.filter(user=user)
+        location_serializer = LocationTypeSerializer(location_types, many=True)
         devices = self.get_queryset()
         serializer = DeviceSerializer(devices, many=True)
         response_data = serializer.data
@@ -38,7 +36,7 @@ class DeviceView(generics.ListCreateAPIView):
             'data': {
                 'device': response_data,
                 'industry_type': industry_serializer.data,
-                'location_type': location_serailizer.data,
+                'location_type': location_serializer.data,
                 'status_dict': {x: y for x, y in DEVICE_STATUS}
             }
         }
@@ -46,7 +44,7 @@ class DeviceView(generics.ListCreateAPIView):
         return Response(data, status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
-        token = get_token_obj(request.auth)
+        user = request.auth.user
         industry_id = request.data.get('industry_type_id', '')
         franchise_id = request.data.get('location_type_id', '')
         if not industry_id:
@@ -66,7 +64,13 @@ class DeviceView(generics.ListCreateAPIView):
 
         serializer = DeviceSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(user=token.user, industry_type=industry, location_type=franchise)
+        serializer.save(user=user, industry_type=industry, location_type=franchise)
+
+        create_activity_log(
+            request,
+            "Device '{s_no}' added to user '{email}'.".format(s_no=serializer.data['serial_number'], email=user.email)
+        )
+
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Successfully device created.",
@@ -109,8 +113,7 @@ class DeviceDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = DeviceSerializer
 
     def get_queryset(self):
-        token = get_token_obj(self.request.auth)
-        return Device.objects.filter(user=token.user).filter(pk=self.kwargs['id'])
+        return Device.objects.filter(user=self.request.auth.user).filter(pk=self.kwargs['id'])
 
     def retrieve(self, request, *args, **kwargs):
         device = self.get_object()
@@ -124,7 +127,7 @@ class DeviceDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def update(self, request, *args, **kwargs):
         device = self.get_object()
-        token = get_token_obj(self.request.auth)
+        user = request.auth.user
         industry_id = request.data.get('industry_type_id', '')
         industry_name = request.data.get('industry_name', '')
         franchise_id = request.data.get('location_type_id', '')
@@ -142,7 +145,7 @@ class DeviceDetailView(generics.RetrieveUpdateDestroyAPIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         if industry_name:
-            industry = Industry.objects.create(name=industry_name, user=token.user)
+            industry = Industry.objects.create(name=industry_name, user=user)
         else:
             industry = Industry.objects.get(pk=industry_id)
 
@@ -150,7 +153,11 @@ class DeviceDetailView(generics.RetrieveUpdateDestroyAPIView):
 
         serializer = DeviceSerializer(device, data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(user=token.user, industry_type=industry, location_type=franchise)
+        serializer.save(user=user, industry_type=industry, location_type=franchise)
+        create_activity_log(
+            request,
+            "Device '{s_no}' of user '{email} updated.".format(s_no=serializer.data['serial_number'], email=user.email)
+        )
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Device successfully updated.",
@@ -160,6 +167,11 @@ class DeviceDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
+        create_activity_log(
+            request,
+            "Device '{s_no}' of user '{email}' deleted.".format(s_no=instance.serial_number,
+                                                                email=request.auth.user.email)
+        )
         instance.delete()
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
