@@ -7,7 +7,7 @@ from rest_framework.response import Response
 
 from wirfi_app.models import Profile, AdminActivityLog
 from wirfi_app.serializers import UserSerializer
-from wirfi_app.views.login_logout import get_token_obj
+from wirfi_app.views.create_admin_activity_log import create_activity_log
 
 User = get_user_model()
 
@@ -21,20 +21,21 @@ class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def retrieve(self, request, *args, **kwargs):
         user = self.get_object()
-        serializer = UserSerializer(user)
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Detail successfully fetched.",
-            'data': serializer.data
+            'data': UserSerializer(user).data
         }
         return Response(data, status=status.HTTP_200_OK)
 
     def update(self, request, *args, **kwargs):
-        user = self.get_object()
-        token = get_token_obj(self.request.auth)
+        user = request.auth.user
         serializer = UserSerializer(user, data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(user=token.user)
+        serializer.save()
+
+        create_activity_log(request, "User profile of '{}' updated.".format(user.email))
+
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "User successfully updated",
@@ -50,8 +51,7 @@ class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
             }, status=status.HTTP_403_FORBIDDEN)
 
         user = self.get_object()
-        print(user.first_name, user.last_name)
-        activity = "User `{email}` deleted".format(email = user.email)
+        activity = "User `{email}` deleted".format(email=user.email)
         AdminActivityLog.objects.create(admin=request.user, activity=activity)
         user.delete()
         return Response({
@@ -63,23 +63,22 @@ class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
 @api_view(['POST'])
 def profile_images_view(request, id):
     profile_picture = request.FILES.get('profile_picture', '')
-    user = get_token_obj(request.auth).user
+    user = request.auth.user
     if not profile_picture:
         return Response({
             "code": getattr(settings, 'ERROR_CODE', 0),
             "message": "Please upload the image."},
             status=status.HTTP_400_BAD_REQUEST)
 
-    profile = Profile.objects.filter(user__id=id)
+    profile = Profile.objects.filter(user=user)
     if profile:
         profile[0].profile_picture = profile_picture
         profile[0].save()
     else:
         Profile.objects.create(user=user, phone_number='', address='', profile_picture=profile_picture)
 
-    user = UserSerializer(user).data
     return Response({
         "code": getattr(settings, 'SUCCESS_CODE', 1),
         "message": "Images Successfully uploaded.",
-        "data": user},
+        "data": UserSerializer(user).data},
         status=status.HTTP_200_OK)
