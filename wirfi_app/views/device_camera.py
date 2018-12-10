@@ -18,7 +18,7 @@ class DeviceCameraView(generics.ListCreateAPIView):
         serializer = DeviceCameraSerializer(self.get_queryset(), many=True)
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
-            'message': "Sucesfully fetched device's camera information.",
+            'message': "Successfully fetched device's camera information.",
             'data': serializer.data
         }
         return Response(data, status=status.HTTP_200_OK)
@@ -38,7 +38,7 @@ class DeviceCameraView(generics.ListCreateAPIView):
 
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
-            'message': "Sucesfully added device's camera information.",
+            'message': "Successfully added device's camera information.",
             'data': {'camera_service': serializer.data}
         }
         return Response(data, status=status.HTTP_201_CREATED)
@@ -64,7 +64,7 @@ class DeviceCameraDetailView(generics.UpdateAPIView, generics.DestroyAPIView):
         )
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
-            'message': "Sucesfully updated device's camera information.",
+            'message': "Successfully updated device's camera information.",
             'data': {'camera_service': serializer.data}
         }
         return Response(data, status=status.HTTP_200_OK)
@@ -81,6 +81,6 @@ class DeviceCameraDetailView(generics.UpdateAPIView, generics.DestroyAPIView):
         camera.delete()
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
-            'message': "Sucesfully deleted device's camera information."
+            'message': "Successfully deleted device's camera information."
         }
         return Response(data, status=status.HTTP_200_OK)

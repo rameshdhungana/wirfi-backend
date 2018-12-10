@@ -8,9 +8,9 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from wirfi_app.models import Device, DeviceSetting
-from wirfi_app.serializers import DeviceSerializer, DeviceMuteSettingSerializer, DevicePrioritySettingSerializer, DeviceSleepSerializer
+from wirfi_app.serializers import DeviceMuteSettingSerializer, DevicePrioritySettingSerializer, DeviceSleepSerializer
 from wirfi_app.views.caching import update_cached_device_list
-from wirfi_app.views.login_logout import get_token_obj
+from wirfi_app.views.create_admin_activity_log import create_activity_log
 
 
 @api_view(['POST'])
@@ -21,6 +21,12 @@ def mute_device_view(request, id):
         mute_serializer = DeviceMuteSettingSerializer(device_setting, data=request.data)
         mute_serializer.is_valid(raise_exception=True)
         mute_serializer.save()
+
+        create_activity_log(
+            request,
+            "Mute setting of device '{device}' of user '{email} updated.".format(device=device_obj.serial_number,
+                                                                                email=request.auth.user.email)
+        )
 
         data_to_cache = {'id': device_setting.id,
                          'mute_start': (datetime.datetime.strptime(mute_serializer.data['mute_settings']['mute_start'],
@@ -53,9 +59,16 @@ def device_priority_view(request, id):
         serializer = DevicePrioritySettingSerializer(device_setting, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
+        create_activity_log(
+            request,
+            "Priority of device '{device}' of user '{user}' updated.".format(device=device.serial_number,
+                                                                             user=request.auth.user.email)
+        )
+
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
-            'message': "Sucesfully priority updated.",
+            'message': "Successfully priority updated.",
             'data': serializer.data
         }
         return Response(data, status=status.HTTP_200_OK)
@@ -87,9 +100,16 @@ class DeviceSleepView(generics.CreateAPIView):
                          'sleep_duration': serializer.data['sleep_settings']['sleep_duration']}
 
         update_cached_device_list(data_to_cache)
+
+        create_activity_log(
+            request,
+            "Sleep setting of device '{device}' of user '{email} updated.".format(device=instance.device.serial_number,
+                                                                                 email=request.auth.user.email)
+        )
+
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
-            'message': "Sucesfully sleep settings updated.",
+            'message': "Successfully sleep settings updated.",
             'data': serializer.data
         }
 
