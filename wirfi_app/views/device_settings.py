@@ -25,7 +25,7 @@ def mute_device_view(request, id):
         create_activity_log(
             request,
             "Mute setting of device '{device}' of user '{email} updated.".format(device=device_obj.serial_number,
-                                                                                email=request.auth.user.email)
+                                                                                 email=request.auth.user.email)
         )
 
         data_to_cache = {'id': device_setting.id,

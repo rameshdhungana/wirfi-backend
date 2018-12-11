@@ -5,6 +5,7 @@ from rest_framework.response import Response
 
 from wirfi_app.models import Device, DeviceNetwork
 from wirfi_app.serializers import DeviceNetworkSerializer, DeviceNetworkUpdateSerializer
+from wirfi_app.views.create_admin_activity_log import create_activity_log
 
 
 class DeviceNetworkView(generics.ListCreateAPIView):
@@ -47,9 +48,17 @@ class DeviceNetworkView(generics.ListCreateAPIView):
             }
             return Response(data, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = DeviceNetworkSerializer(data=request.data)
+        serializer = DeviceNetworkSerializer(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save(device=self.device)
+
+        message = "{network} network added to device '{device}' of user '{email}'."
+        message = message.format(
+                    network='Primary' if data['primary_network'] else 'Secondary',
+                    device=self.device.serial_number,
+                    email=request.auth.user.email
+                )
+        create_activity_log(request, message)
 
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
@@ -79,7 +88,6 @@ class DeviceNetworkDetailView(generics.RetrieveUpdateDestroyAPIView):
     def update(self, request, *args, **kwargs):
         network = self.get_object()
         device = Device.objects.get(pk=self.kwargs['device_id'])
-        print(request.data, 'this is data')
         serializer = DeviceNetworkUpdateSerializer(network, data=request.data)
         serializer.is_valid(raise_exception=True)
         if network.password != request.data['old_password']:
@@ -90,6 +98,14 @@ class DeviceNetworkDetailView(generics.RetrieveUpdateDestroyAPIView):
             return Response(data, status=status.HTTP_400_BAD_REQUEST)
 
         serializer.save(device=device)
+
+        message = "{network} network of device '{device}' of user '{email}' updated."
+        message = message.format(
+                    network='Primary' if network.primary_network else 'Secondary',
+                    device=device.serial_number,
+                    email=request.auth.user.email
+                )
+        create_activity_log(request, message)
 
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
@@ -105,6 +121,13 @@ class DeviceNetworkDetailView(generics.RetrieveUpdateDestroyAPIView):
                 'code': getattr(settings, 'ERROR_CODE', 0),
                 'message': "Primary network can't be deleted."
             }, status=status.HTTP_400_BAD_REQUEST)
+
+        message = "Secondary network of device '{device}' of user '{email}' deleted."
+        message = message.format(
+                    device=instance.device.serial_number,
+                    email=request.auth.user.email
+                )
+        create_activity_log(request, message)
 
         instance.delete()
         return Response({
