@@ -1,5 +1,5 @@
 from django.urls import path
-from wirfi_app.views import BillingView, BillingDetailView, delete_billing_card, \
+from wirfi_app.views import BillingView, delete_billing_card, \
     BusinessView, BusinessDetailView, UserDetailView, profile_images_view, \
     Login, logout, get_logged_in_user, AdminActivityLogListView, AdminListCreateUserView
 
