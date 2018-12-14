@@ -12,7 +12,7 @@ urlpatterns = [
 
     # business
     path('business/', BusinessView.as_view()),
-    path('business/<int:id>/', BusinessDetailView.as_view()),
+    # path('business/<int:id>/', BusinessDetailView.as_view()),
 
     # user
     path('user/<int:id>/', UserDetailView.as_view(), name="user-detail"),

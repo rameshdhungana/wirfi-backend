@@ -15,7 +15,7 @@ class Profile(models.Model):
 
 
 class Business(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="business")
     name = models.CharField(max_length=50)
     address = models.CharField(max_length=100)
     latitude = models.DecimalField(max_digits=15, decimal_places=12)

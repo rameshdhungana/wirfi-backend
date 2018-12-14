@@ -36,36 +36,39 @@ class BusinessView(generics.ListCreateAPIView):
 
     def create(self, request, *args, **kwargs):
         user = request.auth.user
-        serializer = BusinessSerializer(data=request.data)
+        if self.get_queryset():
+            serializer = BusinessSerializer(self.get_queryset().first(), data=request.data)
+        else:
+            serializer = BusinessSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(user=user)
         create_activity_log(request, "Business information of user '{}' added.".format(user.email))
         headers = self.get_success_headers(serializer.data)
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
-            'message': "Business Info successfully created.",
+            'message': "Business Info successfully created." if self.get_queryset() else "Business Info successfully updated.",
             'data': serializer.data
         }
         return Response(data, status=status.HTTP_201_CREATED, headers=headers)
 
 
-class BusinessDetailView(generics.UpdateAPIView):
-    lookup_field = 'id'
-    serializer_class = BusinessSerializer
-
-    def get_queryset(self):
-        return Business.objects.filter(user=self.request.auth.user).filter(pk=self.kwargs.get('id', ''))
-
-    def update(self, request, *args, **kwargs):
-        user = request.auth.user
-        business = self.get_object()
-        serializer = BusinessSerializer(business, data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save(user=user)
-        create_activity_log(request, "Business information of user '{}' updated.".format(user.email))
-        data = {
-            'code': getattr(settings, 'SUCCESS_CODE', 1),
-            'message': "Business Info successfully updated.",
-            'data': serializer.data
-        }
-        return Response(data, status=status.HTTP_200_OK)
+# class BusinessDetailView(generics.UpdateAPIView):
+#     lookup_field = 'id'
+#     serializer_class = BusinessSerializer
+#
+#     def get_queryset(self):
+#         return Business.objects.filter(user=self.request.auth.user).filter(pk=self.kwargs.get('id', ''))
+#
+#     def update(self, request, *args, **kwargs):
+#         user = request.auth.user
+#         business = self.get_object()
+#         serializer = BusinessSerializer(business, data=request.data)
+#         serializer.is_valid(raise_exception=True)
+#         serializer.save(user=user)
+#         create_activity_log(request, "Business information of user '{}' updated.".format(user.email))
+#         data = {
+#             'code': getattr(settings, 'SUCCESS_CODE', 1),
+#             'message': "Business Info successfully updated.",
+#             'data': serializer.data
+#         }
+#         return Response(data, status=status.HTTP_200_OK)
