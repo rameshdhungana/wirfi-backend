@@ -13,7 +13,7 @@ class Device(models.Model):
     location_logo = models.ImageField(upload_to='device/images', null=True)
     machine_photo = models.ImageField(upload_to='device/images', null=True)
     location_of_device = models.CharField(max_length=128, verbose_name="location_of_device")
-    address = models.CharField(max_length=100, verbose_name="device_address")
+    address = models.TextField(verbose_name="device_address")
     latitude = models.FloatField(default=0)
     longitude = models.FloatField(default=0)
     industry_type = models.ForeignKey(Industry, on_delete=models.CASCADE, related_name="industry_type")
