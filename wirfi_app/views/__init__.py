@@ -23,3 +23,4 @@ from wirfi_app.views.user import UserDetailView, profile_images_view
 from wirfi_app.views.ping_server import ping_server_from_wirfi_device
 from wirfi_app.views.signal_receivers import queue_device_create_task, queue_device_network_task
 from wirfi_app.views.impersonate import impersonate_user, stop_impersonation
+from wirfi_app.views.dashboard_device_location import DeviceLocation
