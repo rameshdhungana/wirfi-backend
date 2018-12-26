@@ -1,5 +1,5 @@
 from django.urls import path
-from wirfi_app.views import add_device_status_view, AllNotificationView, DeviceCameraDetailView, \
+from wirfi_app.views import DeviceStatusView, AllNotificationView, DeviceCameraDetailView, \
     DeviceCameraView, DeviceDetailView, DeviceNetworkDetailView, DeviceNetworkView, \
     DeviceNotificationView, DeviceSleepView, DeviceView, UpdateNotificationView, \
     device_images_view, mute_device_view, device_priority_view
@@ -11,7 +11,7 @@ urlpatterns = [
     path('device/<int:id>/images/', device_images_view, name="device-images"),
 
     # informations
-    path('device/<int:id>/status/', add_device_status_view, name="device_status"),
+    path('device-status/', DeviceStatusView.as_view(), name="device_status"),
     path('device/<int:device_id>/network/', DeviceNetworkView.as_view(), name="device-network"),
     path('device/<int:device_id>/network/<int:id>/', DeviceNetworkDetailView.as_view(), name="device-network-detail"),
 
