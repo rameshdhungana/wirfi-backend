@@ -66,4 +66,4 @@ def pusher_notification(email, message):
         cluster=settings.PUSHER_CLUSTER,
         ssl=True
     )
-    pusher_client.trigger(email, 'status', {'message': message})
+    pusher_client.trigger(email, 'status_change', {'message': message})
