@@ -1,5 +1,5 @@
 from wirfi_app.urls import dashboard_version_check, device, industry_location_type, password_reset_change, \
-    preset_filter, user_register, user, ping_server, impersonate
+    preset_filter, user_register, user, ping_server, impersonate, dashboard_device_location
 
 urlpatterns = dashboard_version_check.urlpatterns
 urlpatterns += device.urlpatterns
@@ -10,3 +10,4 @@ urlpatterns += user_register.urlpatterns
 urlpatterns += user.urlpatterns
 urlpatterns += ping_server.urlpatterns
 urlpatterns += impersonate.urlpatterns
+urlpatterns += dashboard_device_location.urlpatterns

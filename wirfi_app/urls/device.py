@@ -19,7 +19,7 @@ urlpatterns = [
     path('device/<int:id>/camera/', DeviceCameraView.as_view()),
     path('device/<int:device_id>/camera/<int:pk>', DeviceCameraDetailView.as_view()),
 
-    # settings 
+    # settings
     path('device/<int:id>/mute/', mute_device_view, name='mute_device'),
     path('device/<int:id>/priority/', device_priority_view, name="device-priority"),
     path('device/<int:id>/sleep/', DeviceSleepView.as_view(), name="device-sleep"),
@@ -28,4 +28,6 @@ urlpatterns = [
     # path('device/<int:device_id>/notification/', DeviceNotificationView.as_view(), name='device_notification'),
     path('notifications/', AllNotificationView.as_view(), name='all_notification'),
     path('notifications/<int:pk>/', UpdateNotificationView.as_view(), name='update_notification'),
+
+
 ]
