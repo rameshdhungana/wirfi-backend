@@ -39,24 +39,6 @@ class DeviceNotificationView(generics.CreateAPIView):
     def get_each_type_queryset(self, type):
         return DeviceNotification.objects.filter(device_id=self.kwargs['device_id'], type=type).order_by('-id')
 
-    # def list(self, request, *args, **kwargs):
-    #     notifications = []
-    #
-    #     for index, (type_value, type_name) in enumerate(NOTIFICATION_TYPE):
-    #         noti = self.get_each_type_queryset(type_value)
-    #         serializer = DeviceNotificationSerializer(noti, many=True)
-    #
-    #         notifications.append({"type": type_value, "type_name": type_name, "notifications": serializer.data})
-    #
-    #     data = {
-    #         "code": getattr(settings, 'SUCCESS_CODE', 1),
-    #         'message': "Notifications fetched successfully",
-    #         "data":
-    #             {"read_type": READ,
-    #              "notifications": notifications}
-    #     }
-    #     return Response(data, status=status.HTTP_200_OK)
-
     def create(self, request, *args, **kwargs):
         device = Device.objects.get(pk=self.kwargs['device_id'])
         serializer = DeviceNotificationSerializer(data=request.data)
