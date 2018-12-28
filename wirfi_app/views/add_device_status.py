@@ -9,18 +9,12 @@ from wirfi_app.models.device_services import URGENT_UNREAD, UNREAD
 from wirfi_app.serializers import DeviceSerializer, DeviceStatusSerializer, DeviceNotificationSerializer
 
 STATUS_DESCRIPTION = {
-    '6': {'message': 'Went back online',
-          'type': URGENT_UNREAD},
-    '5': {'message': 'Cell',
-          'type': UNREAD},
-    '4': {'message': 'Auto recover',
-          'type': UNREAD},
-    '3': {'message': 'Poor connection',
-          'type': UNREAD},
-    '2': {'message': 'Lost connection to the internet',
-          'type': URGENT_UNREAD},
-    '1': {'message': 'Asleep',
-          'type': UNREAD},
+    '6': {'message': 'Went back online'},
+    '5': {'message': 'Cell'},
+    '4': {'message': 'Auto recover'},
+    '3': {'message': 'Poor connection'},
+    '2': {'message': 'Lost connection to the internet'},
+    '1': {'message': 'Asleep'},
 }
 
 
@@ -45,12 +39,18 @@ class DeviceStatusView(generics.ListCreateAPIView):
         device = Device.objects.get(pk=request.data['device'])
         device_status = DeviceStatus.objects.create(device=device, status=request.data['status'])
 
+        priority_device = device.device_settings.priority
+
         data = STATUS_DESCRIPTION[device_status.status]
+        data['type'] = URGENT_UNREAD if priority_device else UNREAD
+        data['device_status'] = str(device_status.status)
+
         serializer = DeviceNotificationSerializer(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save(device=device)
-        message = '{}: {}'.format(device.name, data['message'])
-        pusher_notification(email=request.auth.user.email, message=message)
+        if priority_device:
+            print('pusher')
+            pusher_notification(email=request.auth.user.email, message=serializer.data)
 
         return Response({
             'code': getattr(settings, 'SUCCESS_CODE', 1),
@@ -66,4 +66,4 @@ def pusher_notification(email, message):
         cluster=settings.PUSHER_CLUSTER,
         ssl=True
     )
-    pusher_client.trigger(email, 'status_change', {'message': message})
+    pusher_client.trigger(email, 'status_change', {'data': message})

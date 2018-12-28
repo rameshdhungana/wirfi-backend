@@ -23,5 +23,6 @@ class DeviceNotification(models.Model):
     device = models.ForeignKey(Device, on_delete=models.CASCADE, related_name='device_notification')
     created_at = models.DateTimeField(auto_now_add=True)
     type = models.IntegerField(choices=NOTIFICATION_TYPE, default=2)
+    device_status = models.CharField(max_length=2)
     message = models.CharField(max_length=255)
     description = models.TextField(blank=True)
