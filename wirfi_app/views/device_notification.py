@@ -5,7 +5,6 @@ from rest_framework.response import Response
 
 from wirfi_app.models import Device, DeviceNotification, NOTIFICATION_TYPE, READ
 from wirfi_app.serializers import DeviceNotificationSerializer
-from wirfi_app.views.login_logout import get_token_obj
 
 
 class AllNotificationView(generics.ListAPIView):

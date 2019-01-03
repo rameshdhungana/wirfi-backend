@@ -28,5 +28,5 @@ class DeviceNetwork(models.Model):
 
 class DeviceStatus(models.Model):
     device = models.ForeignKey(Device, on_delete=models.CASCADE, related_name="status")
-    status = models.IntegerField(choices=DEVICE_STATUS, default=1)
+    status = models.IntegerField(choices=DEVICE_STATUS, default=2)
     timestamp = models.DateTimeField(auto_now_add=True)
