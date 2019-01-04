@@ -13,6 +13,9 @@ from wirfi_app.views.login_logout import get_token_obj
 
 @api_view(['GET'])
 def dashboard_view(request):
+    '''
+    API to get User's dashboard information.
+    '''
     industry_type = []
     donut_chart = {}
     token = get_token_obj(request.auth)

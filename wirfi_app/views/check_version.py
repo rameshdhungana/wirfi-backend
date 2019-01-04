@@ -7,6 +7,9 @@ from wirfi_app.serializers import CheckVersionSerializer
 
 
 class CheckVersion(generics.CreateAPIView):
+    '''
+    API to check mobile app's version.
+    '''
     serializer_class = CheckVersionSerializer
 
     def create(self, request):

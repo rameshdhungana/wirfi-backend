@@ -9,6 +9,9 @@ from wirfi_app.views.create_admin_activity_log import create_activity_log
 
 
 class BusinessView(generics.ListCreateAPIView):
+    '''
+    API to retrieve, add and update logged in User's business information.
+    '''
     serializer_class = BusinessSerializer
 
     def get_queryset(self):

@@ -11,6 +11,9 @@ from wirfi_app.views.create_admin_activity_log import create_activity_log
 
 
 class BillingView(generics.ListCreateAPIView):
+    '''
+    API to create and list logged in User's billing information.
+    '''
     serializer_class = BillingSerializer
 
     def get_queryset(self):
@@ -85,6 +88,9 @@ class BillingView(generics.ListCreateAPIView):
 
 
 class BillingDetailView(generics.RetrieveAPIView):
+    '''
+    API to retrieve, update logged in User's billing info.
+    '''
     lookup_field = 'id'
     serializer_class = BillingSerializer
 
@@ -120,6 +126,9 @@ class BillingDetailView(generics.RetrieveAPIView):
 
 @api_view(['POST'])
 def delete_billing_card(request):
+    '''
+    API to delete logged in User's billing info.
+    '''
     stripe.api_key = settings.STRIPE_API_KEY
     card_id = request.data['id']
     user = request.auth.user

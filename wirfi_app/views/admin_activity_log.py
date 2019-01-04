@@ -8,6 +8,9 @@ from wirfi_app.serializers import AdminActivityLogSerializer
 
 
 class AdminActivityLogListView(generics.ListAPIView):
+    '''
+    API to list all admin activity log, logged when super admin changes impersonated user's informations.
+    '''
     serializer_class = AdminActivityLogSerializer
     queryset = AdminActivityLog.objects.all().order_by('-id')
     search_fields = ('admin__email', 'timestamp', 'activity')
