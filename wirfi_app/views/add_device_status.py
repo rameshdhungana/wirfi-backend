@@ -11,8 +11,8 @@ from wirfi_app.serializers import DeviceSerializer, DeviceStatusSerializer, Devi
 STATUS_DESCRIPTION = {
     '6': {'message': 'Went back online'},
     '5': {'message': 'Cell'},
-    '4': {'message': 'Auto recover'},
-    '3': {'message': 'Poor connection'},
+    '4': {'message': 'Poor connection'},
+    '3': {'message': 'Missed a ping'},
     '2': {'message': 'Lost connection to the internet'},
     '1': {'message': 'Asleep'},
 }

@@ -4,8 +4,8 @@ from wirfi_app.models.device import Device
 DEVICE_STATUS = (
     (6, 'ONLINE'),
     (5, 'CELL'),
-    (4, 'AUTO RECOVER'),
-    (3, 'WEAK SIGNAL'),
+    (4, 'WEAK SIGNAL'),
+    (3, 'MISSED A PING'),
     (2, 'OFFLINE'),
     (1, 'ASLEEP'),
 )
@@ -28,5 +28,5 @@ class DeviceNetwork(models.Model):
 
 class DeviceStatus(models.Model):
     device = models.ForeignKey(Device, on_delete=models.CASCADE, related_name="status")
-    status = models.IntegerField(choices=DEVICE_STATUS, default=6)
+    status = models.IntegerField(choices=DEVICE_STATUS, default=2)
     timestamp = models.DateTimeField(auto_now_add=True)

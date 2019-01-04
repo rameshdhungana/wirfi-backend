@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from wirfi_app.models import Device, DeviceLocationHours, DeviceSetting
+from wirfi_app.models import Device, DeviceLocationHours, DeviceSetting, DeviceStatus
 from .industry_franchise_type import IndustryTypeSerializer, LocationTypeSerializer
 from .device_information import DeviceLocationHoursSerializer, DeviceNetworkSerializer
 from .device_services import DeviceCameraSerializer
@@ -46,11 +46,13 @@ class DeviceSerializer(serializers.ModelSerializer):
         validated_data.pop('location_type_id')
         device = Device.objects.create(**validated_data)
         DeviceSetting.objects.create(device=device)
+        DeviceStatus.objects.create(device=device)
 
         for location_hour_data in location_hours_data:
             location_hour_data['device'] = device
             location_hour = DeviceLocationHours.objects.create(**location_hour_data)
             device.location_hours.add(location_hour)
+
         return device
 
     def update(self, instance, validated_data):
