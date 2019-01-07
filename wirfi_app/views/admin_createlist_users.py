@@ -13,6 +13,9 @@ User = get_user_model()
 
 
 class AdminListCreateUserView(generics.ListCreateAPIView):
+    '''
+    API to create and list users by superadmin
+    '''
     serializer_class = AdminUserSerializer
     search_fields = ('first_name', 'last_name', 'email')
     filter_backends = (filters.SearchFilter,)

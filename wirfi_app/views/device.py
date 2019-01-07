@@ -13,6 +13,9 @@ from wirfi_app.views.create_admin_activity_log import create_activity_log
 
 
 class DeviceView(generics.ListCreateAPIView):
+    '''
+    API to list and add logged in User's devices.
+    '''
     serializer_class = DeviceSerializer
 
     def get_queryset(self):
@@ -81,6 +84,9 @@ class DeviceView(generics.ListCreateAPIView):
 
 @api_view(['POST'])
 def device_images_view(request, id):
+    '''
+    API to add device image and device's location image.
+    '''
     location_logo = request.FILES.get('location_logo', '')
     machine_photo = request.FILES.get('machine_photo', '')
     if not (location_logo and machine_photo):
@@ -109,6 +115,9 @@ def device_images_view(request, id):
 
 
 class DeviceDetailView(generics.RetrieveUpdateDestroyAPIView):
+    '''
+    API to retrieve, update and delete logged in User's devices.
+    '''
     lookup_field = 'id'
     serializer_class = DeviceSerializer
 

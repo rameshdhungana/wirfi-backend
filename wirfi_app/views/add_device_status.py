@@ -19,6 +19,9 @@ STATUS_DESCRIPTION = {
 
 
 class DeviceStatusView(generics.ListCreateAPIView):
+    '''
+    An API to create and list device status.
+    '''
     serializer_class = DeviceStatusSerializer
 
     def get_queryset(self):
