@@ -8,10 +8,13 @@ from wirfi_app.serializers import DeviceNotificationSerializer
 
 
 class AllNotificationView(generics.ListAPIView):
+    '''
+    API to list logged in User's notifications
+    '''
     serializer_class = DeviceNotificationSerializer
 
     def get_each_type_queryset(self, type):
-        return DeviceNotification.objects.filter(type=type).order_by('-id')
+        return DeviceNotification.objects.filter(device__user=self.request.user).filter(type=type).order_by('-id')
 
     def list(self, request, *args, **kwargs):
         notifications = []
@@ -32,26 +35,29 @@ class AllNotificationView(generics.ListAPIView):
         return Response(data, status=status.HTTP_200_OK)
 
 
-class DeviceNotificationView(generics.CreateAPIView):
-    serializer_class = DeviceNotificationSerializer
+# class DeviceNotificationView(generics.CreateAPIView):
+#     serializer_class = DeviceNotificationSerializer
+#
+#     def get_each_type_queryset(self, type):
+#         return DeviceNotification.objects.filter(device_id=self.kwargs['device_id'], type=type).order_by('-id')
+#
+#     def create(self, request, *args, **kwargs):
+#         device = Device.objects.get(pk=self.kwargs['device_id'])
+#         serializer = DeviceNotificationSerializer(data=request.data)
+#         serializer.is_valid(raise_exception=True)
+#         serializer.save(device=device)
+#         data = {
+#             "code": getattr(settings, 'SUCCESS_CODE', 1),
+#             'message': "Device Notifications created successfully",
+#             "data": serializer.data
+#         }
+#         return Response(data, status=status.HTTP_200_OK)
 
-    def get_each_type_queryset(self, type):
-        return DeviceNotification.objects.filter(device_id=self.kwargs['device_id'], type=type).order_by('-id')
 
-    def create(self, request, *args, **kwargs):
-        device = Device.objects.get(pk=self.kwargs['device_id'])
-        serializer = DeviceNotificationSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save(device=device)
-        data = {
-            "code": getattr(settings, 'SUCCESS_CODE', 1),
-            'message': "Device Notifications created successfully",
-            "data": serializer.data
-        }
-        return Response(data, status=status.HTTP_200_OK)
-
-
-class UpdateNotificationView(generics.UpdateAPIView, generics.DestroyAPIView):
+class UpdateNotificationView(generics.UpdateAPIView):  # , generics.DestroyAPIView):
+    '''
+    API to update notification status type (Urgent Unread/Unread -> Read)
+    '''
     serializer_class = DeviceNotificationSerializer
     queryset = DeviceNotification.objects.all()
 
@@ -65,9 +71,9 @@ class UpdateNotificationView(generics.UpdateAPIView, generics.DestroyAPIView):
         }
         return Response(data, status=status.HTTP_200_OK)
 
-    def destroy(self, request, *args, **kwargs):
-        self.get_object().delete()
-        return Response({
-            "code": getattr(settings, 'SUCCESS_CODE', 1),
-            "message": "Successfully deleted notification."
-        }, status=status.HTTP_200_OK)
+    # def destroy(self, request, *args, **kwargs):
+    #     self.get_object().delete()
+    #     return Response({
+    #         "code": getattr(settings, 'SUCCESS_CODE', 1),
+    #         "message": "Successfully deleted notification."
+    #     }, status=status.HTTP_200_OK)
