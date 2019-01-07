@@ -24,6 +24,8 @@ User = get_user_model()
 
 class ResetPasswordView(generics.CreateAPIView):
     """
+    API to reset password that send email with reset link and activation code.
+
     Calls Django Auth PasswordResetForm save method.
 
     Accepts the following POST parameters: email
@@ -69,6 +71,9 @@ def get_activation_code(user, count):
 
 
 class ResetPasswordConfirmView(PasswordResetConfirmView):
+    '''
+    API to reset password using mailed link.
+    '''
     serializer_class = PasswordResetConfirmSerializer
 
     def post(self, request, *args, **kwargs):
@@ -95,6 +100,9 @@ class ResetPasswordConfirmView(PasswordResetConfirmView):
 
 
 class ResetPasswordConfirmMobileView(generics.CreateAPIView):
+    '''
+    API to reset password from mobile using mailed activation code.
+    '''
     serializer_class = ResetPasswordMobileSerializer
 
     def create(self, request, *args, **kwargs):

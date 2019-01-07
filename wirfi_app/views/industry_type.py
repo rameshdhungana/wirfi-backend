@@ -18,6 +18,9 @@ def industry_type_name_already_exits(name, user):
 
 
 class IndustryTypeListView(generics.ListCreateAPIView):
+    '''
+    API to list and add logged in User's industry types.
+    '''
     serializer_class = IndustryTypeSerializer
 
     def get_queryset(self):
@@ -62,6 +65,9 @@ class IndustryTypeListView(generics.ListCreateAPIView):
 
 
 class IndustryTypeDetailView(generics.UpdateAPIView, generics.DestroyAPIView):
+    '''
+    API to update and delete logged in user added industry types
+    '''
     lookup_field = 'id'
     serializer_class = IndustryTypeSerializer
 

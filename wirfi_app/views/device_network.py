@@ -9,6 +9,9 @@ from wirfi_app.views.create_admin_activity_log import create_activity_log
 
 
 class DeviceNetworkView(generics.ListCreateAPIView):
+    '''
+    API to create and list primary and secondary network of device.
+    '''
     serializer_class = DeviceNetworkSerializer
 
     def get_queryset(self):
@@ -69,6 +72,9 @@ class DeviceNetworkView(generics.ListCreateAPIView):
 
 
 class DeviceNetworkDetailView(generics.RetrieveUpdateDestroyAPIView):
+    '''
+    API to retrieve, update device's primary and secondary network information and delete secondary network.
+    '''
     lookup_field = 'id'
     serializer_class = DeviceNetworkUpdateSerializer
 

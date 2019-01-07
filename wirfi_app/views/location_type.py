@@ -18,6 +18,9 @@ def franchise_type_name_already_exits(name, user):
 
 
 class LocationTypeListView(generics.ListCreateAPIView):
+    '''
+    API to list and add logged in User's location types.
+    '''
     serializer_class = LocationTypeSerializer
 
     def get_queryset(self):
@@ -63,6 +66,9 @@ class LocationTypeListView(generics.ListCreateAPIView):
 
 
 class LocationTypeDetailView(generics.UpdateAPIView, generics.DestroyAPIView):
+    '''
+    API to update and delete logged in User's location types.
+    '''
     lookup_field = 'id'
     serializer_class = LocationTypeSerializer
 

@@ -17,6 +17,9 @@ def valid_password_regex(password):
 
 
 class ChangePasswordView(PasswordChangeView):
+    '''
+    API to change user password
+    '''
     serializer_class = PasswordChangeSerializer
 
     def post(self, request, *args, **kwargs):
