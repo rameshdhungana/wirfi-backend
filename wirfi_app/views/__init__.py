@@ -9,7 +9,7 @@ from wirfi_app.views.dashboard import dashboard_view
 from wirfi_app.views.device import DeviceView, DeviceDetailView, device_images_view
 from wirfi_app.views.device_camera import DeviceCameraDetailView, DeviceCameraView
 from wirfi_app.views.device_network import DeviceNetworkDetailView, DeviceNetworkView
-from wirfi_app.views.device_notification import AllNotificationView, DeviceNotificationView, UpdateNotificationView
+from wirfi_app.views.device_notification import AllNotificationView, UpdateNotificationView  # , DeviceNotificationView
 from wirfi_app.views.device_settings import DeviceSleepView, device_priority_view, mute_device_view
 from wirfi_app.views.industry_type import IndustryTypeDetailView, IndustryTypeListView
 from wirfi_app.views.location_type import LocationTypeDetailView, LocationTypeListView

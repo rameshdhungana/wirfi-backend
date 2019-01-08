@@ -5,10 +5,10 @@ from wirfi_app.serializers import DeviceLocationSerializer
 
 
 class DeviceLocation(generics.ListAPIView):
+    '''
+    API to list logged in user's all devices' location.
+    '''
     serializer_class = DeviceLocationSerializer
-    queryset = Device.objects.all()
 
     def get_queryset(self):
-        print(self.request.user.id, self.queryset.filter(user=self.request.user).count(), self.queryset.count())
-
-        return self.queryset.filter(user=self.request.user)
+        return Device.objects.filter(user=self.request.user)

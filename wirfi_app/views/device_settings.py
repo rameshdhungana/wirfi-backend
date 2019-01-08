@@ -14,9 +14,15 @@ from wirfi_app.views.create_admin_activity_log import create_activity_log
 
 
 @api_view(['POST'])
-def mute_device_view(request, id):
+def mute_device_view(request, device_id):
+    '''
+    API to mute device
+    :param request:
+    :param device_id:
+    :return:
+    '''
     try:
-        device_obj = Device.objects.get(pk=id)
+        device_obj = Device.objects.get(pk=device_id)
         device_setting, _ = DeviceSetting.objects.get_or_create(device=device_obj)
         mute_serializer = DeviceMuteSettingSerializer(device_setting, data=request.data)
         mute_serializer.is_valid(raise_exception=True)
@@ -52,9 +58,15 @@ def mute_device_view(request, id):
 
 
 @api_view(['POST'])
-def device_priority_view(request, id):
+def device_priority_view(request, device_id):
+    '''
+    API to prioritize/unprioritize device
+    :param request:
+    :param device_id:
+    :return:
+    '''
     try:
-        device = Device.objects.get(pk=id)
+        device = Device.objects.get(pk=device_id)
         device_setting, _ = DeviceSetting.objects.get_or_create(device=device)
         serializer = DevicePrioritySettingSerializer(device_setting, data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -80,6 +92,9 @@ def device_priority_view(request, id):
 
 
 class DeviceSleepView(generics.CreateAPIView):
+    '''
+    API to sleep the device
+    '''
     serializer_class = DeviceSleepSerializer
 
     def get_queryset(self):

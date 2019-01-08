@@ -12,6 +12,12 @@ User = get_user_model()
 
 @api_view(['GET'])
 def impersonate_user(request, user_id):
+    '''
+    API to impersonate the user with its user_id in param by super admin
+    :param request:
+    :param user_id:
+    :return:
+    '''
     if not request.user.is_superuser:
         return Response({
             'code': getattr(settings, 'ERROR_CODE', 0),
@@ -40,6 +46,11 @@ def impersonate_user(request, user_id):
 
 @api_view(['GET'])
 def stop_impersonation(request):
+    '''
+    An API to stop impersonating the user.
+    :param request:
+    :return:
+    '''
     key = request.META.get('HTTP_PERSONATOR', '')
     if not key:
         return Response({

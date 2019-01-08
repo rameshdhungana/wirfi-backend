@@ -105,6 +105,11 @@ def logout(request):
 
 @api_view(['GET'])
 def get_logged_in_user(request):
+    '''
+    API to get logged in user's information
+    :param request:
+    :return:
+    '''
     serializer = UserSerializer(request.user, context={'request': request})
     serializer_data = serializer.data
     data = {
@@ -112,5 +117,4 @@ def get_logged_in_user(request):
         "message": "Successfully fetched.",
         "data": serializer_data
     }
-
     return Response(data, status=status.HTTP_200_OK)

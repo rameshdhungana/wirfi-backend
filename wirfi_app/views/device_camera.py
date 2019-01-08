@@ -9,6 +9,9 @@ from wirfi_app.views.create_admin_activity_log import create_activity_log
 
 
 class DeviceCameraView(generics.ListCreateAPIView):
+    '''
+    API to create and list camera settings for device's id mentioned in the url
+    '''
     serializer_class = DeviceCameraSerializer
 
     def get_queryset(self):
@@ -45,6 +48,9 @@ class DeviceCameraView(generics.ListCreateAPIView):
 
 
 class DeviceCameraDetailView(generics.UpdateAPIView, generics.DestroyAPIView):
+    '''
+    API to update and delete camera setting of device's id mentioned in the url
+    '''
     serializer_class = DeviceCameraSerializer
 
     def get_queryset(self):

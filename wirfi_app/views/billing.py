@@ -71,8 +71,7 @@ class BillingView(generics.ListCreateAPIView):
                 )
                 serializer.save(user=user, customer_id=customer.id)
 
-
-            except:
+            except Exception:
                 return Response({
                     'code': getattr(settings, 'ERROR_CODE', 0),
                     'message': "Stripe Token has already been used. Please try again with new token."
@@ -89,7 +88,7 @@ class BillingView(generics.ListCreateAPIView):
 
 class BillingDetailView(generics.RetrieveAPIView):
     '''
-    API to retrieve, update logged in User's billing info.
+    API to retrieve logged in User's billing info.
     '''
     lookup_field = 'id'
     serializer_class = BillingSerializer

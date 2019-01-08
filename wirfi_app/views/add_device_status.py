@@ -52,8 +52,8 @@ class DeviceStatusView(generics.ListCreateAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save(device=device)
         if priority_device:
-            print('pusher')
-            pusher_notification(email=request.auth.user.email, message=serializer.data)
+            notification_count = DeviceNotification.objects.filter(device__user=request.user).count()
+            pusher_notification(email=request.auth.user.email, message=serializer.data, count=notification_count)
 
         return Response({
             'code': getattr(settings, 'SUCCESS_CODE', 1),
@@ -61,7 +61,7 @@ class DeviceStatusView(generics.ListCreateAPIView):
         }, status=status.HTTP_201_CREATED)
 
 
-def pusher_notification(email, message):
+def pusher_notification(email, message, count):
     pusher_client = pusher.Pusher(
         app_id=settings.PUSHER_APP_ID,
         key=settings.PUSHER_KEY,
@@ -69,4 +69,4 @@ def pusher_notification(email, message):
         cluster=settings.PUSHER_CLUSTER,
         ssl=True
     )
-    pusher_client.trigger(email, 'status_change', {'data': message})
+    pusher_client.trigger(email, 'status_change', {'message': message, 'count': count})
