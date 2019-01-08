@@ -11,6 +11,7 @@ footage_socket.setsockopt_string(zmq.SUBSCRIBE, np.unicode(''))
 while True:
     try:
         frame = footage_socket.recv_string()
+        print(frame)
         img = base64.b64decode(frame)
         npimg = np.fromstring(img, dtype=np.uint8)
         source = cv2.imdecode(npimg, 1)

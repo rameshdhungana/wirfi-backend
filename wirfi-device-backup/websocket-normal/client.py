@@ -4,6 +4,7 @@ import zmq
 
 context = zmq.Context()
 footage_socket = context.socket(zmq.PUB)
+# footage_socket.connect('tcp://ec2-54-213-235-156.us-west-2.compute.amazonaws.com:5555')
 footage_socket.connect('tcp://localhost:5555')
 
 camera = cv2.VideoCapture(0)  # init the camera
