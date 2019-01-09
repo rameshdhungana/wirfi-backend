@@ -1,5 +1,6 @@
 import pusher
 from django.conf import settings
+from django.db.models import Q
 
 from rest_framework import status, generics
 from rest_framework.response import Response
@@ -51,10 +52,10 @@ class DeviceStatusView(generics.ListCreateAPIView):
         serializer = DeviceNotificationSerializer(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save(device=device)
-        if priority_device and not device.device_settings.is_muted:
+        if priority_device:
             notification_count = DeviceNotification.objects.\
                                         filter(device__user=request.user).\
-                                        filter(type=UNREAD or URGENT_UNREAD).count()
+                                        filter(Q(type=URGENT_UNREAD) | Q(type=UNREAD)).count()
             pusher_notification(email=request.auth.user.email, message=serializer.data, count=notification_count)
 
         return Response({
