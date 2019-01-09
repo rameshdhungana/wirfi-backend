@@ -4,7 +4,7 @@ from django.conf import settings
 from rest_framework import status, generics
 from rest_framework.response import Response
 
-from wirfi_app.models import Device, DEVICE_STATUS, DeviceStatus
+from wirfi_app.models import Device, DEVICE_STATUS, DeviceStatus, DeviceNotification
 from wirfi_app.models.device_services import URGENT_UNREAD, UNREAD
 from wirfi_app.serializers import DeviceSerializer, DeviceStatusSerializer, DeviceNotificationSerializer
 
@@ -51,8 +51,10 @@ class DeviceStatusView(generics.ListCreateAPIView):
         serializer = DeviceNotificationSerializer(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save(device=device)
-        if priority_device:
-            notification_count = DeviceNotification.objects.filter(device__user=request.user).count()
+        if priority_device and not device.device_settings.is_muted:
+            notification_count = DeviceNotification.objects.\
+                                        filter(device__user=request.user).\
+                                        filter(type=UNREAD or URGENT_UNREAD).count()
             pusher_notification(email=request.auth.user.email, message=serializer.data, count=notification_count)
 
         return Response({
@@ -69,4 +71,4 @@ def pusher_notification(email, message, count):
         cluster=settings.PUSHER_CLUSTER,
         ssl=True
     )
-    pusher_client.trigger(email, 'status_change', {'message': message, 'count': count})
+    pusher_client.trigger(email, 'status-change', {'message': message, 'count': count})

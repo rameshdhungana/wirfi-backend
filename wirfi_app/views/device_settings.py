@@ -98,7 +98,7 @@ class DeviceSleepView(generics.CreateAPIView):
     serializer_class = DeviceSleepSerializer
 
     def get_queryset(self):
-        device_obj = Device.objects.get(pk=self.kwargs['id'])
+        device_obj = Device.objects.get(pk=self.kwargs['device_id'])
         device_setting, _ = DeviceSetting.objects.get_or_create(device=device_obj)
         return device_setting
 
@@ -129,4 +129,3 @@ class DeviceSleepView(generics.CreateAPIView):
         }
 
         return Response(data, status=status.HTTP_200_OK)
-
