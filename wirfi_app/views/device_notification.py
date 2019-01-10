@@ -1,9 +1,11 @@
 from django.conf import settings
+from django.db.models import Q
 
 from rest_framework import generics, status
 from rest_framework.response import Response
 
 from wirfi_app.models import Device, DeviceNotification, NOTIFICATION_TYPE, READ
+from wirfi_app.models.device_services import URGENT_UNREAD, UNREAD
 from wirfi_app.serializers import DeviceNotificationSerializer
 
 
@@ -59,12 +61,13 @@ class UpdateNotificationView(generics.UpdateAPIView):  # , generics.DestroyAPIVi
     API to update notification status type (Urgent Unread/Unread -> Read)
     '''
     serializer_class = DeviceNotificationSerializer
-    queryset = DeviceNotification.objects.all()
+    queryset = DeviceNotification.objects.filter(Q(type=URGENT_UNREAD) | Q(type=UNREAD))
 
     def update(self, request, *args, **kwargs):
-        notification = self.get_object()
-        notification.type = READ
-        notification.save()
+        notifications = self.get_queryset().filter(device=self.get_object().device)
+        for notification in notifications:
+            notification.type = READ
+            notification.save()
         data = {
             "code": getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Notifications is updated to READ Type successfully",

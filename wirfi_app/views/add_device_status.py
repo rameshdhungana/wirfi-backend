@@ -1,12 +1,13 @@
-import pusher
 from django.conf import settings
+from django.db.models import Q
 
 from rest_framework import status, generics
 from rest_framework.response import Response
 
-from wirfi_app.models import Device, DEVICE_STATUS, DeviceStatus
+from wirfi_app.models import Device, DEVICE_STATUS, DeviceStatus, DeviceNotification
 from wirfi_app.models.device_services import URGENT_UNREAD, UNREAD
 from wirfi_app.serializers import DeviceSerializer, DeviceStatusSerializer, DeviceNotificationSerializer
+from wirfi_app.views.pusher_notification import pusher_notification
 
 STATUS_DESCRIPTION = {
     '6': {'message': 'Went back online'},
@@ -52,21 +53,13 @@ class DeviceStatusView(generics.ListCreateAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save(device=device)
         if priority_device:
-            notification_count = DeviceNotification.objects.filter(device__user=request.user).count()
-            pusher_notification(email=request.auth.user.email, message=serializer.data, count=notification_count)
+            notification_count = DeviceNotification.objects.\
+                                        filter(device__user=request.user).\
+                                        filter(Q(type=URGENT_UNREAD) | Q(type=UNREAD)).count()
+            pusher_notification(channel=str(request.auth.user.id), event='status-change',
+                                data={'message': serializer.data, 'count': notification_count})
 
         return Response({
             'code': getattr(settings, 'SUCCESS_CODE', 1),
-            'message': 'Device status successfully added.'
+            'message': 'Device status successfully updated.'
         }, status=status.HTTP_201_CREATED)
-
-
-def pusher_notification(email, message, count):
-    pusher_client = pusher.Pusher(
-        app_id=settings.PUSHER_APP_ID,
-        key=settings.PUSHER_KEY,
-        secret=settings.PUSHER_SECRET,
-        cluster=settings.PUSHER_CLUSTER,
-        ssl=True
-    )
-    pusher_client.trigger(email, 'status_change', {'message': message, 'count': count})
