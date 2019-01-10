@@ -56,7 +56,7 @@ class DeviceStatusView(generics.ListCreateAPIView):
             notification_count = DeviceNotification.objects.\
                                         filter(device__user=request.user).\
                                         filter(Q(type=URGENT_UNREAD) | Q(type=UNREAD)).count()
-            pusher_notification(channel=request.auth.user.id, data=serializer.data, count=notification_count)
+            pusher_notification(channel=str(request.auth.user.id), data=serializer.data, count=notification_count)
 
         return Response({
             'code': getattr(settings, 'SUCCESS_CODE', 1),
