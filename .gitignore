@@ -98,3 +98,4 @@ help_files/
 .vscode/
 
 scripts/unmutedevice.sh
+scripts/upload_wirfi_webcam_video_to_s3.sh
