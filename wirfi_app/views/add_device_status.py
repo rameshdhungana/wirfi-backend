@@ -56,15 +56,15 @@ class DeviceStatusView(generics.ListCreateAPIView):
             notification_count = DeviceNotification.objects.\
                                         filter(device__user=request.user).\
                                         filter(Q(type=URGENT_UNREAD) | Q(type=UNREAD)).count()
-            pusher_notification(email=request.auth.user.email, message=serializer.data, count=notification_count)
+            pusher_notification(channel=request.auth.user.id, data=serializer.data, count=notification_count)
 
         return Response({
             'code': getattr(settings, 'SUCCESS_CODE', 1),
-            'message': 'Device status successfully added.'
+            'message': 'Device status successfully updated.'
         }, status=status.HTTP_201_CREATED)
 
 
-def pusher_notification(email, message, count):
+def pusher_notification(channel, data, count):
     pusher_client = pusher.Pusher(
         app_id=settings.PUSHER_APP_ID,
         key=settings.PUSHER_KEY,
@@ -72,4 +72,4 @@ def pusher_notification(email, message, count):
         cluster=settings.PUSHER_CLUSTER,
         ssl=True
     )
-    pusher_client.trigger(email, 'status-change', {'message': message, 'count': count})
+    pusher_client.trigger(channel, 'status-change', {'message': data, 'count': count})
