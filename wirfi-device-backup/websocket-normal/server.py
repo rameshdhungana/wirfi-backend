@@ -3,8 +3,11 @@ import zmq
 import base64
 import numpy as np
 from datetime import datetime
+import boto3
 
-video_length = 30
+client = boto3.client('s3')
+
+video_length = 5 * 60
 context = zmq.Context()
 footage_socket = context.socket(zmq.SUB)
 footage_socket.bind('tcp://*:5555')
@@ -18,7 +21,7 @@ fourcc = cv2.VideoWriter_fourcc(*"mp4v")
 
 last = datetime.now()
 # declaration of video , it will be global
-video = cv2.VideoWriter('video_%s.mp4' % last.strftime("%Y_%m_%d_%H:%M:%S"), fourcc, 20.0, (640, 480))
+video = cv2.VideoWriter('/tmp/video_%s.mp4' % last.strftime("%Y_%m_%d_%H_%M_%S"), fourcc, 20.0, (640, 480))
 
 
 def increase_counter():
@@ -29,9 +32,7 @@ def increase_counter():
         last = now
         # In every interval of set video_length, new file will be used to capture the video and save, file name is made
         # dynamic with datetime
-        video = cv2.VideoWriter('video_%s.mp4' % last.strftime("%Y_%m_%d_%H:%M:%S"), fourcc, 20.0, (640, 480))
-
-        print(last.strftime("%Y-%m-%d-%H:%M:%S"))
+        video = cv2.VideoWriter('/tmp/video_%s.mp4' % last.strftime("%Y_%m_%d_%H_%M_%S"), fourcc, 20.0, (640, 480))
 
 
 while True:
@@ -51,4 +52,3 @@ while True:
     except KeyboardInterrupt:
         cv2.destroyAllWindows()
         break
-
