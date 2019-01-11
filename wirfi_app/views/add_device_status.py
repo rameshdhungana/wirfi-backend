@@ -44,19 +44,24 @@ class DeviceStatusView(generics.ListCreateAPIView):
         device_status = DeviceStatus.objects.create(device=device, status=request.data['status'])
 
         priority_device = device.device_settings.priority
+        urgent_unread = device_status.status in ['2', '3']
 
         data = STATUS_DESCRIPTION[device_status.status]
-        data['type'] = URGENT_UNREAD if priority_device else UNREAD
+        data['type'] = URGENT_UNREAD if urgent_unread else UNREAD
         data['device_status'] = str(device_status.status)
 
         serializer = DeviceNotificationSerializer(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save(device=device)
-        if priority_device:
+
+        # pusher trigger
+        if priority_device or urgent_unread:
             notification_count = DeviceNotification.objects.\
                                         filter(device__user=request.user).\
                                         filter(Q(type=URGENT_UNREAD) | Q(type=UNREAD)).count()
-            pusher_notification(channel=str(request.auth.user.id), event='status-change',
+
+            event_name = 'priority-device' if priority_device else 'status-change'
+            pusher_notification(channel=str(request.auth.user.id), event=event_name,
                                 data={'message': serializer.data, 'count': notification_count})
 
         return Response({
