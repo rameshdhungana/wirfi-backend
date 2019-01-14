@@ -41,28 +41,32 @@ class DeviceStatusView(generics.ListCreateAPIView):
 
     def create(self, request, *args, **kwargs):
         device = Device.objects.get(pk=request.data['device'])
-        device_status = DeviceStatus.objects.create(device=device, status=request.data['status'])
+        prev_device_status = DeviceStatus.objects.filter(device=device).latest('id')
+        device_status = DeviceStatus.objects.create(device=device, status=int(request.data['status']))
 
-        priority_device = device.device_settings.priority
-        urgent_unread = device_status.status in ['2', '3']
+        same_status = device_status.status == prev_device_status.status
 
-        data = STATUS_DESCRIPTION[device_status.status]
-        data['type'] = URGENT_UNREAD if urgent_unread else UNREAD
-        data['device_status'] = str(device_status.status)
+        if not same_status:
+            priority_device = device.device_settings.priority
+            urgent_unread = device_status.status in [2, 3]
 
-        serializer = DeviceNotificationSerializer(data=data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save(device=device)
+            data = STATUS_DESCRIPTION[str(device_status.status)]
+            data['type'] = URGENT_UNREAD if urgent_unread else UNREAD
+            data['device_status'] = str(device_status.status)
 
-        # pusher trigger
-        if priority_device or urgent_unread:
-            notification_count = DeviceNotification.objects.\
-                                        filter(device__user=request.user).\
-                                        filter(Q(type=URGENT_UNREAD) | Q(type=UNREAD)).count()
+            serializer = DeviceNotificationSerializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save(device=device)
 
-            event_name = 'priority-device' if priority_device else 'status-change'
-            pusher_notification(channel=str(request.auth.user.id), event=event_name,
-                                data={'message': serializer.data, 'count': notification_count})
+            # pusher trigger
+            if priority_device or urgent_unread:
+                notification_count = DeviceNotification.objects.\
+                                            filter(device__user=request.user).\
+                                            filter(Q(type=URGENT_UNREAD) | Q(type=UNREAD)).count()
+
+                event_name = 'priority-device' if priority_device else 'status-change'
+                pusher_notification(channel=str(request.auth.user.id), event=event_name,
+                                    data={'message': serializer.data, 'count': notification_count})
 
         return Response({
             'code': getattr(settings, 'SUCCESS_CODE', 1),
