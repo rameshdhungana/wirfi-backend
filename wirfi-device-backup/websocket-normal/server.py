@@ -4,10 +4,11 @@ import base64
 import numpy as np
 from datetime import datetime
 import boto3
+from django.http.response import StreamingHttpResponse
 
 client = boto3.client('s3')
 
-video_length = 5 * 60
+video_length = 0.001
 context = zmq.Context()
 footage_socket = context.socket(zmq.SUB)
 footage_socket.bind('tcp://*:5555')
@@ -20,11 +21,12 @@ fourcc = cv2.VideoWriter_fourcc(*"mp4v")
 # video = cv2.VideoWriter('video%d.avi'%count, fourcc, 20.0, (640,480))
 
 last = datetime.now()
+
 # declaration of video , it will be global
 video = cv2.VideoWriter('/tmp/video_%s.mp4' % last.strftime("%Y_%m_%d_%H_%M_%S"), fourcc, 20.0, (640, 480))
 
 
-def increase_counter():
+def increase_counter(device_serial_number):
     global last, video
 
     now = datetime.now()
@@ -32,20 +34,31 @@ def increase_counter():
         last = now
         # In every interval of set video_length, new file will be used to capture the video and save, file name is made
         # dynamic with datetime
-        video = cv2.VideoWriter('/tmp/video_%s.mp4' % last.strftime("%Y_%m_%d_%H_%M_%S"), fourcc, 20.0, (640, 480))
+        video = cv2.VideoWriter('/tmp/video_%s_%s.mp4' % (device_serial_number, last.strftime("%Y_%m_%d_%H_%M_%S")),
+                                fourcc, 20.0, (640, 480))
 
 
 while True:
     try:
-        frame = footage_socket.recv_string()
-        print(frame)
+        received_data = footage_socket.recv_json()
+        # print(received_data)
+        device_serial_number = received_data['device_serial_number']
+        frame = received_data['camera_data']
+        print(device_serial_number)
+        # print(frame)
+
         img = base64.b64decode(frame)
         npimg = np.fromstring(img, dtype=np.uint8)
         source = cv2.imdecode(npimg, 1)
         video.write(source)
-        # function is called everytime but the params changes on video_length variable value
-        increase_counter()
-        # cv2.imshow("Stream", source)
+
+        # function is called everytime but the params changes on video_length variable value interval
+        increase_counter(device_serial_number)
+        video_length = 20
+
+        streaming_url = StreamingHttpResponse(source, content_type='multipart/x-mixed-replace;boundary=frame')
+        print(streaming_url)
+        cv2.imshow("Stream", source)
         cv2.waitKey(1)
 
 
