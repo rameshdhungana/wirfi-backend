@@ -30,5 +30,5 @@ class DeviceNetworkUpdateSerializer(DeviceNetworkSerializer):
 class DeviceStatusSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeviceStatus
-        exclude = ('id',)
+        exclude = ('id', 'device')
         read_only_fields = ('timestamp',)

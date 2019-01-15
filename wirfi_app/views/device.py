@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
@@ -127,10 +128,27 @@ class DeviceDetailView(generics.RetrieveUpdateDestroyAPIView):
     def retrieve(self, request, *args, **kwargs):
         device = self.get_object()
         serializer = DeviceSerializer(device)
+        response_data = serializer.data
+
+        # get statuses since 8 hours ago
+        current_time = datetime.now()
+        eight_hours_ago = (current_time - timedelta(hours=24)).replace(minute=0, second=0, microsecond=0)
+        statuses = DeviceStatus.objects.filter(device_id=response_data['id']).\
+            filter(timestamp__gte=eight_hours_ago).order_by('id')
+        status_list = [statuses[0], ]
+
+        for i in range(len(statuses)):
+            if i == 0:
+                continue
+
+            if statuses[i].status != statuses[i-1].status:
+                status_list.append(statuses[i])
+        response_data['device_status'] = DeviceStatusSerializer(status_list, many=True).data
+
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
             'message': "Detail successfully fetched.",
-            'data': serializer.data
+            'data': response_data
         }
         return Response(data, status=status.HTTP_200_OK)
 
@@ -190,8 +208,12 @@ class DeviceDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 
 def get_current_device_status(device_id):
+    # current_time = datetime.now()
+    # one_day_ago = current_time - timedelta(hours=24)
     statuses = DeviceStatus.objects.filter(device_id=device_id).order_by('-id')
+    # filter(timestamp__gte=one_day_ago.replace(minute=0, second=0, microsecond=0)).\
+
     for i in range(len(statuses)):
         if statuses[i].status != statuses[0].status:
             return DeviceStatusSerializer(statuses[i - 1]).data
-    return {}
+    return {}  # if not statuses else DeviceStatusSerializer(statuses[-1]).data
