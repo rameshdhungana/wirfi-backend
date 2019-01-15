@@ -4,8 +4,8 @@ import zmq
 
 context = zmq.Context()
 footage_socket = context.socket(zmq.PUB)
-footage_socket.connect('tcp://ec2-54-213-235-156.us-west-2.compute.amazonaws.com:5555')
-# footage_socket.connect('tcp://localhost:5555')
+# footage_socket.connect('tcp://ec2-54-213-235-156.us-west-2.compute.amazonaws.com:5555')
+footage_socket.connect('tcp://localhost:5555')
 
 camera = cv2.VideoCapture(0)  # init the camera
 
@@ -15,7 +15,13 @@ while True:
         frame = cv2.resize(frame, (640, 480))  # resize the frame
         encoded, buffer = cv2.imencode('.jpg', frame)
         jpg_as_text = base64.b64encode(buffer)
-        footage_socket.send(jpg_as_text)
+        # footage_socket.send(jpg_as_text)
+
+        data = {'device_serial_number': '1111111111',
+                'camera_data': jpg_as_text}
+        footage_socket.send_json(data)
+
+
 
     except KeyboardInterrupt:
         camera.release()
