@@ -19,25 +19,25 @@ STATUS_DESCRIPTION = {
 }
 
 
-class DeviceStatusView(generics.ListCreateAPIView):
+class DeviceStatusView(generics.CreateAPIView):
     '''
-    An API to create and list device status.
+    An API to update device status.
     '''
     serializer_class = DeviceStatusSerializer
 
     def get_queryset(self):
         return Device.objects.filter(user=self.request.auth.user)
 
-    def list(self, request, *args, **kwargs):
-        devices = DeviceSerializer(self.get_queryset(), many=True).data
-        return Response({
-            'code': getattr(settings, 'SUCCESS_CODE', 1),
-            'message': 'Device and status successfully fetched.',
-            'data': {
-                'status': [{'id': key, 'name': value} for key, value in DEVICE_STATUS],
-                'devices': devices
-            }
-        }, status=status.HTTP_200_OK)
+    # def list(self, request, *args, **kwargs):
+    #     devices = DeviceSerializer(self.get_queryset(), many=True).data
+    #     return Response({
+    #         'code': getattr(settings, 'SUCCESS_CODE', 1),
+    #         'message': 'Device and status successfully fetched.',
+    #         'data': {
+    #             'status': [{'id': key, 'name': value} for key, value in DEVICE_STATUS],
+    #             'devices': devices
+    #         }
+    #     }, status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
         device = Device.objects.get(pk=request.data['device'])
