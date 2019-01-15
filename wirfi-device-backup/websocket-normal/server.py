@@ -24,6 +24,7 @@ last = datetime.now()
 
 # declaration of video , it will be global
 video = cv2.VideoWriter('/tmp/video_%s.mp4' % last.strftime("%Y_%m_%d_%H_%M_%S"), fourcc, 20.0, (640, 480))
+device_serial_number_list = []
 
 
 def increase_counter(device_serial_number):
@@ -43,6 +44,9 @@ while True:
         received_data = footage_socket.recv_json()
         # print(received_data)
         device_serial_number = received_data['device_serial_number']
+        if not device_serial_number in device_serial_number_list:
+            device_serial_number_list.append(device_serial_number)
+
         frame = received_data['camera_data']
         print(device_serial_number)
         # print(frame)
@@ -58,7 +62,7 @@ while True:
 
         streaming_url = StreamingHttpResponse(source, content_type='multipart/x-mixed-replace;boundary=frame')
         print(streaming_url)
-        cv2.imshow("Stream", source)
+        # cv2.imshow("Stream", source)
         cv2.waitKey(1)
 
 
