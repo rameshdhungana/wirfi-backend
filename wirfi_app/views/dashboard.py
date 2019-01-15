@@ -40,7 +40,7 @@ def dashboard_view(request):
 
     current_time = datetime.now()
     eight_hours_ago = (current_time - timedelta(hours=8)).replace(minute=0, second=0, microsecond=0)
-    priority_devices = Device.objects.filter(device_settings__priority=True)
+    priority_devices = Device.objects.filter(user=request.auth.user).filter(device_settings__priority=True)
     for device in priority_devices:
         statuses = DeviceStatus.objects.filter(device=device). \
             filter(timestamp__gte=eight_hours_ago).order_by('id')
