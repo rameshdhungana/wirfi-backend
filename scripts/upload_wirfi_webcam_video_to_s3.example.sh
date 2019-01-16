@@ -1,5 +1,7 @@
 #!/bin/bash
-DIR="/tmp"
+
+DIR="/home/insightworkshop/IwProjects/Projects/wirfi-web/media/webcam-videos"
+#scripts/webcamTemporaryStorageLocation.cfg contains the location where the videos will be saved temporarily
 
 inotifywait --monitor --event close_write,moved_to --format '%w%f' "${DIR}" |
     while read path action file; do
