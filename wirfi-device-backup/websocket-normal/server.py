@@ -1,10 +1,20 @@
+import os
 import cv2
 import zmq
 import base64
 import numpy as np
 from datetime import datetime
 import boto3
+import configparser
+
 from django.http.response import StreamingHttpResponse
+
+# Get video_storage_location from ~/python/aws-server/webcamTemporaryStorageLocation.cfg
+config = configparser.ConfigParser()
+
+filepath = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))) + '/scripts/webcamTemporaryStorageLocation.cfg'
+config.read(filepath)
+video_storage_location = config['webcamTemporaryStorageLocation']['storageLocation']
 
 client = boto3.client('s3')
 
@@ -34,7 +44,7 @@ def increase_counter(device_serial_number):
         # In every interval of set video_length, new file will be used to capture the video and save, file name is made
         # dynamic with datetime
         video_writer_objects[device_serial_number] = cv2.VideoWriter(
-            '/home/insightworkshop/IwProjects/Projects/wirfi-web/media/webcam-videos/video_%s_%s.mp4' % (
+            video_storage_location + 'video_%s_%s.mp4' % (
                 device_serial_number, last.strftime("%Y_%m_%d_%H_%M_%S")),
             fourcc, 20.0, (640, 480))
 
@@ -45,7 +55,7 @@ video_writer_objects = {}
 def create_video_writer_object(device_serial_number):
     global video_writer_list
     video_writer_objects[device_serial_number] = cv2.VideoWriter(
-        '/home/insightworkshop/IwProjects/Projects/wirfi-web/media/webcam-videos/video_%s_%s.mp4' % (
+        video_storage_location + 'video_%s_%s.mp4' % (
             device_serial_number, last.strftime("%Y_%m_%d_%H_%M_%S")),
         fourcc, 20.0, (640, 480))
 
