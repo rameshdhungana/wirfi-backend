@@ -22,8 +22,7 @@ fourcc = cv2.VideoWriter_fourcc(*"mp4v")
 
 last = datetime.now()
 
-# declaration of video , it will be global
-video = cv2.VideoWriter('/tmp/video_%s.mp4' % last.strftime("%Y_%m_%d_%H_%M_%S"), fourcc, 20.0, (640, 480))
+device_serial_number_list = []
 
 
 def increase_counter(device_serial_number):
@@ -34,8 +33,21 @@ def increase_counter(device_serial_number):
         last = now
         # In every interval of set video_length, new file will be used to capture the video and save, file name is made
         # dynamic with datetime
-        video = cv2.VideoWriter('/tmp/video_%s_%s.mp4' % (device_serial_number, last.strftime("%Y_%m_%d_%H_%M_%S")),
-                                fourcc, 20.0, (640, 480))
+        video_writer_objects[device_serial_number] = cv2.VideoWriter(
+            '/home/insightworkshop/IwProjects/Projects/wirfi-web/media/webcam-videos/video_%s_%s.mp4' % (
+                device_serial_number, last.strftime("%Y_%m_%d_%H_%M_%S")),
+            fourcc, 20.0, (640, 480))
+
+
+video_writer_objects = {}
+
+
+def create_video_writer_object(device_serial_number):
+    global video_writer_list
+    video_writer_objects[device_serial_number] = cv2.VideoWriter(
+        '/home/insightworkshop/IwProjects/Projects/wirfi-web/media/webcam-videos/video_%s_%s.mp4' % (
+            device_serial_number, last.strftime("%Y_%m_%d_%H_%M_%S")),
+        fourcc, 20.0, (640, 480))
 
 
 while True:
@@ -43,6 +55,10 @@ while True:
         received_data = footage_socket.recv_json()
         # print(received_data)
         device_serial_number = received_data['device_serial_number']
+        if not device_serial_number in device_serial_number_list:
+            device_serial_number_list.append(device_serial_number)
+            create_video_writer_object(device_serial_number)
+
         frame = received_data['camera_data']
         print(device_serial_number)
         # print(frame)
@@ -50,7 +66,7 @@ while True:
         img = base64.b64decode(frame)
         npimg = np.fromstring(img, dtype=np.uint8)
         source = cv2.imdecode(npimg, 1)
-        video.write(source)
+        video_writer_objects[device_serial_number].write(source)
 
         # function is called everytime but the params changes on video_length variable value interval
         increase_counter(device_serial_number)
@@ -58,7 +74,7 @@ while True:
 
         streaming_url = StreamingHttpResponse(source, content_type='multipart/x-mixed-replace;boundary=frame')
         print(streaming_url)
-        cv2.imshow("Stream", source)
+        # cv2.imshow("Stream", source)
         cv2.waitKey(1)
 
 
