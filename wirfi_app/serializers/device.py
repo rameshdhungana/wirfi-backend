@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from rest_framework import serializers
 
 from wirfi_app.models import Device, DeviceLocationHours, DeviceSetting, DeviceStatus
@@ -5,6 +7,7 @@ from .industry_franchise_type import IndustryTypeSerializer, LocationTypeSeriali
 from .device_information import DeviceLocationHoursSerializer, DeviceNetworkSerializer
 from .device_services import DeviceCameraSerializer
 from .device_settings import DeviceSettingSerializer
+from .device_information import DeviceStatusSerializer
 
 
 class DeviceSerializer(serializers.ModelSerializer):
@@ -30,20 +33,23 @@ class DeviceSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
         data['machine_photo'] = data['machine_photo'][1:] if data['machine_photo'] else None
         data['location_logo'] = data['location_logo'][1:] if data['location_logo'] else None
-        if data['device_network']:
-            for network in data['device_network']:
-                network_dict = {'id': network['id'], 'ssid': network['ssid']}
-                if network['primary_network']:
-                    device_network['primary_network'] = network_dict
-                else:
-                    device_network['secondary_network'] = network_dict
+        data['device_status'] = get_eight_hours_statuses(instance)
+
+        for network in data['device_network']:
+            network_dict = {'id': network['id'], 'ssid': network['ssid']}
+            if network['primary_network']:
+                device_network['primary_network'] = network_dict
+            else:
+                device_network['secondary_network'] = network_dict
         data['device_network'] = device_network
+
         return data
 
     def create(self, validated_data):
         location_hours_data = validated_data.pop('location_hours', [])
         validated_data.pop('industry_type_id')
         validated_data.pop('location_type_id')
+
         device = Device.objects.create(**validated_data)
         DeviceSetting.objects.create(device=device)
         DeviceStatus.objects.create(device=device)
@@ -66,3 +72,20 @@ class DeviceSerializer(serializers.ModelSerializer):
             location_hour = DeviceLocationHoursSerializer().update(device_hour, validated_data)
             device.location_hours.add(location_hour)
         return device
+
+
+# get statuses since 8 hours ago
+def get_eight_hours_statuses(device):
+    current_time = datetime.now()
+    eight_hours_ago = (current_time - timedelta(hours=8)).replace(minute=0, second=0, microsecond=0)
+    statuses = DeviceStatus.objects.filter(device=device). \
+        filter(timestamp__gte=eight_hours_ago).order_by('id')
+    status_list = [statuses[0], ] if statuses else []
+
+    for i in range(len(statuses)):
+        if i == 0:
+            continue
+
+        if statuses[i].status != statuses[i - 1].status:
+            status_list.append(statuses[i])
+    return DeviceStatusSerializer(status_list, many=True).data
