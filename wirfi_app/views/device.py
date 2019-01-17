@@ -6,7 +6,7 @@ from rest_framework import generics, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from wirfi_app.models import Device, Industry, Franchise, DEVICE_STATUS
+from wirfi_app.models import Device, Industry, Franchise, DEVICE_STATUS, STATUS_COLOR
 from wirfi_app.serializers import DeviceSerializer, IndustryTypeSerializer, \
     LocationTypeSerializer
 from wirfi_app.views.create_admin_activity_log import create_activity_log
@@ -22,6 +22,7 @@ class DeviceView(generics.ListCreateAPIView):
         return Device.objects.filter(user=self.request.auth.user).order_by('-id')
 
     def list(self, request, *args, **kwargs):
+        status_color = {x: y for x, y in STATUS_COLOR}
         user = request.auth.user
         industry_types = Industry.objects.filter(Q(user=user) | Q(user__isnull=True))
         location_types = Franchise.objects.filter(user=user)
@@ -34,7 +35,7 @@ class DeviceView(generics.ListCreateAPIView):
                 'industry_type': IndustryTypeSerializer(industry_types, many=True).data,
                 'location_type': LocationTypeSerializer(location_types, many=True).data,
                 'status_dict': {x: y for x, y in DEVICE_STATUS},
-                'status_list': [{'id': x, 'name': y, 'color': ''} for x, y in DEVICE_STATUS]
+                'status_list': [{'id': x, 'name': y, 'color': status_color[x]} for x, y in DEVICE_STATUS]
             }
         }
         return Response(data, status=status.HTTP_200_OK)
