@@ -76,16 +76,20 @@ class DeviceSerializer(serializers.ModelSerializer):
 
 # get statuses since 8 hours ago
 def get_eight_hours_statuses(device):
+    status_list = []
     current_time = datetime.now()
     eight_hours_ago = (current_time - timedelta(hours=8)).replace(minute=0, second=0, microsecond=0)
-    statuses = DeviceStatus.objects.filter(device=device). \
-        filter(timestamp__gte=eight_hours_ago).order_by('id')
-    status_list = [statuses[0], ] if statuses else [DeviceStatus.objects.filter(device=device).last()]
+    statuses = DeviceStatus.objects.filter(device=device)
 
-    for i in range(len(statuses)):
-        if i == 0:
-            continue
+    if statuses:
+        eight_hours_status = statuses.filter(timestamp__gte=eight_hours_ago).order_by('id')
+        status_list.append(eight_hours_status[0] if eight_hours_status else statuses.last())
 
-        if statuses[i].status != statuses[i - 1].status:
-            status_list.append(statuses[i])
+        for i in range(len(eight_hours_status)):
+            if i == 0:
+                continue
+
+            if eight_hours_status[i].status != eight_hours_status[i - 1].status:
+                status_list.append(eight_hours_status[i])
+
     return DeviceStatusSerializer(status_list, many=True).data
