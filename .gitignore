@@ -99,3 +99,5 @@ help_files/
 
 scripts/unmutedevice.sh
 scripts/upload_wirfi_webcam_video_to_s3.sh
+scripts/create_webcam_temporary_storage_config.sh
+scripts/webcamTemporaryStorageLocation.cfg
