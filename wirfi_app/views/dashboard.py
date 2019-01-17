@@ -1,5 +1,4 @@
 import copy
-from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.db.models import Q
@@ -8,8 +7,8 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from wirfi_app.models import Device, DeviceStatus, Industry, Franchise, DEVICE_STATUS
-from wirfi_app.serializers import DeviceStatusSerializer
+from wirfi_app.models import Device, DeviceStatus, Industry, Franchise, DEVICE_STATUS, STATUS_COLOR
+from wirfi_app.serializers.device import get_eight_hours_statuses
 
 
 @api_view(['GET'])
@@ -21,7 +20,9 @@ def dashboard_view(request):
     industry_type = []
     donut_chart = {}
     device_status_dict = {x: y for x, y in DEVICE_STATUS}
+    status_color = {device_status_dict[x]: y for x, y in STATUS_COLOR}
     donut = {value: 0 for key, value in device_status_dict.items()}
+
     device_industries = Industry.objects.filter(Q(user=request.auth.user) | Q(user_id__isnull=True))
     for industry in device_industries:
         industry_type.append(industry.name)
@@ -37,24 +38,11 @@ def dashboard_view(request):
 
     # get statuses since 8 hours ago
     line_graph = {industry.name: [] for industry in device_industries}
-
-    current_time = datetime.now()
-    eight_hours_ago = (current_time - timedelta(hours=8)).replace(minute=0, second=0, microsecond=0)
     priority_devices = Device.objects.filter(user=request.auth.user).filter(device_settings__priority=True)
     for device in priority_devices:
-        statuses = DeviceStatus.objects.filter(device=device). \
-            filter(timestamp__gte=eight_hours_ago).order_by('id')
-        status_list = [statuses[0], ] if statuses else []
-
-        for i in range(len(statuses)):
-            if i == 0:
-                continue
-
-            if statuses[i].status != statuses[i - 1].status:
-                status_list.append(statuses[i])
         data_device = {
             'name': device.name,
-            'data': DeviceStatusSerializer(status_list, many=True).data
+            'data': get_eight_hours_statuses(device)
         }
 
         line_graph[device.industry_type.name].append(data_device)
@@ -67,6 +55,6 @@ def dashboard_view(request):
             'line_graph': line_graph,
             'industry_type': industry_type,
             'donut_count': len(device_status),
-            'donut_data_format': [{'status': key, 'value': 0} for key in donut.keys()]
+            'donut_data_format': [{'status': key, 'value': 0, 'color': status_color[key]} for key in donut.keys()]
         }
     }, status=status.HTTP_200_OK)
