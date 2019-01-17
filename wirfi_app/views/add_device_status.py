@@ -41,10 +41,10 @@ class DeviceStatusView(generics.CreateAPIView):
 
     def create(self, request, *args, **kwargs):
         device = Device.objects.get(pk=request.data['device'])
-        prev_device_status = DeviceStatus.objects.filter(device=device).latest('id')
+        prev_device_status = DeviceStatus.objects.filter(device=device).last()
         device_status = DeviceStatus.objects.create(device=device, status=int(request.data['status']))
 
-        same_status = device_status.status == prev_device_status.status
+        same_status = device_status.status == prev_device_status.status if prev_device_status else False
 
         if not same_status:
             priority_device = device.device_settings.priority

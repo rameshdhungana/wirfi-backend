@@ -80,7 +80,7 @@ def get_eight_hours_statuses(device):
     eight_hours_ago = (current_time - timedelta(hours=8)).replace(minute=0, second=0, microsecond=0)
     statuses = DeviceStatus.objects.filter(device=device). \
         filter(timestamp__gte=eight_hours_ago).order_by('id')
-    status_list = [statuses[0], ] if statuses else []
+    status_list = [statuses[0], ] if statuses else [DeviceStatus.objects.filter(device=device).last()]
 
     for i in range(len(statuses)):
         if i == 0:
