@@ -6,28 +6,34 @@ import numpy as np
 from datetime import datetime
 import boto3
 import configparser
+import redis
 
 from django.http.response import StreamingHttpResponse
 
 # Get video_storage_location from ~/python/aws-server/webcamTemporaryStorageLocation.cfg
 config = configparser.ConfigParser()
 
-filepath = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))) + '/scripts/webcamTemporaryStorageLocation.cfg'
+filepath = os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.realpath(__file__)))) + '/scripts/webcamTemporaryStorageLocation.cfg'
 config.read(filepath)
 video_storage_location = config['webcamTemporaryStorageLocation']['storageLocation']
+print(video_storage_location)
 
 client = boto3.client('s3')
 
-video_length = 0.001
+video_length = 20
 context = zmq.Context()
 footage_socket = context.socket(zmq.SUB)
 footage_socket.bind('tcp://*:5555')
 footage_socket.setsockopt_string(zmq.SUBSCRIBE, np.unicode(''))
 
+r = redis.Redis()
+
 # fourcc =cv2.VideoWriter_fourcc(*'MP4V')
 fourcc = cv2.VideoWriter_fourcc(*"mp4v")
 
-# out = cv2.VideoWriter('output.avi',fourcc, 20.0, (640,480))
+# out = cv2.VideoWriter('output.avi',fourcc, 20.0, (6
+# 40,480))
 # video = cv2.VideoWriter('video%d.avi'%count, fourcc, 20.0, (640,480))
 
 last = datetime.now()
@@ -70,6 +76,7 @@ while True:
             create_video_writer_object(device_serial_number)
 
         frame = received_data['camera_data']
+        r.set(device_serial_number, frame)
         print(device_serial_number)
         # print(frame)
 
@@ -80,10 +87,7 @@ while True:
 
         # function is called everytime but the params changes on video_length variable value interval
         increase_counter(device_serial_number)
-        video_length = 20
 
-        streaming_url = StreamingHttpResponse(source, content_type='multipart/x-mixed-replace;boundary=frame')
-        print(streaming_url)
         # cv2.imshow("Stream", source)
         cv2.waitKey(1)
 

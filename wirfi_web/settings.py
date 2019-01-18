@@ -70,7 +70,9 @@ LOGIN_EXEMPT_URLS = (
     r'^check-version/',
     r'^media/users/[.-/_\w]+',
     r'ping-server/',
-    r'^media/[.-/_\w]+'
+    r'^media/[.-/_\w]+',
+    r'^device/(\d+)/stream/$'
+
 )
 
 MIDDLEWARE = [

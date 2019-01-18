@@ -6,7 +6,11 @@ from rest_framework.response import Response
 from wirfi_app.models import Device, DeviceCameraServices
 from wirfi_app.serializers import DeviceCameraSerializer
 from wirfi_app.views.create_admin_activity_log import create_activity_log
+from django.http import StreamingHttpResponse
+import redis
+import base64
 
+r = redis.Redis()
 
 class DeviceCameraView(generics.ListCreateAPIView):
     '''
@@ -90,3 +94,14 @@ class DeviceCameraDetailView(generics.UpdateAPIView, generics.DestroyAPIView):
             'message': "Successfully deleted device's camera information."
         }
         return Response(data, status=status.HTTP_200_OK)
+
+
+def get_frame(device_id):
+    while True:
+        frame_str = r.get(str(device_id))
+        frame_byte = base64.b64decode(frame_str)
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + frame_byte + b'\r\n\r\n')
+
+def stream(request, device_id):
+    return StreamingHttpResponse(get_frame(device_id), content_type='multipart/x-mixed-replace; boundary=frame')
