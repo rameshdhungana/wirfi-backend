@@ -7,7 +7,16 @@ DEVICE_STATUS = (
     (4, 'WEAK SIGNAL'),
     (3, 'MISSED A PING'),
     (2, 'OFFLINE'),
-    (1, 'ASLEEP'),
+    (1, 'ASLEEP')
+)
+
+STATUS_COLOR = (
+    (6, '#4aec26'),
+    (5, '#5576e4'),
+    (4, '#f0fc00'),
+    (3, '#faac00'),
+    (2, '#dd0000'),
+    (1, '#808080')
 )
 
 
