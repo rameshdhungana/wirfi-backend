@@ -7,7 +7,7 @@ from wirfi_app.views.caching import add_or_get_cached_device_list, update_cached
 from wirfi_app.views.check_version import CheckVersion
 from wirfi_app.views.dashboard import dashboard_view
 from wirfi_app.views.device import DeviceView, DeviceDetailView, device_images_view
-from wirfi_app.views.device_camera import DeviceCameraDetailView, DeviceCameraView
+from wirfi_app.views.device_camera import DeviceCameraDetailView, DeviceCameraView, stream
 from wirfi_app.views.device_network import DeviceNetworkDetailView, DeviceNetworkView
 from wirfi_app.views.device_notification import AllNotificationView, UpdateNotificationView  # , DeviceNotificationView
 from wirfi_app.views.device_settings import DeviceSleepView, device_priority_view, mute_device_view

@@ -6,6 +6,7 @@ import numpy as np
 from datetime import datetime
 import boto3
 import configparser
+import redis
 
 from django.http.response import StreamingHttpResponse
 
@@ -23,6 +24,8 @@ context = zmq.Context()
 footage_socket = context.socket(zmq.SUB)
 footage_socket.bind('tcp://*:5555')
 footage_socket.setsockopt_string(zmq.SUBSCRIBE, np.unicode(''))
+
+r = redis.Redis()
 
 # fourcc =cv2.VideoWriter_fourcc(*'MP4V')
 fourcc = cv2.VideoWriter_fourcc(*"mp4v")
@@ -70,6 +73,7 @@ while True:
             create_video_writer_object(device_serial_number)
 
         frame = received_data['camera_data']
+        r.set(device_serial_number, frame)
         print(device_serial_number)
         # print(frame)
 
