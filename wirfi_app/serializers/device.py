@@ -26,6 +26,7 @@ class DeviceSerializer(serializers.ModelSerializer):
         read_only_fields = ('location_logo', 'machine_photo')
 
     def to_representation(self, instance):
+        current_time = datetime.now()
         device_network = {
             'primary_network': None,
             'secondary_network': None
@@ -33,7 +34,7 @@ class DeviceSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
         data['machine_photo'] = data['machine_photo'][1:] if data['machine_photo'] else None
         data['location_logo'] = data['location_logo'][1:] if data['location_logo'] else None
-        data['device_status'] = get_eight_hours_statuses(instance)
+        data['device_status'] = get_eight_hours_statuses(instance, current_time)
 
         for network in data['device_network']:
             network_dict = {'id': network['id'], 'ssid': network['ssid']}
@@ -75,9 +76,8 @@ class DeviceSerializer(serializers.ModelSerializer):
 
 
 # get statuses since 8 hours ago
-def get_eight_hours_statuses(device):
+def get_eight_hours_statuses(device, current_time):
     status_list = []
-    current_time = datetime.now()
     eight_hours_ago = (current_time - timedelta(hours=8)).replace(minute=0, second=0, microsecond=0)
     statuses = DeviceStatus.objects.filter(device=device)
 
