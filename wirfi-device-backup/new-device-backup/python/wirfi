@@ -1,0 +1,20 @@
+#!/bin/sh /etc/rc.common
+#starts up the various WiRFi related processes
+
+START=10
+STOP=15
+
+start() {
+     echo "Starting WiRFi"
+   
+     #Start the signal strength display thing
+     screen -S signalstrength -d -m /root/python/ledInit.py
+     
+     #Start the web server
+     cd /root/python/
+     screen -mdS cgiserver ash -c 'python -m CGIHTTPServer 80'
+}
+
+stop() {
+     echo "Stopping WiRFi"
+}
