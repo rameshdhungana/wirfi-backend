@@ -71,22 +71,22 @@ while True:
         received_data = footage_socket.recv_json()
         # print(received_data)
         device_serial_number = received_data['device_serial_number']
-        if not device_serial_number in device_serial_number_list:
-            device_serial_number_list.append(device_serial_number)
-            create_video_writer_object(device_serial_number)
+        # if not device_serial_number in device_serial_number_list:
+        #     device_serial_number_list.append(device_serial_number)
+        #     create_video_writer_object(device_serial_number)
 
         frame = received_data['camera_data']
         r.set(device_serial_number, frame)
         print(device_serial_number)
         # print(frame)
 
-        img = base64.b64decode(frame)
-        npimg = np.fromstring(img, dtype=np.uint8)
-        source = cv2.imdecode(npimg, 1)
-        video_writer_objects[device_serial_number].write(source)
+        # img = base64.b64decode(frame)
+        # npimg = np.fromstring(img, dtype=np.uint8)
+        # source = cv2.imdecode(npimg, 1)
+        # video_writer_objects[device_serial_number].write(source)
 
         # function is called everytime but the params changes on video_length variable value interval
-        increase_counter(device_serial_number)
+        # increase_counter(device_serial_number)
 
         # cv2.imshow("Stream", source)
         cv2.waitKey(1)
