@@ -1,19 +1,35 @@
 import urllib
+from datetime import datetime
 from urllib.parse import urlparse
-from django.db.models.signals import post_save
-from django.dispatch import receiver
+
+from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
+from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework import status
-from django.conf import settings
 
-from wirfi_app.models import DeviceNetwork, QueueTaskForWiRFiDevice, Device
+from wirfi_app.models import DeviceNetwork, QueueTaskForWiRFiDevice, Device, DevicePingStatus
 
 DEVICE_NETWORK = 'DeviceNetwork'
 DEVICE = 'Device'
 PRIMARY_NETWORK_CHANGED = 'primary_network_changed'
 SECONDARY_NETWORK_CHANGED = 'secondary_network_changed'
 DEVICE_CREATED = 'device_created'
+DEVICE_REBOOT = 'device_reboot'
+
+
+def device_reboot(task, **data_to_store):
+    response_data = {
+        'code': getattr(settings, 'SUCCESS_CODE', 1),
+        'action': task.action,
+        'device_serial_number': task.data['device_serial_number'],
+        'data': {'ssid_name': task.data['ssid_name'],
+                 'password': task.data['password']
+                 }
+    }
+    task.queued_status = False
+    task.save()
+    return response_data
 
 
 def device_created(task, **data_to_store):
@@ -21,8 +37,8 @@ def device_created(task, **data_to_store):
     try:
         device_obj = Device.objects.get(serial_number=task.data['device_serial_number'])
         print(device_obj)
-        # we try to get the devicenetwork instance with device id from obtained from queue task object
-        # if we obtain we update it (this rarely happens , is case of exception)
+        # we try to get the devicenetwork instance with device id from obtained from queue task object,
+        # if we obtain, we update it (this rarely happens , is case of exception)
         # else we create device network object with the credentials obtained from device
         try:
             device_network_obj = DeviceNetwork.objects.get(device=device_obj, primary_network=True)
@@ -30,7 +46,7 @@ def device_created(task, **data_to_store):
             device_network_obj.password = data_to_store['primary_password']
             device_network_obj.primary_network = True
             device_network_obj.save()
-        except:
+        except ObjectDoesNotExist:
             DeviceNetwork.objects.create(
                 device=device_obj, ssid_name=data_to_store['primary_ssid_name'],
                 password=data_to_store['primary_password'],
@@ -77,6 +93,14 @@ tasks_map = {
 }
 
 
+def update_device_ping_status_table(device_serial_number):
+    device_obj = Device.objects.get(serial_number=device_serial_number)
+    # each time device pings the server, its pinged_at value is updated to current datetime field
+    device_ping_status = DevicePingStatus.objects.get_or_create(device=device_obj)
+    device_ping_status.pinged_at = datetime.now()
+    device_ping_status.save()
+
+
 @api_view(['POST'])
 def ping_server_from_wirfi_device(request):
     print('this is checking wirfi_device')
@@ -90,6 +114,7 @@ def ping_server_from_wirfi_device(request):
     try:
 
         device_serial_number = parsed_data['device_serial_number'][0]
+        update_device_ping_status_table(device_serial_number)
 
         # this dictionary's key value pair  will depend upon which function to call depending upon if conditions
         data_to_store = {}
