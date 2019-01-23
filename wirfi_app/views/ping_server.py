@@ -4,6 +4,7 @@ from urllib.parse import urlparse
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
+from pytz import utc
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -93,17 +94,33 @@ tasks_map = {
 }
 
 
-def update_device_ping_status_table(device_serial_number):
+def update_device_ping_status_table(request, device_serial_number, network_strength):
     device_obj = Device.objects.get(serial_number=device_serial_number)
     # each time device pings the server, its pinged_at value is updated to current datetime field
-    device_ping_status = DevicePingStatus.objects.get_or_create(device=device_obj)
-    device_ping_status.pinged_at = datetime.now()
-    device_ping_status.save()
+    device_ping_status_obj, created = DevicePingStatus.objects.get_or_create(device=device_obj)
+    print(device_ping_status_obj, 'this is device ping status object', device_ping_status_obj.pinged_at)
+    data = {'pinged_at': datetime.now().replace(tzinfo=utc), 'device_ip_address': get_client_ip(request),
+            'network_strength': network_strength}
+
+    device_ping_status_obj.pinged_at = datetime.now().replace(tzinfo=utc)
+    device_ping_status_obj.device_ip_address = get_client_ip(request)
+    device_ping_status_obj.network_strength = network_strength
+    device_ping_status_obj.save()
+
+    print(device_ping_status_obj.pinged_at)
+
+
+def get_client_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
 
 
 @api_view(['POST'])
 def ping_server_from_wirfi_device(request):
-    print('this is checking wirfi_device')
     # request.body gets the post data passed from the device while pinging this view
     #  request.body is byte stream hence decode it to utf-8 format and parse it to dict form
     parsed_data = urllib.parse.parse_qs(request.body.decode('utf-8'))
@@ -114,7 +131,11 @@ def ping_server_from_wirfi_device(request):
     try:
 
         device_serial_number = parsed_data['device_serial_number'][0]
-        update_device_ping_status_table(device_serial_number)
+        # network_strength = parsed_data['network_strength'][0]
+        network_strength = -67
+        update_device_ping_status_table(request, device_serial_number, network_strength)
+        print('this is checking wirfi_device')
+        print(get_client_ip(request))
 
         # this dictionary's key value pair  will depend upon which function to call depending upon if conditions
         data_to_store = {}
@@ -135,6 +156,7 @@ def ping_server_from_wirfi_device(request):
 
         return Response(response_data, status=status.HTTP_200_OK)
     except:
+        print('inside except')
         response = {
             'message': 'something went wrong',
             'code': getattr(settings, 'ERROR_CODE', 0),
