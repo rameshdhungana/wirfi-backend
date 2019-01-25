@@ -10,7 +10,7 @@ from wirfi_app.serializers.industry_franchise_type import IndustryTypeSerializer
 from wirfi_app.serializers.login import LoginSerializer
 from wirfi_app.serializers.password_reset import PasswordResetSerializer, ResetPasswordMobileSerializer
 from wirfi_app.serializers.preset_filter import PresetFilterSerializer
-from wirfi_app.serializers.user_detail import UserProfileSerializer, BusinessSerializer, BillingSerializer
+from wirfi_app.serializers.user_detail import UserProfileSerializer, BusinessSerializer, BillingSerializer, UserPushNotificationSettingSerializer
 from wirfi_app.serializers.user_registration import UserRegistrationSerializer
 from wirfi_app.serializers.user import UserSerializer, UserDetailsSerializer
 from wirfi_app.serializers.dashboard_device_location import DeviceLocationSerializer

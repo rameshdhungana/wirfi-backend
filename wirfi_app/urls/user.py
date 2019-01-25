@@ -1,6 +1,6 @@
 from django.urls import path
 from wirfi_app.views import BillingView, BillingDetailView, delete_billing_card, \
-    BusinessView, UserDetailView, profile_images_view, \
+    BusinessView, UserDetailView, profile_images_view, toggle_push_notifications, \
     Login, logout, get_logged_in_user, AdminActivityLogListView, AdminListCreateUserView
 
 
@@ -17,6 +17,7 @@ urlpatterns = [
     # user
     path('user/<int:id>/', UserDetailView.as_view(), name="user-detail"),
     path('user/<int:id>/image/', profile_images_view, name="user-image"),
+    path('user/<int:user_id>/toggle_push_notifications/', toggle_push_notifications, name="user_push_notification"),
 
     # login/logout
     path('login/', Login.as_view(), name='user_login'),

@@ -42,3 +42,9 @@ class BillingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Billing
         exclude = ('user', 'customer_id')
+
+
+class UserPushNotificationSettingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = ('push_notifications',)
