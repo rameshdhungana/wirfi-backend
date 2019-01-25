@@ -36,8 +36,8 @@ def mute_device_view(request, device_id):
 
         data_to_cache = {'id': device_setting.id,
                          'mute_start': (datetime.datetime.strptime(mute_serializer.data['mute_settings']['mute_start'],
-                                                                   "%Y-%m-%dT%H:%M:%S.%fZ")).strftime(
-                             '%Y-%m-%d %H:%M:%S.%f'),
+                                                                   "%Y-%m-%dT%H:%M:%SZ")).strftime(
+                             '%Y-%m-%d %H:%M:%S'),
                          'is_muted': mute_serializer.data['mute_settings']['is_muted'],
                          'mute_duration': mute_serializer.data['mute_settings']['mute_duration']}
         update_cached_device_list(data_to_cache)
@@ -109,8 +109,8 @@ class DeviceSleepView(generics.CreateAPIView):
         serializer.save()
         data_to_cache = {'id': instance.id,
                          'sleep_start': (datetime.datetime.strptime(serializer.data['sleep_settings']['sleep_start'],
-                                                                    "%Y-%m-%dT%H:%M:%S.%fZ")).strftime(
-                             '%Y-%m-%d %H:%M:%S.%f'),
+                                                                    "%Y-%m-%dT%H:%M:%SZ")).strftime(
+                             '%Y-%m-%d %H:%M:%S'),
                          'is_asleep': serializer.data['sleep_settings']['is_asleep'],
                          'sleep_duration': serializer.data['sleep_settings']['sleep_duration']}
 
@@ -119,7 +119,7 @@ class DeviceSleepView(generics.CreateAPIView):
         create_activity_log(
             request,
             "Sleep setting of device '{device}' of user '{email} updated.".format(device=instance.device.serial_number,
-                                                                                 email=request.auth.user.email)
+                                                                                  email=request.auth.user.email)
         )
 
         data = {
