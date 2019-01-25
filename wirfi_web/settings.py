@@ -103,6 +103,7 @@ CORS_ALLOW_HEADERS = (
 )
 
 REST_FRAMEWORK = {
+    'DATETIME_FORMAT': "%Y-%m-%dT%H:%M:%SZ",
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'wirfi_app.authentication.MyOwnTokenAuthentication',
     ),
