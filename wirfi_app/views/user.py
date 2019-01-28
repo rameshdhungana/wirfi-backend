@@ -6,7 +6,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from wirfi_app.models import Profile, AdminActivityLog
-from wirfi_app.serializers import UserSerializer
+from wirfi_app.serializers import UserSerializer, UserPushNotificationSettingSerializer
 from wirfi_app.views.create_admin_activity_log import create_activity_log
 
 User = get_user_model()
@@ -82,3 +82,26 @@ def profile_images_view(request, id):
         "message": "Images Successfully uploaded.",
         "data": UserSerializer(user).data},
         status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+def toggle_push_notifications(request, user_id):
+    try:
+        user_profile = Profile.objects.get(user=user_id)
+        serializer = UserPushNotificationSettingSerializer(user_profile, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        data = {
+            'code': getattr(settings, 'SUCCESS_CODE', 1),
+            'message': "Successfully priority updated.",
+            'data': serializer.data
+        }
+        return Response(data, status=status.HTTP_200_OK)
+
+    except Exception as err:
+        return Response(
+            {
+            "code": getattr(settings, 'ERROR_CODE', 0),
+            "message": str(err)
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )

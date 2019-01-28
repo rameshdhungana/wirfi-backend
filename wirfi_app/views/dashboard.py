@@ -46,9 +46,16 @@ def dashboard_view(request):
     line_graph = {industry.name: [] for industry in device_industries}
     priority_devices = devices.filter(device_settings__priority=True)
     for device in priority_devices:
+
+        data = get_eight_hours_statuses(device, current_time)
+        data.append({
+            'timestamp': current_time.strftime('%Y-%m-%dT%H:%M:%SZ'),
+            'status': data[-1]['status']
+        })
+
         data_device = {
             'name': device.name,
-            'data': get_eight_hours_statuses(device, current_time)
+            'data': data
         }
 
         line_graph[device.industry_type.name].append(data_device)

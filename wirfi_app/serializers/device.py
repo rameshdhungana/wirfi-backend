@@ -83,13 +83,13 @@ def get_eight_hours_statuses(device, current_time):
     statuses = DeviceStatus.objects.filter(device=device)
 
     if statuses:
-        eight_hours_status = statuses.filter(timestamp__gte=eight_hours_ago).order_by('id')
+        eight_hours_status = statuses.filter(timestamp__gt=eight_hours_ago).order_by('id')
 
-        if not eight_hours_status:
-            status = copy.copy(statuses.last())
-            status.timestamp = eight_hours_ago  # add eight hours ago timestamp if no data since eight hours
-            status_list.append(status)
-        else:
+        status = copy.copy(statuses.last())
+        status.timestamp = eight_hours_ago  # add eight hours ago timestamp if no data since eight hours
+        status_list.append(status)
+
+        if eight_hours_status:
             status_list.append(eight_hours_status[0])
 
         for i in range(len(eight_hours_status)):
