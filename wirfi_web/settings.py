@@ -69,7 +69,8 @@ LOGIN_EXEMPT_URLS = (
     r'^list-api/',
     r'^check-version/',
     r'^media/users/[.-/_\w]+',
-    r'ping-server/',
+    r'server/ping/',
+    r'server/set-primary-network/',
     r'^media/[.-/_\w]+',
     r'^device/(\d+)/stream/$'
 

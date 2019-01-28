@@ -15,27 +15,33 @@ form = cgi.FieldStorage()
 # Get data from fields
 ssid = form.getvalue('ssid')
 password = form.getvalue('password')
-
 if ssid and password:
 	
-	# Get url from ~/python/aws-server/aws_info.cfg
-	filepath = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + '/aws-server/aws_server_info.cfg' 
+	# Get url from ~/python/aws-server/device_all_configurations.cfg
+	filepath = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + '/aws-server/device_all_configurations.cfg' 
 	print(filepath)
 	config = ConfigParser.RawConfigParser()
 	config.read(filepath)
-	url = config.get('AwsServerInfo', 'aws_server_ping_address')
+	url = config.get('AwsServerInfo', 'aws_server_set_primary_network_address')
+	print url
+	
+	# get device_serial_number as well
+	device_serial_number = config.get('DeviceInfo', 'device_serial_number') 
+	
+	# get device_secret_key_to_access_server to authenticate device in server
+	secret_key_to_access_server = config.get('AwsServerInfo', 'secret_key_to_access_server')
 	
 	#provide the ssid name, password and device serial number and ping server to store it to database
-	values = {'primary_ssid_name':ssid,'primary_password':password,'device_serial_number':1111111111}
+	values = {'primary_ssid_name':ssid,'primary_password':password,'device_serial_number':device_serial_number,'secret_key_to_access_server':secret_key_to_access_server}
+	print(values)
 	data = urllib.urlencode(values)
 	res = urllib2.Request(url,data)
 	r = urllib2.urlopen(res)
 	response = r.read()
 	p_data = ast.literal_eval(response)
 	print p_data,'/n','---------'	
-	task = [data for data in p_data if data['code'] == 1 and data['action'] == 'device_created' and data['device_serial_number']=='1111111111']
-	print p_data,'/n','---------', task
-	if task:
+	
+	if p_data['device_serial_number'] == device_serial_number and p_data['code'] == 1:
 		subprocess.call(['sudo','uci','set', 'wireless.@wifi-iface[0].ssid={0}'.format(ssid)], shell=False)
         	subprocess.call(['sudo','uci','set', 'wireless.@wifi-iface[0].key={0}'.format(password)], shell=False)
         	subprocess.call(['sudo','uci','commit'], shell=False)
