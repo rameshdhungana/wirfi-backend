@@ -93,7 +93,7 @@ def toggle_push_notifications(request):
         serializer.save()
         data = {
             'code': getattr(settings, 'SUCCESS_CODE', 1),
-            'message': "Successfully priority updated.",
+            'message': "Push Notifications " + "Turned " + ("On." if serializer.data['push_notifications'] else "Off"),
             'data': serializer.data
         }
         return Response(data, status=status.HTTP_200_OK)

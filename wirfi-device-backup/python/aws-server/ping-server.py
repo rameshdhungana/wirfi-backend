@@ -1,17 +1,18 @@
 #!/bin/bash/env python
 import urllib2,urllib,subprocess,json,os,ConfigParser,ast
-filepath = os.path.dirname(os.path.realpath(__file__)) + '/aws_server_info.cfg'
+filepath = os.path.dirname(os.path.realpath(__file__)) + '/device_all_configurations.cfg'
 config = ConfigParser.RawConfigParser()
 config.read(filepath)
 url = config.get('AwsServerInfo', 'aws_server_ping_address')
 print(url,'this is url')
 print(filepath)
 
+#get device secret key to access the server and pass it as data
+secret_key_to_access_server = config.get('AwsServerInfo', 'secret_key_to_access_server')
+
 #Assigning tasks to their identifier string
 PRIMARY_NETWORK_CHANGED = 'primary_network_changed'
-SECONDARY_NETWORK_CHANGED = 'secondary_network_changed'
-DEVICE_CREATED = 'device_created'
-
+DEVICE_REBOOT = 'device_reboot'
 def primary_network_is_changed(data):
 	print(data)
 	ssid = data['ssid_name']
@@ -25,17 +26,28 @@ def primary_network_is_changed(data):
 
 	return True
 
-def secondary_network_is_changed(data):
-        print(data,'this is secondary network change')
+def device_reboot(data):
+	subprocess.call(['sudo','reboot'])
 	return True
-
 
 tasks_map = {
 	PRIMARY_NETWORK_CHANGED:primary_network_is_changed,
-	SECONDARY_NETWORK_CHANGED:secondary_network_is_changed
+	DEVICE_REBOOT:device_reboot
 }
 
-values = {'os':'openwrt', 'name':'wirifi','device_serial_number':1111111111}
+#gets the wifi network signal average signal strength
+cmd = "iw dev wlan0 station dump | grep 'signal avg' | head -1"
+ps = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+output = ps.communicate()[0] 
+f= open('average_signal_strength.txt','w')
+f.write(output)
+f.close()
+r = open('average_signal_strength.txt')
+signal_avg = r.readline()
+network_strength = signal_avg[signal_avg.find("[")+1:signal_avg.find("]")]
+r.close()
+
+values = {'os':'openwrt', 'name':'wirifi','device_serial_number':'1111111111','network_strength':network_strength,'secret_key_to_access_server':secret_key_to_access_server}
 print(values)
 data = urllib.urlencode(values)
 print(data)
