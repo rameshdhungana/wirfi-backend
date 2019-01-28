@@ -83,10 +83,11 @@ def profile_images_view(request, id):
         "data": UserSerializer(user).data},
         status=status.HTTP_200_OK)
 
+
 @api_view(['POST'])
-def toggle_push_notifications(request, user_id):
+def toggle_push_notifications(request):
     try:
-        user_profile = Profile.objects.get(user=user_id)
+        user_profile = Profile.objects.get(user=request.auth.user)
         serializer = UserPushNotificationSettingSerializer(user_profile, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -100,8 +101,8 @@ def toggle_push_notifications(request, user_id):
     except Exception as err:
         return Response(
             {
-            "code": getattr(settings, 'ERROR_CODE', 0),
-            "message": str(err)
+                "code": getattr(settings, 'ERROR_CODE', 0),
+                "message": str(err)
             },
             status=status.HTTP_400_BAD_REQUEST
         )
