@@ -41,10 +41,10 @@ def dashboard_view(request):
 
     donut_chart = {
         key: [
-            {'status': device_status,
-             'value': count,
-             'color': status_color[device_status]
-             } for device_status, count in value.items()
+            {'status': name,
+             'value': value[name],
+             'color': status_color[name]
+             } for status_id, name in DEVICE_STATUS
         ] for key, value in donut_chart.items()}
 
     # line graph get statuses since 8 hours ago
