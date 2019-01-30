@@ -8,7 +8,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from wirfi_app.models import Device, DeviceStatus, Industry, Franchise, DEVICE_STATUS, STATUS_COLOR
+from wirfi_app.models import Device, DeviceStatus, Industry, DEVICE_STATUS, STATUS_COLOR
 from wirfi_app.serializers import DeviceLocationSerializer
 from wirfi_app.serializers.device import get_eight_hours_statuses
 
@@ -39,8 +39,13 @@ def dashboard_view(request):
     for device in device_status:
         donut_chart[device.device.industry_type.name][device_status_dict[device.status]] += 1
 
-    donut_chart = {key: [{'status': device_status, 'value': count} for device_status, count in value.items()] for
-                   key, value in donut_chart.items()}
+    donut_chart = {
+        key: [
+            {'status': name,
+             'value': value[name],
+             'color': status_color[name]
+             } for status_id, name in DEVICE_STATUS
+        ] for key, value in donut_chart.items()}
 
     # line graph get statuses since 8 hours ago
     line_graph = {industry.name: [] for industry in device_industries}
@@ -68,6 +73,8 @@ def dashboard_view(request):
             'line_graph': line_graph,
             'device_location': DeviceLocationSerializer(devices, many=True).data,
             'industry_type': industry_type,
-            'donut_data_format': [{'status': key, 'value': 0, 'color': status_color[key]} for key in donut.keys()]
+            'donut_data_format': [
+                {'status': name, 'value': 0, 'color': status_color[name]} for i, name in DEVICE_STATUS
+            ]
         }
     }, status=status.HTTP_200_OK)

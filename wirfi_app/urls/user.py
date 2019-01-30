@@ -17,7 +17,7 @@ urlpatterns = [
     # user
     path('user/<int:id>/', UserDetailView.as_view(), name="user-detail"),
     path('user/<int:id>/image/', profile_images_view, name="user-image"),
-    path('user/<int:user_id>/toggle_push_notifications/', toggle_push_notifications, name="user_push_notification"),
+    path('toggle_push_notifications/', toggle_push_notifications, name="user_push_notification"),
 
     # login/logout
     path('login/', Login.as_view(), name='user_login'),
