@@ -15,6 +15,8 @@ form = cgi.FieldStorage()
 # Get data from fields
 ssid = form.getvalue('ssid')
 password = form.getvalue('password')
+ssid = 'Insight Workshop First Floor'
+password = '!N$IGHTv2'
 if ssid and password:
 	
 	# Get url from ~/python/aws-server/device_all_configurations.cfg

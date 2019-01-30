@@ -10,6 +10,9 @@ print(filepath)
 #get device secret key to access the server and pass it as data
 secret_key_to_access_server = config.get('AwsServerInfo', 'secret_key_to_access_server')
 
+#get device serial number
+device_serial_number = config.get('DeviceInfo', 'device_serial_number')
+
 #Assigning tasks to their identifier string
 PRIMARY_NETWORK_CHANGED = 'primary_network_changed'
 DEVICE_REBOOT = 'device_reboot'
@@ -47,7 +50,7 @@ signal_avg = r.readline()
 network_strength = signal_avg[signal_avg.find("[")+1:signal_avg.find("]")]
 r.close()
 
-values = {'os':'openwrt', 'name':'wirifi','device_serial_number':'1111111111','network_strength':network_strength,'secret_key_to_access_server':secret_key_to_access_server}
+values = {'device_serial_number':device_serial_number,'network_strength':network_strength,'secret_key_to_access_server':secret_key_to_access_server}
 print(values)
 data = urllib.urlencode(values)
 print(data)

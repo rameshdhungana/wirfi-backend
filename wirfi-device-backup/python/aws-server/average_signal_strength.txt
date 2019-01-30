@@ -1,1 +1,1 @@
-	signal avg:	-53 [-53] dBm
+	signal avg:	-63 [-63] dBm

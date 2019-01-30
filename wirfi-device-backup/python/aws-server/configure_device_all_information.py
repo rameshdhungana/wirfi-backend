@@ -5,9 +5,9 @@ config = ConfigParser.RawConfigParser()
 #server related information section
 config.add_section('AwsServerInfo')
 
-config.set('AwsServerInfo', 'aws_server_ip_address', '192.168.1.181:8000')
-config.set('AwsServerInfo', 'aws_server_ping_address', 'http://192.168.1.181:8000/server/ping/')
-config.set('AwsServerInfo', 'aws_server_set_primary_network_address', 'http://192.168.1.181:8000/server/set-primary-network/')
+config.set('AwsServerInfo', 'aws_server_ip_address', 'http://api.wirfi.testiw.codesamaj.com/')
+config.set('AwsServerInfo', 'aws_server_ping_address', 'http://api.wirfi.testiw.codesamaj.com/server/ping/')
+config.set('AwsServerInfo', 'aws_server_set_primary_network_address', 'http://api.wirfi.testiw.codesamaj.com/server/set-primary-network/')
 config.set('AwsServerInfo', 'secret_key_to_access_server', 'qRY,1QC;>#^,S|6M*Ky~<m-+p{ADEfWIRFI')
 
 #device related information section
