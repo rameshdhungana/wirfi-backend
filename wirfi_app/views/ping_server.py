@@ -157,10 +157,10 @@ def ping_server_from_wirfi_device(request):
             print(response_data, 'this is response from queue function')
 
         return Response(response_data, status=status.HTTP_200_OK)
-    except:
+    except Exception as e:
         print('inside except')
         response = {
-            'message': 'something went wrong',
+            'message': 'something went wrong' + str(e),
             'code': getattr(settings, 'ERROR_CODE', 0),
 
         }
