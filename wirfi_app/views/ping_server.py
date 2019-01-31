@@ -43,7 +43,6 @@ def device_network_setting_changed(task):
 tasks_map = {
     PRIMARY_NETWORK_CHANGED: device_network_setting_changed,
     DEVICE_REBOOT: device_reboot
-
 }
 
 
