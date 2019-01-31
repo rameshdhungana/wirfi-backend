@@ -20,3 +20,6 @@ class Command(BaseCommand):
                              )
 
         print(ssh)
+
+# this script is not required for functionality , this was used to access the wirfi device using python
+# management command in initial phase of Wirfi device exploration
